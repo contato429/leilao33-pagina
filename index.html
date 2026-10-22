@@ -213,7 +213,7 @@
       <!-- leilões -->
       <div id="p-leiloes" class="painel oculto">
         <h3>Habilitação nos leilões</h3>
-        <p class="meta">Para dar lances em cada leilão você precisa se habilitar nele, confirmando sua senha. A Galeria 33 aprova cada habilitação.</p>
+        <p class="meta">Para dar lances em cada leilão você precisa se habilitar nele, confirmando sua senha. Depois de confirmar, você já pode dar lances.</p>
         <div id="l-lista"></div>
         <div class="msg" id="h-msg"></div>
       </div>
@@ -667,7 +667,7 @@ function renderLeiloes() {
     if (!l.hab) acao = l.habilitacao_aberta ? `<button data-hab="${esc(l.id)}">Habilitar-me</button>` : `<span class="status">habilitação fechada</span>`;
     else if (l.hab.status === "pendente") acao = `<span class="status pend">em análise</span>`;
     else if (l.hab.status === "habilitado") acao = `<span class="status ok">habilitado</span>`;
-    else acao = `<span class="status neg">recusada: ${esc(l.hab.motivo)}</span> ${l.habilitacao_aberta ? `<button class="sec" data-hab="${esc(l.id)}">Pedir de novo</button>` : ""}`;
+    else acao = `<span class="status neg">cancelada: ${esc(l.hab.motivo)}</span>`;
     return `<div class="linha"><span>${esc(l.nome)}</span><span>${acao}</span></div>`;
   }).join("") : "<p class='meta'>Nenhum leilão aberto no momento.</p>";
   $("l-lista").querySelectorAll("[data-hab]").forEach(b => b.onclick = () => abrirModalHab(b.dataset.hab));
@@ -689,7 +689,7 @@ $("form-hab").addEventListener("submit", async e => {
     const r = await api("habilitar", { leilaoId: leilaoAlvo, aceite: $("m-aceite").checked, email: estado.email, senha: $("m-senha").value });
     $("m-senha").value = "";
     $("modal-hab").classList.add("oculto");
-    msg($("h-msg"), r.status === "habilitado" ? "Você já está habilitado." : "Pedido enviado. A Galeria 33 vai analisar sua habilitação.", "ok");
+    msg($("h-msg"), "Você está habilitado neste leilão e já pode dar lances.", "ok");
     await carregarEstado();
   } catch (err) { msg($("m-msg"), err.message, "erro"); }
   finally { botao.disabled = false; }
