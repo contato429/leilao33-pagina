@@ -137,7 +137,7 @@ async function carregarConfig() {
   document.getElementById("legal").textContent =
     `Leilão conduzido pelo leiloeiro oficial ${CONFIG.leiloeiro.nome}, matrícula ${CONFIG.leiloeiro.matricula}. ` +
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
-    `Incremento mínimo de ${brl(CONFIG.regras.incremento_minimo_reais)}. ` +
+    `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
     `A reserva não é divulgada.`;
 }
