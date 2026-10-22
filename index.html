@@ -354,6 +354,27 @@
   .oferta .meta { font: 400 .76rem var(--mono); color: var(--muted); }
   .lupa-faixa.oferta-f { background: #ffb400; color: #2a1c00; border-color: #b27d00; }
   .lupa-faixa.oferta-f button.cobrir { background: #2a1c00; color: #ffe9b0; }
+
+  /* ===== PAINEL: ARREMATES E COBRANÇAS ===== */
+  .ad-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ad-bts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ad-bts button, .arr-item button { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 8px 14px; font: 700 .8rem var(--sans); cursor: pointer; }
+  .ad-bts button:hover, .arr-item button:hover { border-color: var(--acid); }
+  .arr-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 10px 0; display: grid; gap: 8px; background: var(--bg2); }
+  .arr-item header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .arr-item h4 { margin: 0; font: italic 400 1.4rem/1 var(--serif); }
+  .arr-item .sub { font: 400 .75rem var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .arr-item .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px 18px; font-size: .88rem; }
+  .arr-item .grade b { display: block; font: 400 .66rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .arr-item .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .arr-item .acoes button.perigo { color: #ff6a4d; border-color: #ff6a4d; }
+  .arr-item .acoes button.confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
+  .chip-st { font: 700 .68rem var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .chip-st.ok { background: #12b868; color: #02210f; border-color: #12b868; }
+  .chip-st.aten { background: #ffb400; color: #2a1c00; border-color: #ffb400; }
+  .chip-st.mau { background: #ff2d20; color: #fff; border-color: #ff2d20; }
+  .chip-st.vivo { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  #ad-csv-txt { width: 100%; min-height: 120px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font: 400 .72rem var(--mono); }
   @media (prefers-reduced-motion: reduce) {
     .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -596,6 +617,14 @@
 
   <!-- ===== PAINEL DA EQUIPE ===== -->
   <div id="view-admin" class="oculto admin-pag"><h2>Painel da equipe</h2>
+    <div class="painel" id="ad-arr-painel">
+      <div class="ad-topo"><h3>Arremates e cobranças</h3>
+        <div class="ad-bts"><button type="button" id="ad-arr-atualizar">Atualizar</button><button type="button" id="ad-rotina" title="Roda agora o que normalmente roda de hora em hora">Rodar a rotina agora</button><button type="button" id="ad-csv">Copiar planilha</button></div></div>
+      <div class="meta" id="ad-arr-resumo"></div>
+      <div class="msg" id="ad-arr-msg" role="status"></div>
+      <div id="ad-arr" class="carregando">Carregando…</div>
+      <textarea id="ad-csv-txt" class="oculto" readonly aria-label="Planilha em CSV"></textarea>
+    </div>
     <div class="painel"><h3>Cadastros aguardando análise</h3><div id="ad-cad" class="carregando">Carregando…</div></div>
     <div class="painel"><h3>Habilitações aguardando análise</h3><div id="ad-hab" class="carregando">Carregando…</div></div>
     <div class="painel oculto" id="ad-ver"></div>
@@ -1668,7 +1697,89 @@ $("form-hab").addEventListener("submit", async e => {
 });
 
 /* ===== PAINEL DA EQUIPE ===== */
+
+/* ===== ARREMATES E COBRANÇAS (equipe) ===== */
+let arrLinhas = [], arrConfirma = null, arrTimer = null;
+const ROT_SIT = { aberto: ["Aberto", "vivo"], sem_lances: ["Encerrado sem lances", ""], vendido: ["Arrematado", "ok"], aguardando_oferta: ["Oferta em andamento", "aten"], nao_vendido: ["Sem venda", ""] };
+const ROT_PAG = { aguardando: ["Aguardando pagamento", "aten"], pago: ["Pago", "ok"], vencido: ["Vencido", "mau"] };
+async function carregarArremates(manter) {
+  if (!manter) msg($("ad-arr-msg"), "");
+  try {
+    const r = await api("admin_arremates");
+    arrLinhas = r.linhas; renderArremates();
+  } catch (e) { $("ad-arr").className = ""; $("ad-arr").innerHTML = ""; msg($("ad-arr-msg"), e.message, "erro"); }
+}
+function renderArremates() {
+  const L = arrLinhas, n = (f) => L.filter(f).length;
+  $("ad-arr-resumo").textContent = L.length + " lotes · " + n(l => l.situacao === "aberto") + " abertos · " + n(l => l.situacao === "aguardando_oferta") + " com oferta em andamento · " + n(l => l.situacao === "vendido") + " arrematados (" + n(l => l.pagamento_status === "pago") + " pagos, " + n(l => l.situacao === "vendido" && l.pagamento_status !== "pago") + " a receber)";
+  $("ad-arr").className = "";
+  $("ad-arr").innerHTML = L.map(l => {
+    const [rs, cls] = ROT_SIT[l.situacao] || [l.situacao, ""];
+    const pag = l.situacao === "vendido" ? (ROT_PAG[l.pagamento_status] || [l.lancado ? "Cobrança ainda não criada" : "Lote não lançado: sem cobrança automática", ""]) : null;
+    const fato = (k, v) => v === "" || v == null ? "" : `<div><b>${k}</b>${v}</div>`;
+    const bt = [];
+    const b = (ac, txt, perigo) => bt.push(`<button type="button" data-arr="${esc(l.id)}" data-ac="${ac}" class="${perigo ? "perigo" : ""}">${txt}</button>`);
+    if (l.tem_produto && !l.lancado && l.situacao === "aberto") b("lancar", "Lançar lote (liga a rotina da loja)");
+    if (l.lancado && l.situacao === "aberto") b("desfazer_lancar", "Desfazer lançamento");
+    if (l.situacao === "vendido" && l.pagamento_status !== "pago") { b("marcar_pago", "Marcar como pago"); b("reenviar_link", "Enviar novo link de pagamento"); b("invalidar", "Invalidar arremate", true); }
+    if (l.situacao !== "aberto" && l.loja_estado !== "devolvido_loja" && l.pagamento_status !== "pago" && l.tem_produto) b("devolver_loja", "Devolver a obra à loja", true);
+    return `<div class="arr-item"><header><div><h4>${esc(l.artista || l.titulo)}</h4><div class="sub">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)}</div></div>
+      <div><span class="chip-st ${cls}">${rs}</span>${pag ? ` <span class="chip-st ${pag[1]}">${pag[0]}</span>` : ""}</div></header>
+      <div class="grade">
+        ${fato("Encerra", l.situacao === "aberto" ? dataHora(l.encerra_em) + " (" + tempoRestante(l.encerra_em) + ")" : "encerrado em " + dataHora(l.encerra_em))}
+        ${fato("Lances", l.n_lances + (l.maior_lance != null ? " · maior " + brl(l.maior_lance) : ""))}
+        ${fato("Reserva (só equipe)", l.reserva != null ? brl(l.reserva) : "")}
+        ${l.oferta ? fato("Oferta da reserva", esc(l.oferta.nome) + " (" + l.oferta.posicao + "ª vez) até " + dataHora(l.oferta.prazo)) : ""}
+        ${l.comprador_nome ? fato("Comprador", esc(l.comprador_nome) + "<br><span class='meta'>" + esc(l.comprador_email) + "</span>") : ""}
+        ${l.valor_final != null ? fato("Valor final", brl(l.valor_final)) + fato("Comissão", brl(l.comissao)) + fato("Total a pagar", brl(l.total)) : ""}
+        ${l.pagamento_prazo ? fato("Prazo do pagamento", dataHora(l.pagamento_prazo)) : ""}
+        ${l.pagamento_url ? fato("Link de pagamento", `<a class="link" href="${esc(l.pagamento_url)}" target="_blank" rel="noopener">abrir</a>`) : ""}
+        ${l.invalidado_em ? fato("Arremate invalidado", dataHora(l.invalidado_em) + (l.reoferta_nome ? "; obra oferecida a " + esc(l.reoferta_nome) : "")) : ""}
+        ${fato("Loja", l.lancado ? esc(l.loja_estado.replace("_", " ")) : "não lançado")}
+        ${l.ultima_acao ? fato("Última ação da equipe", esc(l.ultima_acao)) : ""}
+      </div>
+      ${bt.length ? `<div class="acoes">${bt.join("")}</div>` : ""}</div>`;
+  }).join("") || "<p class='meta'>Nenhum lote.</p>";
+  $("ad-arr").querySelectorAll("[data-arr]").forEach(el => {
+    const chave = el.dataset.arr + ":" + el.dataset.ac;
+    if (arrConfirma === chave) { el.textContent = "Confirmar: " + el.textContent; el.classList.add("confirma"); }
+    el.onclick = () => acaoArremate(el.dataset.arr, el.dataset.ac, el);
+  });
+}
+async function acaoArremate(id, ac, el) {
+  const chave = id + ":" + ac;
+  if (arrConfirma !== chave) {
+    arrConfirma = chave; clearTimeout(arrTimer); arrTimer = setTimeout(() => { arrConfirma = null; renderArremates(); }, 6000);
+    renderArremates(); return;
+  }
+  arrConfirma = null; clearTimeout(arrTimer);
+  msg($("ad-arr-msg"), "Executando…");
+  try {
+    const r = await api("admin_acao_lote", { id, acao: ac });
+    msg($("ad-arr-msg"), r.mensagem || "Feito.", "ok");
+  } catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
+  await carregarArremates(true);
+}
+$("ad-arr-atualizar").onclick = () => carregarArremates();
+$("ad-rotina").onclick = async () => {
+  msg($("ad-arr-msg"), "Rodando a rotina…");
+  try { const r = await api("admin_rotina"); msg($("ad-arr-msg"), r.feito && r.feito.length ? "Rotina feita: " + r.feito.join("; ") : "Rotina feita: nada a mudar.", "ok"); }
+  catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
+  await carregarArremates(true);
+};
+function csvCelula(v) { const t = v == null ? "" : String(v); return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
+$("ad-csv").onclick = async () => {
+  const cab = ["Lote", "Artista", "Título", "Encerramento", "Situação", "Lances", "Maior lance", "Reserva", "Comprador", "E-mail", "Valor final", "Comissão", "Total", "Pagamento", "Prazo do pagamento", "Loja"];
+  const linhas = arrLinhas.map(l => [l.id, l.artista, l.titulo, l.encerra_em, (ROT_SIT[l.situacao] || [l.situacao])[0], l.n_lances, l.maior_lance, l.reserva, l.comprador_nome, l.comprador_email, l.valor_final, l.comissao, l.total, (ROT_PAG[l.pagamento_status] || [l.pagamento_status])[0], l.pagamento_prazo, l.loja_estado]);
+  const csv = [cab].concat(linhas).map(r => r.map(csvCelula).join(";")).join("\n");
+  const ta = $("ad-csv-txt"); ta.value = csv; ta.classList.remove("oculto"); ta.focus(); ta.select();
+  try { await navigator.clipboard.writeText(csv); msg($("ad-arr-msg"), "Planilha copiada. Cole no Excel ou no Google Planilhas.", "ok"); }
+  catch (e) { try { document.execCommand("copy"); msg($("ad-arr-msg"), "Planilha copiada. Cole no Excel ou no Google Planilhas.", "ok"); } catch (e2) { msg($("ad-arr-msg"), "Selecione o texto abaixo e copie (Ctrl+C).", "ok"); } }
+};
+setInterval(() => { if (!$("view-admin").classList.contains("oculto") && !document.hidden && !arrConfirma) carregarArremates(true); }, 60000);
+
 async function carregarAdmin() {
+  carregarArremates();
   $("ad-ver").classList.add("oculto");
   try {
     const r = await api("admin_listar");
