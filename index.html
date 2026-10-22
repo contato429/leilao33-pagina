@@ -547,10 +547,11 @@
           <label class="campo">Telefone com DDD<input id="d-tel" type="tel" autocomplete="tel" required></label>
         </div>
         <div class="duas">
-          <label class="campo">CEP<input id="d-cep" inputmode="numeric" autocomplete="postal-code" required></label>
+          <label class="campo">CEP<input id="d-cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required></label>
           <label class="campo">Cidade/UF<input id="d-cidade" autocomplete="address-level2" placeholder="Joinville/SC" required></label>
         </div>
         <label class="campo">Endereço (rua, número, bairro)<input id="d-end" autocomplete="street-address" required></label>
+        <div class="msg" id="d-cep-msg" role="status"></div>
         <fieldset style="border:1px solid var(--line); border-radius:6px; padding:8px 12px;">
           <legend class="meta">Você é pessoa politicamente exposta (PEP)?</legend>
           <label><input type="radio" name="pep" value="nao" checked> Não</label>
@@ -1505,8 +1506,36 @@ function ajustarTipo() {
 }
 $("d-doc").addEventListener("input", ajustarTipo);
 
+
+/* CEP: preenche cidade/UF e rua pelo serviço gratuito ViaCEP (só o CEP é enviado). */
+let cepConsultado = "", enderecoAuto = "";
+async function buscarCep() {
+  const cep = soNum($("d-cep").value).slice(0, 8);
+  $("d-cep").value = cep.length > 5 ? cep.slice(0, 5) + "-" + cep.slice(5) : cep;
+  if (cep.length !== 8 || cep === cepConsultado) return;
+  cepConsultado = cep;
+  msg($("d-cep-msg"), "Buscando o endereço…");
+  try {
+    const r = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
+    const d = await r.json();
+    if (d.erro) { msg($("d-cep-msg"), "CEP não encontrado. Confira os números ou preencha o endereço à mão.", "erro"); return; }
+    if (d.localidade) $("d-cidade").value = d.localidade + "/" + d.uf;
+    const fim = $("d-end"), atual = fim.value.trim();
+    if (d.logradouro && (!atual || atual === enderecoAuto)) {
+      // Deixa o cursor no lugar do número: "Rua X, |, Bairro".
+      enderecoAuto = d.logradouro + ", , " + (d.bairro || "");
+      fim.value = enderecoAuto;
+      fim.focus(); const pos = d.logradouro.length + 2; fim.setSelectionRange(pos, pos);
+      msg($("d-cep-msg"), "Endereço encontrado. Digite o número (e o complemento, se houver).", "ok");
+    } else msg($("d-cep-msg"), d.localidade ? "Cidade e UF preenchidas." : "", "ok");
+  } catch (e) { cepConsultado = ""; msg($("d-cep-msg"), "Não deu para buscar o CEP agora. Preencha o endereço à mão.", "erro"); }
+}
+$("d-cep").addEventListener("input", buscarCep);
+$("d-cep").addEventListener("blur", buscarCep);
+
 $("form-dados").addEventListener("submit", async e => {
   e.preventDefault();
+  if (/,\s*,/.test($("d-end").value)) { msg($("d-msg"), "Falta o número no endereço. Digite o número depois da rua.", "erro"); $("d-end").focus(); return; }
   const botao = $("d-salvar"); botao.disabled = true;
   msg($("d-msg"), "Salvando…");
   try {
