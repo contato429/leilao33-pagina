@@ -158,7 +158,7 @@
   .midia { position: relative; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: var(--raio); overflow: hidden; background: var(--bg2); cursor: zoom-in; display: block; }
   .midia img { width: 100%; height: auto; max-height: 82vh; object-fit: contain; background: var(--bg2); }
   .midia-dica { margin-top: 10px; font: 400 .72rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-  .painel-lote { position: sticky; top: 76px; display: grid; gap: 14px; }
+  .painel-lote { position: sticky; top: calc(var(--alt-topo, 60px) + var(--alt-faixa, 0px) + 16px); display: grid; gap: 14px; }
   .etiqueta { font: 400 .75rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
   .painel-lote h2 { margin: 0; font: italic 400 clamp(2.6rem, 6vw, 5rem)/.92 var(--serif); letter-spacing: -.02em; }
   .painel-lote .obra { font: 500 1.15rem/1.3 var(--sans); }
@@ -283,7 +283,67 @@
     .duas { grid-template-columns: 1fr; }
     .marca small { display: none; }
   }
+
+  /* ===== LUPA ===== */
+  .lupa-btn { appearance: none; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; height: 36px; padding: 0 14px 0 11px; font: 700 .74rem var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: all .25s var(--ease); }
+  .lupa-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.3; stroke-linecap: round; }
+  .lupa-btn:hover { border-color: var(--acid); }
+  .lupa-btn[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  .aba .cont-mau { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 999px; background: #ff3b30; color: #fff; font: 700 .68rem var(--mono); }
+  .usuario { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .lupa-faixa { position: sticky; top: var(--alt-topo, 60px); z-index: 39; display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding: 12px max(16px, env(safe-area-inset-left, 0px)); font: 600 .95rem/1.3 var(--sans); border-bottom: 1px solid var(--line); }
+  .lupa-faixa .txt { display: grid; gap: 2px; min-width: 0; }
+  .lupa-faixa .txt small { font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+  .lupa-faixa .acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .lupa-faixa button { appearance: none; border: 0; border-radius: 999px; padding: 10px 16px; font: 700 .85rem var(--sans); cursor: pointer; }
+  .lupa-faixa .mudo { background: transparent; border: 1px solid currentColor; color: inherit; padding: 8px 12px; font: 700 .7rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .lupa-faixa.neutro { background: var(--card); color: var(--ink); }
+  .lupa-faixa.ok { background: #12b868; color: #02210f; border-color: #0b8a4d; }
+  .lupa-faixa.ok button.cobrir { background: #02210f; color: #c9ffe1; }
+  .lupa-faixa.mau { background: #ff2d20; color: #fff; border-color: #b81308; animation: alerta 1.2s ease-in-out infinite alternate; }
+  .lupa-faixa.mau.urgente { animation-duration: .55s; }
+  .lupa-faixa.mau button.cobrir { background: #fff; color: #b81308; font-size: .95rem; }
+  .lupa-faixa .tempo-f { font: 700 1rem var(--mono); font-variant-numeric: tabular-nums; }
+  @keyframes alerta { from { background-color: #ff2d20; } to { background-color: #ff5a3c; } }
+  body.lupa-ok::after, body.lupa-mau::after { content: ""; position: fixed; inset: 0; z-index: 38; pointer-events: none; box-shadow: inset 0 0 0 5px var(--lupa-cor); background: radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--lupa-cor) 30%, transparent) 100%); }
+  body.lupa-ok { --lupa-cor: #12b868; }
+  body.lupa-mau { --lupa-cor: #ff2d20; }
+  .lance.s-ok, .lance.s-mau { transition: background .4s, border-color .4s; }
+  .lance.s-ok { border-color: #12b868; background: color-mix(in srgb, #12b868 16%, var(--card)); }
+  .lance.s-mau { border-color: #ff2d20; background: color-mix(in srgb, #ff2d20 16%, var(--card)); }
+  .status-lote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; font: 700 .95rem var(--sans); }
+  .status-lote.ok { background: #12b868; color: #02210f; }
+  .status-lote.mau { background: #ff2d20; color: #fff; }
+  .status-lote button { appearance: none; border: 0; border-radius: 999px; padding: 9px 15px; font: 700 .85rem var(--sans); cursor: pointer; background: #fff; color: #b81308; }
+  .total-com { font: 400 .78rem var(--mono); color: var(--muted); }
+  .total-com b { color: var(--ink); }
+  .reserva { display: inline-flex; align-items: center; gap: 6px; font: 700 .7rem var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .reserva.sim { color: var(--ok); border-color: var(--ok); }
+  .ficha { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line); }
+  .ficha div { display: grid; grid-template-columns: minmax(96px, 30%) 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+  .ficha dt { font: 400 .7rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+  .ficha dd { margin: 0; }
+  .miniaturas { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .miniaturas button { appearance: none; padding: 0; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 2px solid var(--line); background: var(--bg2); cursor: pointer; }
+  .miniaturas button[aria-current="true"] { border-color: var(--acid); }
+  .miniaturas img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ml-item { display: grid; grid-template-columns: 84px 1fr; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--line); border-radius: var(--raio); background: var(--card); margin: 12px 0; }
+  .ml-item.s-ok { border-color: #12b868; background: color-mix(in srgb, #12b868 12%, var(--card)); }
+  .ml-item.s-mau { border-color: #ff2d20; background: color-mix(in srgb, #ff2d20 12%, var(--card)); }
+  .ml-item img { width: 84px; height: 104px; object-fit: cover; border-radius: 10px; background: var(--bg2); }
+  .ml-item h4 { margin: 0; font: italic 400 1.5rem/1 var(--serif); }
+  .ml-item .l2 { font: 400 .78rem var(--mono); color: var(--muted); display: flex; gap: 6px 14px; flex-wrap: wrap; margin: 4px 0 8px; }
+  .ml-item .l2 b { color: var(--ink); }
+  .ml-item .bt { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .ml-item .sel { font: 700 .72rem var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; }
+  .ml-item .sel.ok { background: #12b868; color: #02210f; }
+  .ml-item .sel.mau { background: #ff2d20; color: #fff; }
+  .ml-item .sel.fim { background: var(--bg2); color: var(--muted); border: 1px solid var(--line); }
+  .ml-item button { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 8px 14px; font: 700 .8rem var(--sans); cursor: pointer; }
+  .ml-item button.cobrir { background: #ff2d20; color: #fff; border-color: #ff2d20; }
+  @media (max-width: 520px) { .ml-item { grid-template-columns: 64px 1fr; } .ml-item img { width: 64px; height: 84px; } }
   @media (prefers-reduced-motion: reduce) {
+    .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
     .card { opacity: 1; transform: none; }
     .letreiro .trilho { animation: none; }
@@ -301,12 +361,21 @@
   <nav class="abas" aria-label="Seções">
     <button class="aba ativa" id="aba-lotes">Lotes</button>
     <button class="aba" id="aba-conta">Minha conta</button>
+    <button class="aba oculto" id="aba-lances">Meus lances<span class="cont-mau oculto" id="ml-cont"></span></button>
     <button class="aba oculto" id="aba-admin">Painel da equipe</button>
   </nav>
-  <div class="usuario"><span id="usuario"></span><button class="tema" id="tema" aria-label="Alternar tema claro e escuro" title="Tema">◐</button></div>
+  <div class="usuario"><button class="lupa-btn oculto" id="lupa" aria-pressed="false" title="Lupa: acompanha seus lances e avisa quando forem cobertos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>Lupa</button><span id="usuario"></span><button class="tema" id="tema" aria-label="Alternar tema claro e escuro" title="Tema">◐</button></div>
 </header>
 
+<div class="lupa-faixa neutro oculto" id="lupa-faixa" role="status" aria-live="assertive"></div>
+
 <main>
+  <!-- ===== MEUS LANCES ===== -->
+  <div id="view-lances" class="oculto conta-pag"><h2>Meus lances</h2>
+    <p class="texto">Ligue a <b>Lupa</b> para acompanhar seus lotes em tempo real. A tela fica verde quando você está ganhando e vermelha assim que seu lance é coberto, para você cobrir de novo antes do fim.</p>
+    <div id="ml-lista"></div>
+  </div>
+
   <!-- ===== LOTES ===== -->
   <div id="view-lotes">
     <section class="heroi" id="heroi">
@@ -356,6 +425,7 @@
       <div class="lote-grade">
         <div>
           <button class="midia" id="d-img" aria-label="Ampliar imagem da obra"></button>
+          <div class="miniaturas oculto" id="d-thumbs"></div>
           <div class="midia-dica">clique na imagem para ampliar</div>
         </div>
         <div class="painel-lote">
@@ -364,12 +434,15 @@
           <div class="obra" id="d-titulo"></div>
           <h4 class="sub">Sobre a obra</h4>
           <p class="texto" id="d-descricao"></p>
+          <dl class="ficha oculto" id="d-ficha"></dl>
 
           <div class="lance">
             <div class="rot">Lance atual</div>
             <div class="valor" id="d-atual" aria-live="polite"></div>
             <div class="meta2"><span>inicial <b id="d-inicial"></b></span><span>próximo mínimo <b id="d-minimo"></b></span><span id="d-nlances"></span></div>
+            <div class="meta2" id="d-estim-bloco"><span id="d-estim"></span><span class="reserva oculto" id="d-reserva"></span></div>
             <div class="cont" id="d-tempo" role="timer" aria-label="Tempo restante"></div>
+            <div class="status-lote oculto" id="d-status" role="status"></div>
             <div class="meta" id="d-fimtxt">encerra em <span id="d-fim"></span></div>
 
             <div id="d-acesso" class="aviso-caixa oculto"></div>
@@ -381,6 +454,7 @@
                 <button type="button" id="f-mais" aria-label="Próximo lance">+</button>
               </div>
               <div class="rapidos" id="f-rapidos" role="group" aria-label="Valores definidos"></div>
+              <div class="total-com" id="f-total"></div>
               <input type="hidden" id="f-valor">
               <label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);">
                 <input type="checkbox" id="f-aceite" required> Li e aceito as condições do leilão e a comissão do leiloeiro.
@@ -789,7 +863,7 @@ async function abrir(id, card) {
     window.scrollTo({ top: 0 });
   });
   clearInterval(atualizacao);
-  atualizacao = setInterval(() => { if (aberto && !document.hidden) atualizarDetalhe(); }, 8000);
+  atualizacao = setInterval(() => { if (aberto && !document.hidden && !lupaLigada) atualizarDetalhe(); }, 8000);
 }
 async function atualizarDetalhe() {
   try { detalhe = await api("lote", { id: aberto }); renderDetalhe(); } catch (e) { /* tenta no próximo ciclo */ }
@@ -803,7 +877,10 @@ function voltar() {
 }
 function renderDetalhe() {
   const l = detalhe; if (!l) return;
-  $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc((l.artista || "") + ", " + l.titulo)}">` : "";
+  if (!$("d-img").querySelector("img") || $("d-img").dataset.lote !== l.id) {
+    $("d-img").dataset.lote = l.id;
+    $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc((l.artista || "") + ", " + l.titulo)}">` : "";
+  }
   $("d-tag").textContent = "Lote " + numeroLote(l.id);
   $("d-vivo").classList.toggle("oculto", !!l.encerrado);
   $("d-artista").textContent = l.artista || l.titulo;
@@ -823,7 +900,10 @@ function renderDetalhe() {
     valorAnterior = l.valor_atual;
   }
   $("bl-valor").textContent = brl(l.valor_atual);
+  renderEstimativa(l);
+  renderFichaEFotos(l);
   renderRapidos();
+  renderStatusLote();
   $("f-enviar").disabled = !!l.encerrado;
   if (l.encerrado) {
     msg($("f-msg"), l.resultado?.arrematado
@@ -837,6 +917,31 @@ function renderDetalhe() {
   renderAcesso();
   atualizarContagem();
 }
+function renderEstimativa(l) {
+  const e = $("d-estim"), r = $("d-reserva");
+  e.innerHTML = l.estimativa_min && l.estimativa_max ? `estimativa <b>${brl(l.estimativa_min)} a ${brl(l.estimativa_max)}</b>` : "";
+  const tem = l.reserva_atingida !== undefined && !l.encerrado;
+  r.classList.toggle("oculto", !tem);
+  if (tem) { r.textContent = l.reserva_atingida ? "Reserva atingida" : "Reserva ainda não atingida"; r.classList.toggle("sim", !!l.reserva_atingida); }
+  $("d-estim-bloco").classList.toggle("oculto", !e.innerHTML && !tem);
+}
+const ROTULOS_FICHA = { assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", proveniencia: "Proveniência", estado: "Estado de conservação", certificado: "Certificado" };
+function renderFichaEFotos(l) {
+  const f = $("d-ficha"), itens = Object.keys(ROTULOS_FICHA).filter(k => l.ficha && l.ficha[k]);
+  f.classList.toggle("oculto", !itens.length);
+  f.innerHTML = itens.map(k => `<div><dt>${ROTULOS_FICHA[k]}</dt><dd>${esc(l.ficha[k])}</dd></div>`).join("");
+  const t = $("d-thumbs"), fotos = [l.imagem].concat(l.imagens || []).filter((x, i, a) => x && a.indexOf(x) === i);
+  t.classList.toggle("oculto", fotos.length < 2);
+  if (fotos.length < 2) { t.innerHTML = ""; return; }
+  const atual = $("d-img").querySelector("img");
+  const cur = atual ? atual.getAttribute("src") : fotos[0];
+  t.innerHTML = fotos.map((u, i) => `<button type="button" data-u="${esc(u)}" aria-label="Foto ${i + 1}" aria-current="${u === cur}"><img src="${esc(u)}" alt=""></button>`).join("");
+  t.querySelectorAll("button").forEach(b => b.onclick = () => {
+    const im = $("d-img").querySelector("img"); if (im) im.src = b.dataset.u;
+    t.querySelectorAll("button").forEach(x => x.setAttribute("aria-current", String(x === b)));
+  });
+}
+function comissaoPct() { return Number(CONFIG && CONFIG.leiloeiro && CONFIG.leiloeiro.comissao_percentual) || 0; }
 // Os valores possíveis são definidos: o mínimo e, a partir dele, cada degrau da escala de incremento.
 const DEGRAUS = 40;
 function escadaDeLances(minimo) {
@@ -855,6 +960,8 @@ function renderRapidos() {
   const marca = () => {
     campo.value = String(escada[idx]);
     $("f-sel").textContent = brl(escada[idx]);
+    const pc = comissaoPct();
+    $("f-total").innerHTML = pc ? `Com a comissão do leiloeiro (${pc}%): <b>${brl(Math.round(escada[idx] * (1 + pc / 100) * 100) / 100)}</b>` : "";
     $("f-menos").disabled = idx === 0;
     $("f-mais").disabled = idx === escada.length - 1;
     cx.querySelectorAll(".rapido").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.k) === idx)));
@@ -926,6 +1033,7 @@ $("form-lance").addEventListener("submit", async e => {
     msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
     avisar("Lance de " + brl(r.valor) + " registrado. Você está na frente.");
     $("f-valor").value = "";
+    await carregarLupa();
     await atualizarDetalhe();
   } catch (err) {
     msg($("f-msg"), err.message, "erro");
@@ -967,12 +1075,183 @@ if ("IntersectionObserver" in window) {
   }, { threshold: 0 }).observe(document.querySelector(".lance"));
 }
 
+/* ===== LUPA E MEUS LANCES ===== */
+let lupaLigada = false, lupaMudo = false, meus = [], statusAnt = {}, lupaTimer = null, audioCtx = null;
+try { lupaLigada = localStorage.getItem("l33-lupa") === "1"; lupaMudo = localStorage.getItem("l33-lupa-mudo") === "1"; } catch (e) {}
+const statusDe = l => l.lider ? "ganhando" : "coberto";
+function tom(tipo) {
+  if (lupaMudo) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const seq = tipo === "mau" ? [[440, 0], [330, .2], [440, .4]] : [[660, 0], [880, .13]];
+    const t0 = audioCtx.currentTime;
+    seq.forEach(([f, t]) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = tipo === "mau" ? "sawtooth" : "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t0 + t);
+      g.gain.exponentialRampToValueAtTime(.12, t0 + t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + t + .17);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0 + t); o.stop(t0 + t + .19);
+    });
+  } catch (e) {}
+}
+function vibrar(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+const abertosMeus = () => meus.filter(l => !l.encerrado && new Date(l.encerra_em).getTime() > Date.now());
+
+async function carregarLupa() {
+  if (!estado.logado) { meus = []; statusAnt = {}; renderLupa(); return; }
+  try { const r = await api("lupa"); aplicarLupa(r.lotes || []); } catch (e) { agendarLupa(); }
+}
+function aplicarLupa(novos) {
+  const agora = {};
+  novos.forEach(l => {
+    const st = l.encerrado ? "fim" : statusDe(l);
+    agora[l.id] = st;
+    const a = statusAnt[l.id];
+    if (!lupaLigada || !a || a === st) return;
+    if (st === "coberto") {
+      avisar("Seu lance em " + (l.artista || l.titulo) + " foi coberto. Cubra agora.", "erro"); tom("mau"); vibrar([220, 100, 220]);
+    } else if (st === "ganhando") {
+      avisar("Você está ganhando " + (l.artista || l.titulo) + ".", "ok"); tom("ok"); vibrar(80);
+    } else if (st === "fim" && l.lider) {
+      avisar(l.resultado && l.resultado.arrematado ? "Você arrematou " + (l.artista || l.titulo) + " por " + brl(l.resultado.valor) + "." : "Lote encerrado sem atingir a reserva.", "ok"); tom("ok");
+    }
+  });
+  statusAnt = agora; meus = novos;
+  renderLupa();
+  const m = aberto && novos.find(x => x.id === aberto);
+  if (m && detalhe && (m.valor_atual !== detalhe.valor_atual || m.lider !== detalhe.lider)) atualizarDetalhe();
+  agendarLupa();
+}
+function agendarLupa() {
+  clearTimeout(lupaTimer);
+  if (!lupaLigada || !estado.logado) return;
+  const urgente = abertosMeus().some(l => new Date(l.encerra_em).getTime() - Date.now() < 600000);
+  lupaTimer = setTimeout(() => { if (!document.hidden) carregarLupa(); else agendarLupa(); }, urgente ? 2000 : 5000);
+}
+function ligarLupa(sim) {
+  if (sim && !estado.logado) { avisar("Entre na sua conta para usar a Lupa.", "erro"); mostrar("conta"); return; }
+  lupaLigada = sim;
+  try { localStorage.setItem("l33-lupa", sim ? "1" : "0"); } catch (e) {}
+  if (sim) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.resume) audioCtx.resume(); } catch (e) {} carregarLupa(); }
+  else { clearTimeout(lupaTimer); }
+  renderLupa();
+}
+$("lupa").onclick = () => ligarLupa(!lupaLigada);
+
+function medirTopo() {
+  const root = document.documentElement.style;
+  root.setProperty("--alt-topo", document.querySelector(".topo").offsetHeight + "px");
+  const f = $("lupa-faixa");
+  root.setProperty("--alt-faixa", f.classList.contains("oculto") ? "0px" : f.offsetHeight + "px");
+}
+addEventListener("resize", medirTopo);
+
+async function cobrir(id, botao) {
+  const l = meus.find(x => x.id === id) || (detalhe && detalhe.id === id ? detalhe : null);
+  if (!l) return;
+  if (botao) botao.disabled = true;
+  try {
+    const r = await api("lance", { id, corpo: { valor: l.minimo_proximo, aceite: true } });
+    avisar("Lance de " + brl(r.valor) + " registrado. Você voltou à frente.", "ok"); tom("ok"); vibrar(80);
+  } catch (e) { avisar(e.message, "erro"); }
+  finally {
+    await carregarLupa();
+    if (aberto === id) await atualizarDetalhe();
+    if (botao) botao.disabled = false;
+  }
+}
+
+function renderLupa() {
+  const logado = !!estado.logado;
+  $("lupa").classList.toggle("oculto", !logado);
+  $("lupa").setAttribute("aria-pressed", String(lupaLigada));
+  $("aba-lances").classList.toggle("oculto", !logado);
+  const ab = abertosMeus();
+  const cobertos = ab.filter(l => !l.lider).sort((a, b) => new Date(a.encerra_em) - new Date(b.encerra_em));
+  const ganhando = ab.filter(l => l.lider).sort((a, b) => new Date(a.encerra_em) - new Date(b.encerra_em));
+  const cont = $("ml-cont"); cont.textContent = cobertos.length; cont.classList.toggle("oculto", !cobertos.length);
+
+  const faixa = $("lupa-faixa");
+  const ligada = lupaLigada && logado;
+  faixa.classList.toggle("oculto", !ligada);
+  let geral = "";
+  if (ligada) {
+    const mudoBtn = `<button type="button" class="mudo" id="lupa-mudo" aria-pressed="${lupaMudo}">${lupaMudo ? "Som off" : "Som on"}</button>`;
+    if (!ab.length) {
+      faixa.className = "lupa-faixa neutro";
+      faixa.innerHTML = `<div class="txt"><span>Lupa ligada</span><small>Dê um lance em um lote para acompanhar aqui.</small></div><div class="acoes">${mudoBtn}<button type="button" class="mudo" id="lupa-off">Desligar</button></div>`;
+    } else if (cobertos.length) {
+      const l = cobertos[0], ms = new Date(l.encerra_em).getTime() - Date.now();
+      geral = "mau";
+      faixa.className = "lupa-faixa mau" + (ms < 300000 ? " urgente" : "");
+      faixa.innerHTML = `<div class="txt"><span>Seu lance em <b>${esc(l.artista || l.titulo)}</b> foi coberto${cobertos.length > 1 ? " (+" + (cobertos.length - 1) + ")" : ""}.</span><small>Lance atual ${brl(l.valor_atual)} · encerra em <span class="tempo-f" data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</span></small></div>
+        <div class="acoes"><button type="button" class="cobrir" data-cobrir="${esc(l.id)}">Cobrir ${brl(l.minimo_proximo)}</button><button type="button" class="mudo" data-abrir="${esc(l.id)}">Ver lote</button>${mudoBtn}</div>`;
+    } else {
+      const l = ganhando[0];
+      geral = "ok";
+      faixa.className = "lupa-faixa ok";
+      faixa.innerHTML = `<div class="txt"><span>Você está ganhando ${ganhando.length} ${ganhando.length === 1 ? "lote" : "lotes"}.</span><small>Próximo encerramento: ${esc(l.artista || l.titulo)} em <span class="tempo-f" data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</span></small></div>
+        <div class="acoes"><button type="button" class="mudo" data-abrir="${esc(l.id)}">Ver lote</button>${mudoBtn}</div>`;
+    }
+    faixa.querySelectorAll("[data-cobrir]").forEach(b => b.onclick = () => cobrir(b.dataset.cobrir, b));
+    faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
+    const mb = $("lupa-mudo"); if (mb) mb.onclick = () => { lupaMudo = !lupaMudo; try { localStorage.setItem("l33-lupa-mudo", lupaMudo ? "1" : "0"); } catch (e) {} if (!lupaMudo) tom("ok"); renderLupa(); };
+    const off = $("lupa-off"); if (off) off.onclick = () => ligarLupa(false);
+  }
+  // Cor da tela: a do lote aberto, se você participa dele; senão a geral.
+  let cor = geral;
+  const mine = aberto && ab.find(x => x.id === aberto);
+  if (ligada && mine) cor = mine.lider ? "ok" : "mau";
+  document.body.classList.toggle("lupa-ok", ligada && cor === "ok");
+  document.body.classList.toggle("lupa-mau", ligada && cor === "mau");
+  medirTopo();
+  renderStatusLote();
+  renderLances();
+}
+
+// Situação da pessoa no lote aberto: sempre visível, colorida de verdade com a Lupa ligada.
+function renderStatusLote() {
+  const el = $("d-status"), caixa = document.querySelector(".lance");
+  const l = detalhe;
+  caixa.classList.remove("s-ok", "s-mau");
+  if (!l || l.encerrado || !l.participo) { el.classList.add("oculto"); return; }
+  const ganhando = !!l.lider;
+  el.className = "status-lote " + (ganhando ? "ok" : "mau");
+  el.innerHTML = ganhando
+    ? `<span>Você está ganhando este lote.</span>`
+    : `<span>Seu lance foi coberto.</span><button type="button" id="d-cobrir">Cobrir ${brl(l.minimo_proximo)}</button>`;
+  const b = $("d-cobrir"); if (b) b.onclick = () => cobrir(l.id, b);
+  if (lupaLigada) caixa.classList.add(ganhando ? "s-ok" : "s-mau");
+}
+
+function renderLances() {
+  const alvo = $("ml-lista");
+  if (!alvo || $("view-lances").classList.contains("oculto")) return;
+  if (!meus.length) { alvo.innerHTML = `<div class="painel"><p class="texto">Você ainda não deu lances. Abra um lote e escolha seu valor.</p></div>`; return; }
+  const ord = meus.slice().sort((a, b) => (Number(a.encerrado) - Number(b.encerrado)) || (new Date(a.encerra_em) - new Date(b.encerra_em)));
+  alvo.innerHTML = ord.map(l => {
+    const st = l.encerrado ? "fim" : (l.lider ? "ok" : "mau");
+    const rot = l.encerrado ? (l.lider && l.resultado && l.resultado.arrematado ? "Arrematado por você" : (l.lider ? "Encerrado sem reserva" : "Encerrado")) : (l.lider ? "Ganhando" : "Coberto");
+    return `<div class="ml-item ${st === "fim" ? "" : "s-" + st}">
+      ${l.imagem ? `<img src="${esc(l.imagem)}" alt="">` : `<div></div>`}
+      <div><h4>${esc(l.artista || l.titulo)}</h4>
+        <div class="l2"><span>${esc(l.titulo)}</span><span>seu maior lance <b>${brl(l.meu_maior)}</b></span><span>atual <b>${brl(l.valor_atual)}</b></span><span>${l.encerrado ? "encerrado" : `encerra em <b data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</b>`}</span></div>
+        <div class="bt"><span class="sel ${st}">${rot}</span>
+          ${!l.encerrado && !l.lider ? `<button type="button" class="cobrir" data-cobrir="${esc(l.id)}">Cobrir ${brl(l.minimo_proximo)}</button>` : ""}
+          <button type="button" data-abrir="${esc(l.id)}">Abrir lote</button></div></div></div>`;
+  }).join("");
+  alvo.querySelectorAll("[data-cobrir]").forEach(b => b.onclick = () => cobrir(b.dataset.cobrir, b));
+  alvo.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
+}
+
 /* ===== ESTADO DA CONTA ===== */
 async function carregarEstado() {
   try { estado = await api("estado"); } catch (e) { estado = { logado: false, erro: e.message }; }
   renderUsuario();
   if (!$("view-conta").classList.contains("oculto")) renderConta();
   if (detalhe) renderAcesso();
+  await carregarLupa();
 }
 function renderUsuario() {
   const u = $("usuario");
@@ -989,23 +1268,26 @@ function renderUsuario() {
 async function sair() {
   try { await api("sair"); } catch (e) {}
   estado = { logado: false };
-  renderUsuario(); renderConta();
+  meus = []; statusAnt = {}; clearTimeout(lupaTimer);
+  renderUsuario(); renderConta(); renderLupa();
   if (detalhe) renderAcesso();
   setTimeout(carregarEstado, 800);
 }
 
 /* ===== ABAS ===== */
 function mostrar(qual) {
-  for (const v of ["lotes", "conta", "admin"]) {
+  for (const v of ["lotes", "lances", "conta", "admin"]) {
     $("view-" + v).classList.toggle("oculto", v !== qual);
     $("aba-" + v).classList.toggle("ativa", v === qual);
   }
   if (qual === "conta") { renderConta(); carregarEstado(); }
+  if (qual === "lances") { renderLances(); carregarLupa(); }
   if (qual === "admin") carregarAdmin();
   window.scrollTo({ top: 0, behavior: reduz ? "auto" : "smooth" });
 }
 $("aba-lotes").onclick = () => mostrar("lotes");
 $("aba-conta").onclick = () => mostrar("conta");
+$("aba-lances").onclick = () => mostrar("lances");
 $("aba-admin").onclick = () => mostrar("admin");
 
 /* ===== MINHA CONTA ===== */
@@ -1297,6 +1579,7 @@ carregarConfig()
     $("carregando").textContent = e && e.message && e.message.startsWith("Esta página") ? e.message : "Não foi possível conectar ao servidor do leilão.";
   });
 setInterval(tick, 1000);
+medirTopo();
 setInterval(() => { if (!aberto && !document.hidden && !$("view-lotes").classList.contains("oculto")) carregarLotes(); }, 15000);
 </script>
 </body>
