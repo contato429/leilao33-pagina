@@ -945,15 +945,15 @@ function renderOferta(l) {
   if (!o) { box.classList.add("oculto"); box.innerHTML = ""; ofertaConfirma = false; return; }
   const pc = comissaoPct();
   const total = pc ? Math.round(o.valor * (1 + pc / 100) * 100) / 100 : o.valor;
-  const segundo = o.posicao === 2;
+  const segundo = o.posicao === 2, reoferta = o.posicao === 3;
   const marcado = box.querySelector("#of-aceite") ? box.querySelector("#of-aceite").checked : false;
   box.classList.remove("oculto");
-  box.innerHTML = `<h4 id="of-tit">${segundo ? "O primeiro colocado não ficou com a obra. Você pode levá-la." : "Seu lance foi o último, mas não atingiu o valor mínimo de venda."}</h4>
-    <p>${segundo ? "Você deu o segundo maior lance e pode levar esta obra pelo valor mínimo de venda:" : "Você pode levar esta obra pelo valor mínimo de venda:"}</p>
+  box.innerHTML = `<h4 id="of-tit">${reoferta ? "O arremate anterior foi invalidado por falta de pagamento. A obra pode ser sua." : segundo ? "O primeiro colocado não ficou com a obra. Você pode levá-la." : "Seu lance foi o último, mas não atingiu o valor mínimo de venda."}</h4>
+    <p>${reoferta ? "Você pode levar esta obra pelo mesmo valor do arremate anterior:" : segundo ? "Você deu o segundo maior lance e pode levar esta obra pelo valor mínimo de venda:" : "Você pode levar esta obra pelo valor mínimo de venda:"}</p>
     <div class="valor-of">${brl(o.valor)}</div>
     ${pc ? `<p class="meta">Com a comissão do leiloeiro (${pc}%): ${brl(total)}</p>` : ""}
-    <p class="meta">Responda até ${dataHora(o.prazo)}. ${segundo ? "Sem resposta ou com recusa, o lote é encerrado sem venda e volta à loja." : "Sem resposta ou com recusa, a oferta passa ao segundo colocado."}</p>
-    ${ofertaConfirma ? `<p><b>Confirma que recusa? ${segundo ? "O lote será encerrado sem venda e voltará à loja." : "A oferta passará ao segundo colocado."}</b></p>
+    <p class="meta">Responda até ${dataHora(o.prazo)}. ${segundo || reoferta ? "Sem resposta ou com recusa, o lote é encerrado sem venda e volta à loja." : "Sem resposta ou com recusa, a oferta passa ao segundo colocado."}</p>
+    ${ofertaConfirma ? `<p><b>Confirma que recusa? ${segundo || reoferta ? "O lote será encerrado sem venda e voltará à loja." : "A oferta passará ao segundo colocado."}</b></p>
       <div class="bts"><button type="button" class="recusar" id="of-sim-recusa">Sim, recuso</button><button type="button" class="recusar" id="of-nao">Voltar</button></div>`
     : `<label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);"><input type="checkbox" id="of-aceite"${marcado ? " checked" : ""}> Li e aceito as condições do novo preço: levarei esta obra por ${brl(o.valor)}${pc ? `, mais ${pc}% de comissão do leiloeiro (total ${brl(total)})` : ""}, com pagamento em até 7 dias pelo link enviado por e-mail, conforme o edital do leilão.</label>
       <div class="bts"><button type="button" class="aceitar" id="of-aceitar"${marcado ? "" : " disabled"}>Confirmar e arrematar por ${brl(o.valor)}</button><button type="button" class="recusar" id="of-recusar">Recusar</button></div>`}`;
@@ -1238,7 +1238,7 @@ function renderLupa() {
   if (logado && ofertas.length) {
     const l = ofertas[0];
     faixa.className = "lupa-faixa oferta-f";
-    faixa.innerHTML = `<div class="txt"><span>${l.oferta_reserva.posicao === 2 ? "Você pode levar" : "Reserva mínima não atingida em"} <b>${esc(l.artista || l.titulo)}</b>${l.oferta_reserva.posicao === 2 ? "" : ". Você pode levar a obra"} por ${brl(l.oferta_reserva.valor)}.</span><small>Responda até <span class="tempo-f" data-fim="${esc(l.oferta_reserva.prazo)}">${tempoRestante(l.oferta_reserva.prazo)}</span></small></div>
+    faixa.innerHTML = `<div class="txt"><span>${l.oferta_reserva.posicao >= 2 ? "Você pode levar" : "Reserva mínima não atingida em"} <b>${esc(l.artista || l.titulo)}</b>${l.oferta_reserva.posicao >= 2 ? "" : ". Você pode levar a obra"} por ${brl(l.oferta_reserva.valor)}.</span><small>Responda até <span class="tempo-f" data-fim="${esc(l.oferta_reserva.prazo)}">${tempoRestante(l.oferta_reserva.prazo)}</span></small></div>
       <div class="acoes"><button type="button" class="cobrir" data-abrir="${esc(l.id)}">Ver oferta</button></div>`;
     faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
   } else if (ligada) {
