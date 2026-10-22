@@ -756,7 +756,7 @@ async function carregarConfig() {
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
     `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
-    `A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e pode aceitar ou recusar.`;
+    `A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e tem 24 horas para aceitar ou recusar. Se recusar ou não responder, a oferta passa ao segundo colocado, por mais 24 horas.`;
 }
 function renderEsqueleto() {
   $("lista").innerHTML = Array.from({ length: 6 }, () =>
