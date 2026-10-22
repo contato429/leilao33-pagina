@@ -727,8 +727,10 @@ function animarNumero(el, de, para) {
   })(t0);
 }
 function trocar(fn) {
-  if (!reduz && document.startViewTransition) document.startViewTransition(fn);
-  else fn();
+  if (!reduz && document.startViewTransition) {
+    const t = document.startViewTransition(fn);
+    for (const k of ["ready", "finished", "updateCallbackDone"]) if (t[k] && t[k].catch) t[k].catch(() => {});
+  } else fn();
 }
 
 /* ===== TEMA ===== */
@@ -868,6 +870,7 @@ async function abrir(id, card) {
   const img = card && card.querySelector(".foto img");
   if (img) img.style.viewTransitionName = "lote-foto";
   aberto = id; detalhe = dados; valorAnterior = null;
+  msg($("f-msg"), "");
   trocar(() => {
     mostrarVitrine(false);
     renderDetalhe();
@@ -920,11 +923,11 @@ function renderDetalhe() {
   $("f-enviar").disabled = !!l.encerrado;
   renderOferta(l);
   if (l.encerrado) {
-    msg($("f-msg"), l.resultado?.arrematado
-      ? `Lote arrematado por ${brl(l.resultado.valor)}. A Galeria 33 envia o link de pagamento ao arrematante.`
-      : l.resultado?.aguardando
-        ? (l.oferta_reserva ? "" : "Lote encerrado. Aguardando a decisão do último licitante.")
-        : "Lote encerrado sem venda.");
+    // Dados de venda não aparecem para o público: só que o lote fechou e o último valor de arremate.
+    const vf = l.resultado && l.resultado.valor_final;
+    msg($("f-msg"), l.oferta_reserva ? ""
+      : l.voce_arrematou ? `Você arrematou este lote por ${brl(vf)}. A Galeria 33 envia o link de pagamento por e-mail.`
+      : vf != null ? `Lote encerrado. Valor final: ${brl(vf)}.` : "Lote encerrado.");
   }
   const h = l.historico.slice().reverse();
   $("d-historico").innerHTML = h.length
@@ -1165,7 +1168,7 @@ function aplicarLupa(novos) {
     } else if (st === "ganhando") {
       avisar("Você está ganhando " + (l.artista || l.titulo) + ".", "ok"); tom("ok"); vibrar(80);
     } else if (st === "fim" && l.lider) {
-      if (l.resultado && l.resultado.arrematado) { avisar("Você arrematou " + (l.artista || l.titulo) + " por " + brl(l.resultado.valor) + ".", "ok"); tom("ok"); }
+      if (l.voce_arrematou) { avisar("Você arrematou " + (l.artista || l.titulo) + " por " + brl(l.resultado && l.resultado.valor_final) + ".", "ok"); tom("ok"); }
     }
   });
   statusAnt = agora; meus = novos;
@@ -1291,7 +1294,7 @@ function renderLances() {
   const ord = meus.slice().sort((a, b) => (Number(a.encerrado) - Number(b.encerrado)) || (new Date(a.encerra_em) - new Date(b.encerra_em)));
   alvo.innerHTML = ord.map(l => {
     const st = l.encerrado ? "fim" : (l.lider ? "ok" : "mau");
-    const rot = l.oferta_reserva ? "Oferta da reserva: responda" : l.encerrado ? (l.lider && l.resultado && l.resultado.arrematado ? "Arrematado por você" : (l.resultado && l.resultado.aguardando ? "Aguardando decisão" : "Encerrado sem venda")) : (l.lider ? "Ganhando" : "Coberto");
+    const rot = l.oferta_reserva ? "Oferta da reserva: responda" : l.encerrado ? (l.voce_arrematou ? "Arrematado por você" : "Encerrado") : (l.lider ? "Ganhando" : "Coberto");
     return `<div class="ml-item ${st === "fim" ? "" : "s-" + st}">
       ${l.imagem ? `<img src="${esc(l.imagem)}" alt="">` : `<div></div>`}
       <div><h4>${esc(l.artista || l.titulo)}</h4>
