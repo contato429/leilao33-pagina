@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEILÃO 33 · Galeria 33</title>
+<style>
+  :root { --ink:#1b1b1b; --muted:#6b6b6b; --line:#e6e3dc; --paper:#faf9f6; --accent:#8a1c1c; --ok:#2e6b3a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#f1efe9; --muted:#a4a099; --line:#34322e; --paper:#161514; --accent:#e07b7b; --ok:#8fd19e; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family: Georgia, "Times New Roman", serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  header h1 { font-size: 2rem; letter-spacing: .08em; margin: 0 0 4px; }
+  header p { color: var(--muted); margin: 0 0 8px; }
+  .aviso { font: 14px/1.4 system-ui, sans-serif; background: #fff4d6; color:#5b4500; padding:10px 12px; border-radius:6px; margin: 12px 0 20px; }
+  @media (prefers-color-scheme: dark) { .aviso { background:#3a3112; color:#f3e3a6; } }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
+  .card { border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--paper); cursor:pointer; }
+  .card .img { aspect-ratio: 4/3; background:#ddd7cc; display:flex; align-items:center; justify-content:center; color:var(--muted); font: 14px system-ui, sans-serif; }
+  .card .img img { width:100%; height:100%; object-fit:cover; }
+  .card .body { padding:12px 14px 14px; }
+  .card h3 { margin:0 0 2px; font-size:1.05rem; }
+  .meta { font: 13px system-ui, sans-serif; color: var(--muted); }
+  .price { font: 600 15px system-ui, sans-serif; margin-top:8px; }
+  .status { display:inline-block; font:12px system-ui, sans-serif; padding:2px 8px; border-radius:99px; border:1px solid var(--line); margin-top:6px; }
+  .status.ativo { color: var(--ok); border-color: var(--ok); }
+  .status.encerrado { color: var(--muted); }
+  .detalhe { display:none; margin-top:24px; border-top:1px solid var(--line); padding-top:20px; }
+  .detalhe.ativo { display:grid; grid-template-columns: 1fr 1fr; gap:24px; }
+  @media (max-width: 760px) { .detalhe.ativo { grid-template-columns: 1fr; } }
+  .detalhe .img { background:#ddd7cc; aspect-ratio:4/3; border-radius:8px; overflow:hidden; }
+  .detalhe .img img { width:100%; height:100%; object-fit:cover; }
+  .detalhe h2 { margin:0 0 4px; }
+  .fato { font: 14px/1.5 system-ui, sans-serif; margin: 6px 0; }
+  .fato b { display:inline-block; min-width:150px; color: var(--muted); font-weight:500; }
+  .cronometro { font: 600 18px system-ui, sans-serif; margin: 12px 0; }
+  form { display:grid; gap:10px; margin-top:12px; font: 14px system-ui, sans-serif; }
+  input { padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); font: 15px system-ui, sans-serif; }
+  button { padding:11px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; font: 600 15px system-ui, sans-serif; cursor:pointer; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .msg { font: 14px system-ui, sans-serif; min-height: 20px; }
+  .msg.erro { color: var(--accent); }
+  .msg.ok { color: var(--ok); }
+  .historico { font: 13px system-ui, sans-serif; color: var(--muted); margin-top:14px; }
+  .legal { font: 12px/1.5 system-ui, sans-serif; color: var(--muted); margin-top: 28px; border-top:1px solid var(--line); padding-top:14px; }
+  .fechar { background:transparent; color:var(--muted); border:1px solid var(--line); margin-top:8px; }
+  .carregando { font: 14px system-ui, sans-serif; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="titulo">LEILÃO 33</h1>
+    <p id="subtitulo"></p>
+  </header>
+  <div class="aviso" id="aviso"></div>
+
+  <p class="carregando" id="carregando">Carregando lotes…</p>
+  <section class="grid" id="lista"></section>
+
+  <section class="detalhe" id="detalhe">
+    <div>
+      <div class="img" id="d-img"></div>
+    </div>
+    <div>
+      <h2 id="d-titulo"></h2>
+      <div class="meta" id="d-artista"></div>
+      <p class="fato" id="d-descricao"></p>
+      <p class="fato"><b>Lance inicial</b><span id="d-inicial"></span></p>
+      <p class="fato"><b>Lance atual</b><span id="d-atual"></span></p>
+      <p class="fato"><b>Próximo lance mínimo</b><span id="d-minimo"></span></p>
+      <p class="fato"><b>Encerramento</b><span id="d-fim"></span></p>
+      <div class="cronometro" id="d-tempo"></div>
+
+      <form id="form-lance">
+        <input id="f-nome" placeholder="Nome completo" required>
+        <input id="f-email" type="email" placeholder="E-mail" required>
+        <input id="f-valor" type="number" min="0" step="100" placeholder="Valor do lance (R$)" required>
+        <label style="font: 13px system-ui, sans-serif; color: var(--muted);">
+          <input type="checkbox" id="f-aceite" required style="margin-right:6px;">
+          Li e aceito as condições do leilão e a comissão do leiloeiro.
+        </label>
+        <button type="submit" id="f-enviar">Dar lance</button>
+        <div class="msg" id="f-msg"></div>
+      </form>
+      <button class="fechar" id="voltar">Voltar aos lotes</button>
+      <div class="historico" id="d-historico"></div>
+    </div>
+  </section>
+
+  <div class="legal" id="legal"></div>
+</div>
+
+<script>
+/* ===== ENDEREÇO DA API ===== */
+
+/* ===== ESTADO ===== */
+let CONFIG = null;
+let lotes = [];        // resumo de cada lote (vem de /api/lotes)
+let aberto = null;     // id do lote aberto
+let detalhe = null;    // lote aberto com histórico (vem de /api/lotes/:id)
+let relogio = null;
+let atualizacao = null;
+
+/* ===== API ===== */
+/* ===== PONTE COM O WIX (Velo) =====
+   A página roda no componente HTML do Wix. Cada pedido vai ao código de página
+   por postMessage, e a resposta volta com o mesmo id. */
+const pendentes = new Map();
+let sequencia = 0;
+window.addEventListener("message", (e) => {
+  const m = e.data;
+  if (!m || m.id === undefined || !pendentes.has(m.id)) return;
+  const p = pendentes.get(m.id);
+  pendentes.delete(m.id);
+  if (m.ok) p.resolve(m.dados);
+  else p.reject(new Error(m.erro || "Falha no servidor."));
+});
+function api(acao, dados) {
+  return new Promise((resolve, reject) => {
+    const id = ++sequencia;
+    pendentes.set(id, { resolve, reject });
+    window.parent.postMessage({ id, acao, dados }, "*");
+    setTimeout(() => {
+      if (pendentes.has(id)) { pendentes.delete(id); reject(new Error("O servidor demorou para responder. Tente de novo.")); }
+    }, 15000);
+  });
+}
+
+async function carregarConfig() {
+  CONFIG = await api("config");
+  document.getElementById("titulo").textContent = CONFIG.textos.titulo;
+  document.getElementById("subtitulo").textContent = CONFIG.textos.subtitulo;
+  document.getElementById("aviso").textContent = CONFIG.textos.aviso;
+  document.getElementById("legal").textContent =
+    `Leilão conduzido pelo leiloeiro oficial ${CONFIG.leiloeiro.nome}, matrícula ${CONFIG.leiloeiro.matricula}. ` +
+    `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
+    `Incremento mínimo de ${brl(CONFIG.regras.incremento_minimo_reais)}. ` +
+    `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
+    `A reserva não é divulgada.`;
+}
+
+async function carregarLotes() {
+  try {
+    const { lotes: lista } = await api("lotes");
+    lotes = lista;
+    document.getElementById("carregando").style.display = "none";
+    if (!aberto) renderLista();
+  } catch (e) {
+    document.getElementById("carregando").textContent = "Não foi possível carregar os lotes. Tente de novo em instantes.";
+  }
+}
+
+async function carregarDetalhe(id) {
+  detalhe = await api("lote", { id });
+  renderDetalhe();
+}
+
+/* ===== FORMATAÇÃO ===== */
+const brl = v => v == null ? "—" : "R$ " + Number(v).toLocaleString("pt-BR");
+const dataHora = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function tempoRestante(iso) {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "Encerrado";
+  const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000),
+        m = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
+  return (d ? d + "d " : "") + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+/* ===== TELAS ===== */
+function renderLista() {
+  const el = document.getElementById("lista");
+  el.style.display = "";
+  el.innerHTML = lotes.map(l => {
+    const fim = l.encerrado;
+    return `<article class="card" data-id="${esc(l.id)}">
+      <div class="img">${l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "imagem da obra"}</div>
+      <div class="body">
+        <h3>${esc(l.titulo)}</h3>
+        <div class="meta">${esc(l.artista)}</div>
+        <div class="price">${fim ? "Lance final: " + brl(l.valor_atual) : "Lance atual: " + brl(l.valor_atual)}</div>
+        <span class="status ${fim ? "encerrado" : "ativo"}">${fim ? "Encerrado" : "Aberto · " + tempoRestante(l.encerra_em)}</span>
+      </div></article>`;
+  }).join("");
+  el.querySelectorAll(".card").forEach(c => c.onclick = () => abrir(c.dataset.id));
+}
+
+async function abrir(id) {
+  aberto = id;
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("detalhe").classList.add("ativo");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  await carregarDetalhe(id);
+  clearInterval(relogio);
+  relogio = setInterval(atualizarTempo, 1000);
+  // Atualiza o lote aberto a cada 10 s, para ver lances de outros.
+  clearInterval(atualizacao);
+  atualizacao = setInterval(() => { if (aberto) carregarDetalhe(aberto).catch(() => {}); }, 10000);
+}
+
+function voltar() {
+  aberto = null; detalhe = null;
+  clearInterval(relogio);
+  document.getElementById("detalhe").classList.remove("ativo");
+  carregarLotes();
+}
+
+function renderDetalhe() {
+  const l = detalhe; if (!l) return;
+  document.getElementById("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "";
+  document.getElementById("d-titulo").textContent = l.titulo;
+  document.getElementById("d-artista").textContent = l.artista;
+  document.getElementById("d-descricao").textContent = l.descricao;
+  document.getElementById("d-inicial").textContent = brl(l.lance_inicial);
+  document.getElementById("d-atual").textContent = brl(l.valor_atual);
+  document.getElementById("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
+  document.getElementById("d-fim").textContent = dataHora(l.encerra_em);
+  // Não mexe no que a pessoa já digitou; só preenche se estiver vazio ou abaixo do novo mínimo.
+  const valor = document.getElementById("f-valor");
+  valor.min = l.minimo_proximo;
+  if (l.encerrado) valor.value = "";
+  else if (!valor.value || Number(valor.value) < l.minimo_proximo) valor.value = l.minimo_proximo;
+  document.getElementById("f-enviar").disabled = l.encerrado;
+  const msg = document.getElementById("f-msg");
+  if (l.encerrado) {
+    msg.textContent = l.resultado?.arrematado
+      ? `Lote arrematado por ${brl(l.resultado.valor)}. O leiloeiro entra em contato com o arrematante.`
+      : "Lote encerrado sem atingir a reserva.";
+    msg.className = "msg";
+  }
+  document.getElementById("d-historico").innerHTML = l.historico.length
+    ? "<b>Lances</b><br>" + l.historico.map(x => `${dataHora(x.criado_em)} · ${brl(x.valor)} · ${esc(x.nome)}`).join("<br>")
+    : "Nenhum lance ainda.";
+  atualizarTempo();
+}
+
+function atualizarTempo() {
+  const l = detalhe; if (!l) return;
+  const el = document.getElementById("d-tempo");
+  if (new Date(l.encerra_em).getTime() <= Date.now()) {
+    el.textContent = "Lote encerrado";
+    if (!l.encerrado) carregarDetalhe(aberto).catch(() => {});
+  } else {
+    el.textContent = "Encerra em " + tempoRestante(l.encerra_em);
+  }
+}
+
+/* ===== LANCE ===== */
+document.getElementById("form-lance").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("f-msg");
+  const botao = document.getElementById("f-enviar");
+  botao.disabled = true;
+  try {
+    const r = await api("lance", { id: aberto, corpo: {
+        nome: document.getElementById("f-nome").value,
+        email: document.getElementById("f-email").value,
+        valor: Number(document.getElementById("f-valor").value),
+        aceite: document.getElementById("f-aceite").checked,
+      },
+    });
+    msg.textContent = "Lance registrado: " + brl(r.valor) + ".";
+    msg.className = "msg ok";
+    document.getElementById("f-valor").value = "";
+    await carregarDetalhe(aberto);
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = "msg erro";
+  } finally {
+    botao.disabled = !!(detalhe && detalhe.encerrado);
+  }
+});
+
+document.getElementById("voltar").addEventListener("click", voltar);
+
+/* ===== INÍCIO ===== */
+carregarConfig()
+  .then(carregarLotes)
+  .catch(() => {
+    document.getElementById("carregando").textContent = "Não foi possível conectar ao servidor do leilão.";
+  });
+setInterval(() => { if (!aberto) carregarLotes(); }, 15000);
+</script>
+</body>
+</html>
