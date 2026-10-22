@@ -177,6 +177,11 @@
   .cont small { font: 400 .62rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
   .cont.urgente b { color: var(--hot); }
   .cont.fim { grid-template-columns: 1fr; text-align: center; font: italic 400 1.6rem var(--serif); }
+  .passo { display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; gap: 10px; }
+  .passo button { appearance: none; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); border-radius: 999px; height: 52px; font: 700 1.5rem var(--mono); cursor: pointer; transition: all .2s; }
+  .passo button:hover:not(:disabled) { border-color: var(--acid); background: var(--acid); color: #0a0a0a; }
+  .passo button:disabled { opacity: .3; cursor: not-allowed; }
+  .passo output { text-align: center; font: 700 1.9rem var(--mono); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
   .rapidos { display: flex; gap: 8px; flex-wrap: wrap; }
   .rapido { appearance: none; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); border-radius: 999px; padding: 8px 14px; font: 700 .82rem var(--mono); cursor: pointer; transition: all .2s; font-variant-numeric: tabular-nums; }
   .rapido:hover { border-color: var(--acid); transform: translateY(-2px); }
@@ -369,8 +374,14 @@
 
             <div id="d-acesso" class="aviso-caixa oculto"></div>
             <form id="form-lance" class="oculto" autocomplete="off">
-              <div class="rapidos" id="f-rapidos" role="group" aria-label="Valores rápidos"></div>
-              <label class="campo">Seu lance (R$)<input id="f-valor" inputmode="numeric" pattern="[0-9]*" placeholder="Valor do lance" required></label>
+              <div class="rot">Escolha seu lance</div>
+              <div class="passo">
+                <button type="button" id="f-menos" aria-label="Lance anterior">&minus;</button>
+                <output id="f-sel" aria-live="polite">&ndash;</output>
+                <button type="button" id="f-mais" aria-label="Próximo lance">+</button>
+              </div>
+              <div class="rapidos" id="f-rapidos" role="group" aria-label="Valores definidos"></div>
+              <input type="hidden" id="f-valor">
               <label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);">
                 <input type="checkbox" id="f-aceite" required> Li e aceito as condições do leilão e a comissão do leiloeiro.
               </label>
@@ -826,17 +837,32 @@ function renderDetalhe() {
   renderAcesso();
   atualizarContagem();
 }
+// Os valores possíveis são definidos: o mínimo e, a partir dele, cada degrau da escala de incremento.
+const DEGRAUS = 40;
+function escadaDeLances(minimo) {
+  const e = [minimo];
+  while (e.length < DEGRAUS) e.push(e[e.length - 1] + incrementoPara(e[e.length - 1]));
+  return e;
+}
 function renderRapidos() {
   const l = detalhe, cx = $("f-rapidos");
   if (!l || l.encerrado) { cx.innerHTML = ""; return; }
-  const m = l.minimo_proximo, i = incrementoPara(m);
-  const valores = [m, m + i, m + 2 * i, m + 5 * i];
-  cx.innerHTML = valores.map(v => `<button type="button" class="rapido" data-v="${v}" aria-pressed="false">${brl(v)}</button>`).join("");
+  const escada = escadaDeLances(l.minimo_proximo);
   const campo = $("f-valor");
-  if (!campo.value || Number(soNum(campo.value)) < m) campo.value = String(m);
-  const marca = () => cx.querySelectorAll(".rapido").forEach(b => b.setAttribute("aria-pressed", String(soNum(campo.value) === b.dataset.v)));
-  cx.querySelectorAll(".rapido").forEach(b => b.onclick = () => { campo.value = b.dataset.v; marca(); });
-  campo.oninput = marca; marca();
+  let idx = Math.max(0, escada.indexOf(Number(campo.value)));
+  const atalhos = [0, 1, 2, 5];
+  cx.innerHTML = atalhos.map(k => `<button type="button" class="rapido" data-k="${k}" aria-pressed="false">${brl(escada[k])}</button>`).join("");
+  const marca = () => {
+    campo.value = String(escada[idx]);
+    $("f-sel").textContent = brl(escada[idx]);
+    $("f-menos").disabled = idx === 0;
+    $("f-mais").disabled = idx === escada.length - 1;
+    cx.querySelectorAll(".rapido").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.k) === idx)));
+  };
+  cx.querySelectorAll(".rapido").forEach(b => b.onclick = () => { idx = Number(b.dataset.k); marca(); });
+  $("f-menos").onclick = () => { idx = Math.max(0, idx - 1); marca(); };
+  $("f-mais").onclick = () => { idx = Math.min(escada.length - 1, idx + 1); marca(); };
+  marca();
 }
 // Mostra o formulário de lance só para quem pode dar lance; os demais veem o que falta.
 function renderAcesso() {
@@ -893,7 +919,7 @@ $("form-lance").addEventListener("submit", async e => {
   e.preventDefault();
   const botao = $("f-enviar");
   const valor = Number(soNum($("f-valor").value));
-  if (!valor) { msg($("f-msg"), "Informe o valor do lance.", "erro"); return; }
+  if (!valor) { msg($("f-msg"), "Escolha o valor do lance.", "erro"); return; }
   botao.disabled = true;
   try {
     const r = await api("lance", { id: aberto, corpo: { valor, aceite: $("f-aceite").checked } });
