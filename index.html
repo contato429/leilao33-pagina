@@ -342,6 +342,18 @@
   .ml-item button { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 8px 14px; font: 700 .8rem var(--sans); cursor: pointer; }
   .ml-item button.cobrir { background: #ff2d20; color: #fff; border-color: #ff2d20; }
   @media (max-width: 520px) { .ml-item { grid-template-columns: 64px 1fr; } .ml-item img { width: 64px; height: 84px; } }
+
+  .oferta { border: 2px solid #ffb400; background: color-mix(in srgb, #ffb400 14%, var(--card)); border-radius: var(--raio); padding: 16px; display: grid; gap: 10px; }
+  .oferta h4 { margin: 0; font: 700 1.1rem/1.2 var(--sans); letter-spacing: -.02em; }
+  .oferta p { margin: 0; font-size: .92rem; }
+  .oferta .valor-of { font: 700 clamp(1.8rem, 5vw, 2.6rem)/1 var(--mono); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+  .oferta .bts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .oferta button { appearance: none; border: 0; border-radius: 999px; padding: 12px 20px; font: 700 .92rem var(--sans); cursor: pointer; }
+  .oferta .aceitar { background: #12b868; color: #02210f; }
+  .oferta .recusar { background: transparent; border: 1px solid var(--ink); color: var(--ink); }
+  .oferta .meta { font: 400 .76rem var(--mono); color: var(--muted); }
+  .lupa-faixa.oferta-f { background: #ffb400; color: #2a1c00; border-color: #b27d00; }
+  .lupa-faixa.oferta-f button.cobrir { background: #2a1c00; color: #ffe9b0; }
   @media (prefers-reduced-motion: reduce) {
     .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -440,9 +452,10 @@
             <div class="rot">Lance atual</div>
             <div class="valor" id="d-atual" aria-live="polite"></div>
             <div class="meta2"><span>inicial <b id="d-inicial"></b></span><span>próximo mínimo <b id="d-minimo"></b></span><span id="d-nlances"></span></div>
-            <div class="meta2" id="d-estim-bloco"><span id="d-estim"></span><span class="reserva oculto" id="d-reserva"></span></div>
+            <div class="meta2" id="d-estim-bloco"><span id="d-estim"></span></div>
             <div class="cont" id="d-tempo" role="timer" aria-label="Tempo restante"></div>
             <div class="status-lote oculto" id="d-status" role="status"></div>
+            <div class="oferta oculto" id="d-oferta" role="alertdialog" aria-labelledby="of-tit"></div>
             <div class="meta" id="d-fimtxt">encerra em <span id="d-fim"></span></div>
 
             <div id="d-acesso" class="aviso-caixa oculto"></div>
@@ -741,7 +754,7 @@ async function carregarConfig() {
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
     `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
-    `A reserva não é divulgada.`;
+    `A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e pode aceitar ou recusar.`;
 }
 function renderEsqueleto() {
   $("lista").innerHTML = Array.from({ length: 6 }, () =>
@@ -905,10 +918,13 @@ function renderDetalhe() {
   renderRapidos();
   renderStatusLote();
   $("f-enviar").disabled = !!l.encerrado;
+  renderOferta(l);
   if (l.encerrado) {
     msg($("f-msg"), l.resultado?.arrematado
       ? `Lote arrematado por ${brl(l.resultado.valor)}. A Galeria 33 envia o link de pagamento ao arrematante.`
-      : "Lote encerrado sem atingir a reserva.");
+      : l.resultado?.aguardando
+        ? (l.oferta_reserva ? "" : "Lote encerrado. Aguardando a decisão do último licitante.")
+        : "Lote encerrado sem venda.");
   }
   const h = l.historico.slice().reverse();
   $("d-historico").innerHTML = h.length
@@ -917,13 +933,44 @@ function renderDetalhe() {
   renderAcesso();
   atualizarContagem();
 }
+
+// Oferta da reserva: só quem deu o último lance vê, e só depois do fim, se o valor mínimo não foi atingido.
+let ofertaConfirma = null; // "aceitar" | "recusar" | null
+function renderOferta(l) {
+  const box = $("d-oferta"), o = l && l.oferta_reserva;
+  if (!o) { box.classList.add("oculto"); box.innerHTML = ""; ofertaConfirma = null; return; }
+  const pc = comissaoPct();
+  const total = pc ? Math.round(o.valor * (1 + pc / 100) * 100) / 100 : o.valor;
+  const confirmando = ofertaConfirma;
+  box.classList.remove("oculto");
+  box.innerHTML = `<h4 id="of-tit">Seu lance foi o último, mas não atingiu o valor mínimo de venda.</h4>
+    <p>Você pode levar esta obra pelo valor mínimo de venda:</p>
+    <div class="valor-of">${brl(o.valor)}</div>
+    ${pc ? `<p class="meta">Com a comissão do leiloeiro (${pc}%): ${brl(total)}</p>` : ""}
+    <p class="meta">Responda até ${dataHora(o.prazo)}. Sem resposta, o lote é encerrado sem venda e volta à loja.</p>
+    ${confirmando === "aceitar" ? `<p><b>Confirma que aceita arrematar por ${brl(o.valor)}?</b></p>` : confirmando === "recusar" ? `<p><b>Confirma que recusa? O lote será encerrado sem venda e voltará à loja.</b></p>` : ""}
+    <div class="bts">
+      ${confirmando ? `<button type="button" class="${confirmando === "aceitar" ? "aceitar" : "recusar"}" id="of-sim">${confirmando === "aceitar" ? "Sim, aceito" : "Sim, recuso"}</button><button type="button" class="recusar" id="of-nao">Voltar</button>`
+        : `<button type="button" class="aceitar" id="of-aceitar">Aceitar por ${brl(o.valor)}</button><button type="button" class="recusar" id="of-recusar">Recusar</button>`}
+    </div>`;
+  const q = id => box.querySelector("#" + id);
+  if (q("of-aceitar")) q("of-aceitar").onclick = () => { ofertaConfirma = "aceitar"; renderOferta(l); };
+  if (q("of-recusar")) q("of-recusar").onclick = () => { ofertaConfirma = "recusar"; renderOferta(l); };
+  if (q("of-nao")) q("of-nao").onclick = () => { ofertaConfirma = null; renderOferta(l); };
+  if (q("of-sim")) q("of-sim").onclick = async () => {
+    const aceitar = ofertaConfirma === "aceitar"; q("of-sim").disabled = true;
+    try {
+      await api("responder_reserva", { id: l.id, aceitar });
+      avisar(aceitar ? "Você aceitou. A Galeria 33 envia o link de pagamento por e-mail." : "Você recusou. O lote volta à loja.", "ok");
+    } catch (e) { avisar(e.message, "erro"); }
+    ofertaConfirma = null;
+    await carregarLupa(); if (aberto === l.id) await atualizarDetalhe();
+  };
+}
 function renderEstimativa(l) {
-  const e = $("d-estim"), r = $("d-reserva");
+  const e = $("d-estim");
   e.innerHTML = l.estimativa_min && l.estimativa_max ? `estimativa <b>${brl(l.estimativa_min)} a ${brl(l.estimativa_max)}</b>` : "";
-  const tem = l.reserva_atingida !== undefined && !l.encerrado;
-  r.classList.toggle("oculto", !tem);
-  if (tem) { r.textContent = l.reserva_atingida ? "Reserva atingida" : "Reserva ainda não atingida"; r.classList.toggle("sim", !!l.reserva_atingida); }
-  $("d-estim-bloco").classList.toggle("oculto", !e.innerHTML && !tem);
+  $("d-estim-bloco").classList.toggle("oculto", !e.innerHTML);
 }
 const ROTULOS_FICHA = { assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", proveniencia: "Proveniência", estado: "Estado de conservação", certificado: "Certificado" };
 function renderFichaEFotos(l) {
@@ -1078,7 +1125,8 @@ if ("IntersectionObserver" in window) {
 /* ===== LUPA E MEUS LANCES ===== */
 let lupaLigada = false, lupaMudo = false, meus = [], statusAnt = {}, lupaTimer = null, audioCtx = null;
 try { lupaLigada = localStorage.getItem("l33-lupa") === "1"; lupaMudo = localStorage.getItem("l33-lupa-mudo") === "1"; } catch (e) {}
-const statusDe = l => l.lider ? "ganhando" : "coberto";
+const statusDe = l => l.encerrado ? "fim" : (l.lider ? "ganhando" : "coberto");
+const ofertasMinhas = () => meus.filter(l => l.oferta_reserva);
 function tom(tipo) {
   if (lupaMudo) return;
   try {
@@ -1105,16 +1153,19 @@ async function carregarLupa() {
 function aplicarLupa(novos) {
   const agora = {};
   novos.forEach(l => {
-    const st = l.encerrado ? "fim" : statusDe(l);
+    const st = l.oferta_reserva ? "oferta" : statusDe(l);
     agora[l.id] = st;
     const a = statusAnt[l.id];
+    if (st === "oferta" && a !== st && a) {
+      avisar("Reserva mínima não atingida em " + (l.artista || l.titulo) + ". Veja a oferta e responda.", "erro"); tom("mau"); vibrar([200, 100, 200]); return;
+    }
     if (!lupaLigada || !a || a === st) return;
     if (st === "coberto") {
       avisar("Seu lance em " + (l.artista || l.titulo) + " foi coberto. Cubra agora.", "erro"); tom("mau"); vibrar([220, 100, 220]);
     } else if (st === "ganhando") {
       avisar("Você está ganhando " + (l.artista || l.titulo) + ".", "ok"); tom("ok"); vibrar(80);
     } else if (st === "fim" && l.lider) {
-      avisar(l.resultado && l.resultado.arrematado ? "Você arrematou " + (l.artista || l.titulo) + " por " + brl(l.resultado.valor) + "." : "Lote encerrado sem atingir a reserva.", "ok"); tom("ok");
+      if (l.resultado && l.resultado.arrematado) { avisar("Você arrematou " + (l.artista || l.titulo) + " por " + brl(l.resultado.valor) + ".", "ok"); tom("ok"); }
     }
   });
   statusAnt = agora; meus = novos;
@@ -1125,16 +1176,17 @@ function aplicarLupa(novos) {
 }
 function agendarLupa() {
   clearTimeout(lupaTimer);
-  if (!lupaLigada || !estado.logado) return;
-  const urgente = abertosMeus().some(l => new Date(l.encerra_em).getTime() - Date.now() < 600000);
-  lupaTimer = setTimeout(() => { if (!document.hidden) carregarLupa(); else agendarLupa(); }, urgente ? 2000 : 5000);
+  if (!estado.logado) return;
+  const urgente = lupaLigada && abertosMeus().some(l => new Date(l.encerra_em).getTime() - Date.now() < 600000);
+  const espera = lupaLigada ? (urgente ? 2000 : 5000) : 30000;
+  lupaTimer = setTimeout(() => { if (!document.hidden) carregarLupa(); else agendarLupa(); }, espera);
 }
 function ligarLupa(sim) {
   if (sim && !estado.logado) { avisar("Entre na sua conta para usar a Lupa.", "erro"); mostrar("conta"); return; }
   lupaLigada = sim;
   try { localStorage.setItem("l33-lupa", sim ? "1" : "0"); } catch (e) {}
   if (sim) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.resume) audioCtx.resume(); } catch (e) {} carregarLupa(); }
-  else { clearTimeout(lupaTimer); }
+  else { agendarLupa(); }
   renderLupa();
 }
 $("lupa").onclick = () => ligarLupa(!lupaLigada);
@@ -1173,10 +1225,17 @@ function renderLupa() {
   const cont = $("ml-cont"); cont.textContent = cobertos.length; cont.classList.toggle("oculto", !cobertos.length);
 
   const faixa = $("lupa-faixa");
+  const ofertas = ofertasMinhas();
   const ligada = lupaLigada && logado;
-  faixa.classList.toggle("oculto", !ligada);
+  faixa.classList.toggle("oculto", !(ligada || (logado && ofertas.length)));
   let geral = "";
-  if (ligada) {
+  if (logado && ofertas.length) {
+    const l = ofertas[0];
+    faixa.className = "lupa-faixa oferta-f";
+    faixa.innerHTML = `<div class="txt"><span>Reserva mínima não atingida em <b>${esc(l.artista || l.titulo)}</b>. Você pode levar a obra por ${brl(l.oferta_reserva.valor)}.</span><small>Responda até <span class="tempo-f" data-fim="${esc(l.oferta_reserva.prazo)}">${tempoRestante(l.oferta_reserva.prazo)}</span></small></div>
+      <div class="acoes"><button type="button" class="cobrir" data-abrir="${esc(l.id)}">Ver oferta</button></div>`;
+    faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
+  } else if (ligada) {
     const mudoBtn = `<button type="button" class="mudo" id="lupa-mudo" aria-pressed="${lupaMudo}">${lupaMudo ? "Som off" : "Som on"}</button>`;
     if (!ab.length) {
       faixa.className = "lupa-faixa neutro";
@@ -1232,12 +1291,13 @@ function renderLances() {
   const ord = meus.slice().sort((a, b) => (Number(a.encerrado) - Number(b.encerrado)) || (new Date(a.encerra_em) - new Date(b.encerra_em)));
   alvo.innerHTML = ord.map(l => {
     const st = l.encerrado ? "fim" : (l.lider ? "ok" : "mau");
-    const rot = l.encerrado ? (l.lider && l.resultado && l.resultado.arrematado ? "Arrematado por você" : (l.lider ? "Encerrado sem reserva" : "Encerrado")) : (l.lider ? "Ganhando" : "Coberto");
+    const rot = l.oferta_reserva ? "Oferta da reserva: responda" : l.encerrado ? (l.lider && l.resultado && l.resultado.arrematado ? "Arrematado por você" : (l.resultado && l.resultado.aguardando ? "Aguardando decisão" : "Encerrado sem venda")) : (l.lider ? "Ganhando" : "Coberto");
     return `<div class="ml-item ${st === "fim" ? "" : "s-" + st}">
       ${l.imagem ? `<img src="${esc(l.imagem)}" alt="">` : `<div></div>`}
       <div><h4>${esc(l.artista || l.titulo)}</h4>
         <div class="l2"><span>${esc(l.titulo)}</span><span>seu maior lance <b>${brl(l.meu_maior)}</b></span><span>atual <b>${brl(l.valor_atual)}</b></span><span>${l.encerrado ? "encerrado" : `encerra em <b data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</b>`}</span></div>
         <div class="bt"><span class="sel ${st}">${rot}</span>
+          ${l.oferta_reserva ? `<button type="button" class="cobrir" data-abrir="${esc(l.id)}">Responder à oferta</button>` : ""}
           ${!l.encerrado && !l.lider ? `<button type="button" class="cobrir" data-cobrir="${esc(l.id)}">Cobrir ${brl(l.minimo_proximo)}</button>` : ""}
           <button type="button" data-abrir="${esc(l.id)}">Abrir lote</button></div></div></div>`;
   }).join("");
