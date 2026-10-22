@@ -42,6 +42,7 @@
   .detalhe .img img { width:100%; height:100%; object-fit:cover; }
   .detalhe h2 { margin:0 0 4px; }
   .fato { font: 14px/1.5 system-ui, sans-serif; margin: 6px 0; }
+  .sub { margin: 14px 0 2px; font: 600 13px system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .fato b { display:inline-block; min-width:150px; margin-right:10px; color: var(--muted); font-weight:500; }
   .cronometro { font: 600 18px system-ui, sans-serif; margin: 12px 0; }
   form, .form { display:grid; gap:10px; margin-top:12px; font: 14px system-ui, sans-serif; }
@@ -101,7 +102,13 @@
       <div>
         <h2 id="d-titulo"></h2>
         <div class="meta" id="d-artista"></div>
+        <h4 class="sub">Sobre a obra</h4>
         <p class="fato" id="d-descricao"></p>
+        <div id="d-bio-bloco" class="oculto">
+          <h4 class="sub">Sobre o artista</h4>
+          <p class="fato" id="d-bio"></p>
+          <a id="d-bio-link" class="link" target="_blank" rel="noopener" href="#">Ver o currículo completo na Galeria 33</a>
+        </div>
         <p class="fato"><b>Lance inicial</b><span id="d-inicial"></span></p>
         <p class="fato"><b>Lance atual</b><span id="d-atual"></span></p>
         <p class="fato"><b>Próximo lance mínimo</b><span id="d-minimo"></span></p>
@@ -416,6 +423,9 @@ function renderDetalhe() {
   $("d-titulo").textContent = l.titulo;
   $("d-artista").textContent = l.artista;
   $("d-descricao").textContent = l.descricao;
+  $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio);
+  $("d-bio").textContent = l.artista_bio || "";
+  const ln = $("d-bio-link"); ln.classList.toggle("oculto", !l.artista_link); if (l.artista_link) ln.href = l.artista_link;
   $("d-inicial").textContent = brl(l.lance_inicial);
   $("d-atual").textContent = brl(l.valor_atual);
   $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
