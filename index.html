@@ -516,6 +516,15 @@
         <button type="submit">Criar conta</button>
         <div class="msg" id="r-msg"></div>
       </form>
+      <form id="form-codigo" class="painel oculto" autocomplete="off">
+        <h3>Confirme seu e-mail</h3>
+        <p class="meta">Enviamos um código de 6 números para <b id="cod-email"></b>. Digite o código abaixo. Olhe também a caixa de spam.</p>
+        <label class="campo">Código de 6 números<input id="cod-num" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required></label>
+        <button type="submit" id="cod-ok">Confirmar código</button>
+        <button type="button" class="link" id="cod-reenviar">Reenviar código</button>
+        <button type="button" class="link" id="cod-voltar">Voltar</button>
+        <div class="msg" id="cod-msg" role="status"></div>
+      </form>
     </div>
 
     <!-- logado -->
@@ -1368,14 +1377,56 @@ $("aba-lances").onclick = () => mostrar("lances");
 $("aba-admin").onclick = () => mostrar("admin");
 
 /* ===== MINHA CONTA ===== */
-$("t-entrar").onclick = () => { $("form-entrar").classList.remove("oculto"); $("form-criar").classList.add("oculto"); $("t-entrar").classList.add("ativa"); $("t-criar").classList.remove("ativa"); };
-$("t-criar").onclick = () => { $("form-criar").classList.remove("oculto"); $("form-entrar").classList.add("oculto"); $("t-criar").classList.add("ativa"); $("t-entrar").classList.remove("ativa"); };
+$("t-entrar").onclick = () => { $("form-entrar").classList.remove("oculto"); $("form-criar").classList.add("oculto"); $("form-codigo").classList.add("oculto"); $("t-entrar").classList.add("ativa"); $("t-criar").classList.remove("ativa"); };
+$("t-criar").onclick = () => { $("form-criar").classList.remove("oculto"); $("form-entrar").classList.add("oculto"); $("form-codigo").classList.add("oculto"); $("t-criar").classList.add("ativa"); $("t-entrar").classList.remove("ativa"); };
+
+/* Confirmação do e-mail por código de 6 números (o Wix envia o código ao criar a conta). */
+let pendente = null; // { email, senha } guardados só na memória desta página
+function abrirCodigo(email, senha, aviso) {
+  pendente = { email, senha };
+  $("form-entrar").classList.add("oculto"); $("form-criar").classList.add("oculto"); $("form-codigo").classList.remove("oculto");
+  $("cod-email").textContent = email; $("cod-num").value = "";
+  msg($("cod-msg"), aviso || "", aviso ? "ok" : "");
+  $("cod-num").focus();
+}
+$("cod-num").addEventListener("input", () => { $("cod-num").value = soNum($("cod-num").value).slice(0, 6); });
+$("cod-voltar").onclick = () => { pendente = null; $("t-entrar").onclick(); };
+$("cod-reenviar").onclick = async () => {
+  msg($("cod-msg"), "Enviando um novo código…");
+  try { await api("reenviar_codigo"); msg($("cod-msg"), "Enviamos um novo código. Use o mais recente.", "ok"); }
+  catch (err) { msg($("cod-msg"), err.message, "erro"); }
+};
+$("form-codigo").addEventListener("submit", async e => {
+  e.preventDefault();
+  const codigo = soNum($("cod-num").value);
+  if (codigo.length !== 6) { msg($("cod-msg"), "O código tem 6 números.", "erro"); return; }
+  $("cod-ok").disabled = true; msg($("cod-msg"), "Conferindo…");
+  try {
+    await api("verificar_email", { codigo });
+    const p = pendente; pendente = null;
+    $("form-codigo").classList.add("oculto"); $("form-entrar").classList.remove("oculto");
+    if (p && p.senha) {
+      try { await api("entrar", { email: p.email, senha: p.senha }); } catch (e2) { /* tenta pelo estado abaixo */ }
+      await carregarEstado();
+    }
+    if (!estado.logado) { msg($("e-msg"), "E-mail confirmado. Agora entre com seu e-mail e senha.", "ok"); $("e-email").value = (p && p.email) || ""; }
+    else avisar("E-mail confirmado. Bem-vindo!", "ok");
+  } catch (err) { msg($("cod-msg"), err.message, "erro"); }
+  finally { $("cod-ok").disabled = false; }
+});
 
 $("form-entrar").addEventListener("submit", async e => {
   e.preventDefault();
   msg($("e-msg"), "Entrando…");
   try {
-    await api("entrar", { email: $("e-email").value, senha: $("e-senha").value });
+    const email = $("e-email").value, senha = $("e-senha").value;
+    try {
+      await api("entrar", { email, senha });
+    } catch (err) {
+      // Conta ainda sem e-mail confirmado: pede o código de 6 números.
+      if (/verific|confirm|pend|código/i.test(err.message)) { abrirCodigo(email, senha, "Falta confirmar seu e-mail. Digite o código de 6 números ou peça um novo."); return; }
+      throw err;
+    }
     $("e-senha").value = "";
     msg($("e-msg"), "");
     await carregarEstado();
@@ -1393,10 +1444,12 @@ $("form-criar").addEventListener("submit", async e => {
   if ($("r-nome").value.trim().split(/\s+/).length < 2) { msg(m, "Informe seu nome completo.", "erro"); return; }
   msg(m, "Criando conta…");
   try {
-    const r = await api("registrar", { nome: $("r-nome").value, email: $("r-email").value, senha });
+    const email = $("r-email").value;
+    const r = await api("registrar", { nome: $("r-nome").value, email, senha });
     $("r-senha").value = ""; $("r-senha2").value = "";
     if (r && r.status === "PENDING") {
-      msg(m, "Conta criada. Enviamos um e-mail para confirmar seu endereço. Depois de confirmar, entre aqui.", "ok");
+      msg(m, "");
+      abrirCodigo(email, senha, "Conta criada. Enviamos um código de 6 números para o seu e-mail.");
     } else {
       msg(m, "Conta criada.", "ok");
       await carregarEstado();
