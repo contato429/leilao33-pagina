@@ -3,138 +3,395 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
 <title>LEILÃO 33 · Galeria 33</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
 <style>
-  :root { --ink:#1b1b1b; --muted:#6b6b6b; --line:#e6e3dc; --paper:#faf9f6; --accent:#8a1c1c; --ok:#2e6b3a; --warn:#8a5a00; }
-  @media (prefers-color-scheme: dark) {
-    :root { --ink:#f1efe9; --muted:#a4a099; --line:#34322e; --paper:#161514; --accent:#e07b7b; --ok:#8fd19e; --warn:#e8c36a; }
+  :root {
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --acid: #ccff00;
+    --hot: #ff4b1f;
+    --raio: 18px;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  /* Tema escuro (padrão) */
+  :root, :root[data-tema="escuro"] {
+    --bg: #0a0a0a; --bg2: #121212; --card: #151515; --ink: #f3f0e8; --muted: #8d897f; --line: #262626;
+    --acc: #ccff00; --acc-fg: #0a0a0a; --acc-txt: #ccff00; --ok: #7dffb3; --warn: #ffcc00; --neg: #ff6a4d;
+    --grao: .07;
+  }
+  :root[data-tema="claro"] {
+    --bg: #f2efe7; --bg2: #e9e5da; --card: #ffffff; --ink: #0a0a0a; --muted: #6a665d; --line: #d4cfc1;
+    --acc: #ccff00; --acc-fg: #0a0a0a; --acc-txt: #3d5200; --ok: #0d7a3f; --warn: #8a6100; --neg: #c2310f;
+    --grao: .12;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) {
+      --bg: #f2efe7; --bg2: #e9e5da; --card: #ffffff; --ink: #0a0a0a; --muted: #6a665d; --line: #d4cfc1;
+      --acc-txt: #3d5200; --ok: #0d7a3f; --warn: #8a6100; --neg: #c2310f; --grao: .12;
+    }
   }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--paper); color:var(--ink); font-family: Georgia, "Times New Roman", serif; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
-  header h1 { font-size: 2rem; letter-spacing: .08em; margin: 0 0 4px; }
-  header p { color: var(--muted); margin: 0 0 8px; }
-  .barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin: 14px 0 6px; font: 14px system-ui, sans-serif; }
-  .abas { display:flex; gap:6px; flex-wrap:wrap; }
-  .aba { background:transparent; color:var(--muted); border:1px solid var(--line); padding:8px 12px; font: 600 14px system-ui, sans-serif; }
-  .aba.ativa { color:var(--ink); border-color:var(--ink); }
-  .usuario { color:var(--muted); display:flex; gap:10px; align-items:center; }
-  .link { background:none; border:0; color:var(--accent); padding:0; font: 14px system-ui, sans-serif; text-decoration:underline; cursor:pointer; }
-  .aviso { font: 14px/1.4 system-ui, sans-serif; background: #fff4d6; color:#5b4500; padding:10px 12px; border-radius:6px; margin: 12px 0 20px; }
-  @media (prefers-color-scheme: dark) { .aviso { background:#3a3112; color:#f3e3a6; } }
-  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
-  .card { border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--paper); cursor:pointer; }
-  .card .img { aspect-ratio: 4/3; background:#ddd7cc; display:flex; align-items:center; justify-content:center; color:var(--muted); font: 14px system-ui, sans-serif; }
-  .card .img img { width:100%; height:100%; object-fit:cover; }
-  .card .body { padding:12px 14px 14px; }
-  .card h3 { margin:0 0 2px; font-size:1.3rem; line-height:1.2; }
-  .card .obra { font: 500 15px Georgia, serif; font-style: italic; margin: 0 0 4px; }
-  .meta { font: 13px system-ui, sans-serif; color: var(--muted); }
-  .price { font: 600 15px system-ui, sans-serif; margin-top:8px; }
-  .status { display:inline-block; font:12px system-ui, sans-serif; padding:2px 8px; border-radius:99px; border:1px solid var(--line); margin-top:6px; }
-  .status.ativo, .status.ok { color: var(--ok); border-color: var(--ok); }
-  .status.encerrado { color: var(--muted); }
-  .status.pend { color: var(--warn); border-color: var(--warn); }
-  .status.neg { color: var(--accent); border-color: var(--accent); }
-  .detalhe { display:none; margin-top:24px; border-top:1px solid var(--line); padding-top:20px; }
-  .detalhe.ativo { display:grid; grid-template-columns: 1fr 1fr; gap:24px; }
-  @media (max-width: 760px) { .detalhe.ativo { grid-template-columns: 1fr; } }
-  .detalhe .img { background:#ddd7cc; aspect-ratio:4/3; border-radius:8px; overflow:hidden; }
-  .detalhe .img img { width:100%; height:100%; object-fit:cover; }
-  .detalhe h2 { margin:0 0 2px; font-size:2rem; line-height:1.15; }
-  .detalhe .obra { font: italic 500 1.2rem Georgia, serif; margin: 0 0 10px; }
-  .fato { font: 14px/1.5 system-ui, sans-serif; margin: 6px 0; }
-  .sub { margin: 14px 0 2px; font: 600 13px system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .fato b { display:inline-block; min-width:150px; margin-right:10px; color: var(--muted); font-weight:500; }
-  .cronometro { font: 600 18px system-ui, sans-serif; margin: 12px 0; }
-  form, .form { display:grid; gap:10px; margin-top:12px; font: 14px system-ui, sans-serif; }
-  label.campo { display:grid; gap:4px; color:var(--muted); font: 13px system-ui, sans-serif; }
-  input, select, textarea { padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); font: 15px system-ui, sans-serif; width:100%; }
-  input[type=checkbox], input[type=radio] { width:auto; }
-  textarea { min-height: 70px; }
-  button { padding:11px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; font: 600 15px system-ui, sans-serif; cursor:pointer; }
-  button:disabled { opacity:.45; cursor:not-allowed; }
-  button.sec { background:transparent; color:var(--ink); border:1px solid var(--line); }
-  .msg { font: 14px system-ui, sans-serif; min-height: 20px; }
-  .msg.erro { color: var(--accent); }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; overflow-x: hidden; }
+  ::selection { background: var(--acid); color: #0a0a0a; }
+  :focus-visible { outline: 2px solid var(--acc-txt); outline-offset: 3px; border-radius: 6px; }
+  .oculto { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+
+  /* Textura de grão, bem sutil */
+  .grao { position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: var(--grao); mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+  /* ===== Topo ===== */
+  .topo { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 12px clamp(16px, 4vw, 48px); background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--line); }
+  .marca { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+  .marca b { font: 700 1.25rem/1 var(--sans); letter-spacing: -.04em; text-transform: uppercase; }
+  .marca b i { font-style: normal; color: var(--acc-txt); }
+  .marca small { font: 400 .72rem var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .abas { display: flex; gap: 4px; flex-wrap: wrap; }
+  .aba { appearance: none; background: transparent; color: var(--muted); border: 1px solid transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    font: 500 .86rem var(--sans); letter-spacing: .01em; transition: color .2s, background .2s, border-color .2s; }
+  .aba:hover { color: var(--ink); border-color: var(--line); }
+  .aba.ativa { color: var(--acc-fg); background: var(--acid); }
+  .usuario { display: flex; gap: 10px; align-items: center; font: 400 .82rem var(--mono); color: var(--muted); }
+  .link { background: none; border: 0; color: var(--ink); padding: 0; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .tema { appearance: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; font-size: 1rem; line-height: 1; display: grid; place-items: center; transition: transform .3s var(--ease), background .2s; }
+  .tema:hover { transform: rotate(180deg); background: var(--bg2); }
+
+  main { min-height: 60vh; }
+  .miolo { padding: 0 clamp(16px, 4vw, 48px); }
+
+  /* ===== Herói ===== */
+  .heroi { position: relative; padding: clamp(28px, 6vw, 72px) clamp(16px, 4vw, 48px) clamp(24px, 4vw, 48px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: clamp(20px, 4vw, 56px); align-items: end; }
+  .heroi .kicker { font: 400 .75rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .ao-vivo { display: inline-flex; align-items: center; gap: 7px; color: var(--acc-txt); }
+  .ao-vivo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 0 0 color-mix(in srgb, var(--acid) 70%, transparent); animation: pulso 1.8s infinite; }
+  @keyframes pulso { 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  .heroi h1 { margin: 14px 0 18px; font: 700 clamp(3rem, 11.5vw, 9.5rem)/.86 var(--sans); letter-spacing: -.055em; text-transform: uppercase; }
+  .heroi h1 span { display: block; }
+  .heroi h1 .vazado { color: transparent; -webkit-text-stroke: 2px var(--ink); }
+  .heroi h1 .serif { font: italic 400 1.05em/.9 var(--serif); letter-spacing: -.02em; text-transform: none; color: var(--acc-txt); }
+  .heroi p.sub { max-width: 46ch; font-size: clamp(1rem, 1.6vw, 1.2rem); color: var(--muted); margin: 0 0 22px; }
+  .numeros { display: flex; gap: clamp(18px, 4vw, 44px); flex-wrap: wrap; }
+  .numeros div { display: grid; gap: 2px; }
+  .numeros b { font: 700 clamp(1.4rem, 3vw, 2.2rem)/1 var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .numeros span { font: 400 .7rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .destaque { position: relative; aspect-ratio: 4 / 5; border-radius: var(--raio); overflow: hidden; cursor: pointer; background: var(--bg2); isolation: isolate; border: 1px solid var(--line); transition: transform .6s var(--ease); }
+  .destaque:hover { transform: rotate(-1.2deg) scale(1.015); }
+  .destaque img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
+  .destaque:hover img { transform: scale(1.06); }
+  .destaque::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.82)); }
+  .destaque .legenda { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 18px; color: #f3f0e8; display: grid; gap: 4px; }
+  .destaque .etq { position: absolute; top: 14px; left: 14px; z-index: 2; background: var(--acid); color: #0a0a0a; font: 700 .7rem var(--mono); letter-spacing: .12em; padding: 5px 10px; border-radius: 999px; text-transform: uppercase; }
+  .destaque .legenda b { font: italic 400 clamp(1.7rem, 3.2vw, 2.6rem)/1 var(--serif); }
+  .destaque .legenda small { font: 400 .78rem var(--mono); opacity: .85; }
+
+  /* ===== Letreiro ===== */
+  .letreiro { overflow: hidden; border-block: 1px solid var(--line); background: var(--acid); color: #0a0a0a; user-select: none; }
+  .letreiro .trilho { display: flex; width: max-content; animation: corre 46s linear infinite; }
+  .letreiro:hover .trilho { animation-play-state: paused; }
+  .letreiro span { font: italic 400 clamp(1.3rem, 2.6vw, 2rem)/1 var(--serif); padding: 12px 22px; white-space: nowrap; }
+  .letreiro span::after { content: "✦"; margin-left: 44px; font-style: normal; font-size: .7em; vertical-align: .12em; }
+  @keyframes corre { to { transform: translateX(-50%); } }
+
+  /* ===== Como funciona ===== */
+  .passos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--line); border-block: 1px solid var(--line); margin-top: clamp(28px, 5vw, 56px); }
+  .passos div { background: var(--bg); padding: 22px clamp(16px, 2vw, 28px); display: grid; gap: 8px; align-content: start; }
+  .passos i { font: 700 .78rem var(--mono); color: var(--acc-txt); font-style: normal; letter-spacing: .14em; }
+  .passos b { font: 600 1.15rem/1.2 var(--sans); letter-spacing: -.02em; }
+  .passos span { color: var(--muted); font-size: .92rem; }
+
+  /* ===== Filtros ===== */
+  .filtros { display: grid; gap: 14px; padding: clamp(22px, 4vw, 40px) clamp(16px, 4vw, 48px) 8px; }
+  .filtros h2 { margin: 0; font: 700 clamp(1.8rem, 4vw, 3rem)/1 var(--sans); letter-spacing: -.045em; text-transform: uppercase; }
+  .filtros h2 em { font: italic 400 1.1em var(--serif); text-transform: none; letter-spacing: -.01em; color: var(--acc-txt); }
+  .barra { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .barra input[type=search], .barra select { appearance: none; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; font: 500 .9rem var(--sans); min-width: 0; }
+  .barra input[type=search] { flex: 1 1 220px; max-width: 360px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 14px; font: 500 .82rem var(--sans); cursor: pointer; transition: all .2s; }
+  .chip:hover { color: var(--ink); border-color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .check { display: inline-flex; gap: 8px; align-items: center; font: 500 .85rem var(--sans); color: var(--muted); cursor: pointer; }
+  .check input { accent-color: var(--acid); width: 16px; height: 16px; }
+
+  /* ===== Galeria de lotes ===== */
+  .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: clamp(14px, 2vw, 26px); padding: 18px clamp(16px, 4vw, 48px) 8px; }
+  .card { position: relative; display: grid; gap: 12px; cursor: pointer; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; opacity: 0; transform: translateY(26px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: calc(var(--i, 0) * 55ms); }
+  .card.in { opacity: 1; transform: none; }
+  .card .foto { position: relative; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--raio); background: var(--bg2); border: 1px solid var(--line); }
+  .card .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.1s var(--ease), filter .6s; }
+  .card:hover .foto img, .card:focus-visible .foto img { transform: scale(1.07); }
+  .card .foto::after { content: "Ver lote →"; position: absolute; inset: auto 14px 14px auto; background: var(--acid); color: #0a0a0a; font: 700 .78rem var(--sans); padding: 9px 14px; border-radius: 999px; transform: translateY(14px); opacity: 0; transition: all .4s var(--ease); }
+  .card:hover .foto::after, .card:focus-visible .foto::after { transform: none; opacity: 1; }
+  .card .n { position: absolute; top: 12px; left: 12px; z-index: 2; font: 700 .72rem var(--mono); letter-spacing: .1em; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 999px; }
+  .card .tempo { position: absolute; top: 12px; right: 12px; z-index: 2; font: 700 .72rem var(--mono); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .card .tempo.urgente { background: var(--hot); color: #fff; animation: piscar 1.2s steps(2) infinite; }
+  @keyframes piscar { 50% { opacity: .72; } }
+  .card h3 { margin: 0; font: italic 400 clamp(1.8rem, 2.6vw, 2.4rem)/1 var(--serif); letter-spacing: -.01em; }
+  .card .obra { font: 500 .92rem var(--sans); color: var(--muted); margin-top: -6px; }
+  .card .preco { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; font-family: var(--mono); }
+  .card .preco span { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .card .preco b { font-size: 1.1rem; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+  .card.encerrado .foto img { filter: grayscale(1) contrast(1.05); opacity: .7; }
+  .card.sk { opacity: 1; transform: none; pointer-events: none; }
+  .card.sk .foto, .card.sk i { background: linear-gradient(100deg, var(--bg2) 30%, var(--card) 50%, var(--bg2) 70%); background-size: 200% 100%; animation: brilho 1.4s linear infinite; }
+  .card.sk i { display: block; height: 22px; border-radius: 8px; }
+  @keyframes brilho { to { background-position: -200% 0; } }
+  .vazio { grid-column: 1 / -1; padding: 40px 0; text-align: center; color: var(--muted); font: italic 400 1.6rem var(--serif); }
+  .carregando { padding: 18px clamp(16px, 4vw, 48px); font: 400 .85rem var(--mono); color: var(--muted); }
+
+  /* ===== Lote ===== */
+  .lote { padding: clamp(14px, 3vw, 32px) clamp(16px, 4vw, 48px) 24px; }
+  .voltar { appearance: none; background: none; border: 0; color: var(--muted); font: 500 .9rem var(--sans); cursor: pointer; padding: 8px 0; display: inline-flex; gap: 8px; align-items: center; transition: color .2s, gap .2s; }
+  .voltar:hover { color: var(--ink); gap: 12px; }
+  .lote-grade { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(20px, 4vw, 64px); align-items: start; margin-top: 8px; }
+  .midia { position: relative; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: var(--raio); overflow: hidden; background: var(--bg2); cursor: zoom-in; display: block; }
+  .midia img { width: 100%; height: auto; max-height: 82vh; object-fit: contain; background: var(--bg2); }
+  .midia-dica { margin-top: 10px; font: 400 .72rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .painel-lote { position: sticky; top: 76px; display: grid; gap: 14px; }
+  .etiqueta { font: 400 .75rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .painel-lote h2 { margin: 0; font: italic 400 clamp(2.6rem, 6vw, 5rem)/.92 var(--serif); letter-spacing: -.02em; }
+  .painel-lote .obra { font: 500 1.15rem/1.3 var(--sans); }
+  .sub { margin: 4px 0 0; font: 400 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .texto { margin: 0; color: color-mix(in srgb, var(--ink) 82%, var(--muted)); }
+  .lance { background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); padding: clamp(16px, 2.4vw, 26px); display: grid; gap: 14px; }
+  .lance .rot { font: 400 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .lance .valor { font: 700 clamp(2.4rem, 6vw, 4rem)/1 var(--mono); letter-spacing: -.06em; font-variant-numeric: tabular-nums; transition: color .3s; }
+  .lance .valor.flash { animation: flash .9s var(--ease); }
+  @keyframes flash { 0% { color: var(--acc-txt); transform: scale(1.04); } 100% { transform: none; } }
+  .lance .meta2 { display: flex; gap: 18px; flex-wrap: wrap; font: 400 .78rem var(--mono); color: var(--muted); }
+  .lance .meta2 b { color: var(--ink); font-weight: 700; }
+  .cont { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cont div { background: var(--bg2); border-radius: 12px; padding: 10px 6px; text-align: center; }
+  .cont b { display: block; font: 700 clamp(1.3rem, 3vw, 1.9rem)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+  .cont small { font: 400 .62rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .cont.urgente b { color: var(--hot); }
+  .cont.fim { grid-template-columns: 1fr; text-align: center; font: italic 400 1.6rem var(--serif); }
+  .rapidos { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rapido { appearance: none; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); border-radius: 999px; padding: 8px 14px; font: 700 .82rem var(--mono); cursor: pointer; transition: all .2s; font-variant-numeric: tabular-nums; }
+  .rapido:hover { border-color: var(--acid); transform: translateY(-2px); }
+  .rapido[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  .aviso-caixa { border: 1px dashed var(--muted); border-radius: 14px; padding: 14px 16px; font-size: .93rem; display: grid; gap: 8px; justify-items: start; }
+  .historico { display: grid; gap: 0; margin-top: 6px; }
+  .historico h4 { margin: 0 0 8px; font: 400 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .historico .h { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font: 400 .85rem var(--mono); }
+  .historico .h:first-of-type { border-top: 0; }
+  .historico .h.topo b { color: var(--acc-txt); }
+  .historico .h span { color: var(--muted); }
+  .bio { border-top: 1px solid var(--line); padding-top: 12px; }
+  .bio summary { cursor: pointer; list-style: none; font: 400 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  .bio summary::after { content: "+"; font-size: 1.1rem; }
+  .bio[open] summary::after { content: "–"; }
+  .bio p { margin: 12px 0 8px; color: color-mix(in srgb, var(--ink) 85%, var(--muted)); font: 400 1.05rem/1.55 var(--serif); }
+
+  /* barra fixa de lance (celular) */
+  .barra-lance { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 45; display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 18px; border-radius: 999px; background: var(--ink); color: var(--bg); box-shadow: 0 10px 40px rgba(0,0,0,.45); transform: translateY(140%); transition: transform .5s var(--ease); }
+  .barra-lance.vis { transform: none; }
+  .barra-lance span { font: 700 1rem var(--mono); letter-spacing: -.04em; }
+  .barra-lance small { display: block; font: 400 .6rem var(--mono); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+  .barra-lance button { background: var(--acid); color: #0a0a0a; }
+
+  /* ===== Formulários e botões ===== */
+  form, .form { display: grid; gap: 12px; margin-top: 4px; }
+  label.campo { display: grid; gap: 6px; color: var(--muted); font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  input, select, textarea { width: 100%; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: 500 1rem var(--sans); transition: border-color .2s, box-shadow .2s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--acid); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acid) 30%, transparent); }
+  input[type=checkbox], input[type=radio] { width: auto; accent-color: var(--acid); }
+  textarea { min-height: 84px; resize: vertical; }
+  button, .btn { appearance: none; padding: 13px 22px; border: 0; border-radius: 999px; background: var(--acid); color: #0a0a0a; font: 700 .95rem var(--sans); letter-spacing: -.01em; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s, opacity .2s; }
+  button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px color-mix(in srgb, var(--acid) 35%, transparent); }
+  button:active:not(:disabled) { transform: none; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+  button.sec:hover:not(:disabled) { border-color: var(--ink); box-shadow: none; }
+  button.link { background: none; box-shadow: none; padding: 0; color: var(--ink); font: 500 .9rem var(--sans); border-radius: 0; text-decoration: underline; }
+  .grande { padding: 17px 28px; font-size: 1.05rem; width: 100%; }
+  .msg { min-height: 20px; font: 400 .85rem var(--mono); color: var(--muted); }
+  .msg.erro { color: var(--neg); }
   .msg.ok { color: var(--ok); }
-  .historico { font: 13px system-ui, sans-serif; color: var(--muted); margin-top:14px; }
-  .legal { font: 12px/1.5 system-ui, sans-serif; color: var(--muted); margin-top: 28px; border-top:1px solid var(--line); padding-top:14px; }
-  .fechar { background:transparent; color:var(--muted); border:1px solid var(--line); margin-top:8px; }
-  .carregando { font: 14px system-ui, sans-serif; color: var(--muted); }
-  .oculto { display:none !important; }
-  .painel { border:1px solid var(--line); border-radius:10px; padding:16px; margin: 14px 0; font: 14px/1.5 system-ui, sans-serif; }
-  .painel h3 { margin: 0 0 6px; font: 600 16px system-ui, sans-serif; }
-  .duas { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-  @media (max-width: 640px) { .duas { grid-template-columns: 1fr; } }
-  .termo { max-height: 260px; overflow:auto; white-space: pre-wrap; border:1px solid var(--line); border-radius:6px; padding:12px; font: 13px/1.5 system-ui, sans-serif; background: rgba(127,127,127,.06); }
-  .arq { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border:1px dashed var(--line); border-radius:8px; padding:10px; }
-  .arq input { width:auto; max-width:100%; }
-  .linha { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-bottom:1px solid var(--line); padding:8px 0; }
-  .docs { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:10px; }
-  .docs img { width:100%; border-radius:6px; border:1px solid var(--line); }
-  .modal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; z-index:10; }
-  .modal .caixa { background:var(--paper); border-radius:10px; padding:18px; max-width:560px; width:100%; max-height:92vh; overflow:auto; }
+  .status { display: inline-block; font: 700 .68rem var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .status.ok, .status.ativo { color: var(--ok); border-color: var(--ok); }
+  .status.pend { color: var(--warn); border-color: var(--warn); }
+  .status.neg { color: var(--neg); border-color: var(--neg); }
+  .meta { font: 400 .8rem var(--mono); color: var(--muted); }
+  .fato { margin: 6px 0; font-size: .95rem; }
+  .fato b { display: inline-block; min-width: 150px; margin-right: 10px; color: var(--muted); font: 400 .75rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+
+  /* ===== Conta e painel ===== */
+  .conta-pag { max-width: 880px; margin: 0 auto; padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 32px) 24px; }
+  .conta-pag > h2, .admin-pag > h2 { font: 700 clamp(2rem, 5vw, 3.6rem)/1 var(--sans); letter-spacing: -.05em; text-transform: uppercase; margin: 0 0 18px; }
+  .admin-pag { max-width: 980px; margin: 0 auto; padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 32px) 24px; }
+  .painel { background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); padding: clamp(16px, 2.4vw, 26px); margin: 14px 0; display: grid; gap: 12px; }
+  .painel h3 { margin: 0; font: 700 1.3rem/1.1 var(--sans); letter-spacing: -.03em; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .termo { max-height: 260px; overflow: auto; white-space: pre-wrap; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font: 400 .82rem/1.6 var(--mono); background: var(--bg); color: var(--muted); }
+  .arq { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px dashed var(--line); border-radius: 14px; padding: 12px 14px; transition: border-color .2s; }
+  .arq:hover { border-color: var(--acid); }
+  .arq input { width: auto; max-width: 100%; border: 0; padding: 6px 0; background: none; }
+  .linha { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding: 10px 0; }
+  .docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .docs img { width: 100%; border-radius: 12px; border: 1px solid var(--line); }
+  fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 0; }
+  legend { font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
+  fieldset label { margin-right: 18px; font-size: .95rem; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.66); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; z-index: 70; }
+  .modal .caixa { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 24px; max-width: 580px; width: 100%; max-height: 92vh; overflow: auto; display: grid; gap: 14px; animation: sobe .45s var(--ease); }
+  @keyframes sobe { from { opacity: 0; transform: translateY(24px) scale(.98); } }
+
+  /* ===== Lightbox ===== */
+  #lightbox { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
+  #lightbox::backdrop { background: rgba(0,0,0,.94); }
+  #lightbox .zoom { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; cursor: zoom-in; }
+  #lightbox img { max-width: 94vw; max-height: 92vh; object-fit: contain; transition: transform .35s var(--ease); }
+  #lightbox .zoom.ampliado { cursor: zoom-out; }
+  #lightbox .zoom.ampliado img { transform: scale(2.4); transition: transform .35s var(--ease); }
+  #lightbox .fecha { position: fixed; top: 16px; right: 16px; z-index: 3; width: 46px; height: 46px; padding: 0; border-radius: 50%; background: var(--ink); color: var(--bg); font-size: 1.2rem; }
+
+  /* ===== Aviso passageiro ===== */
+  .avisos { position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 80; display: grid; gap: 8px; width: min(92vw, 460px); pointer-events: none; }
+  .aviso-t { pointer-events: auto; padding: 13px 18px; border-radius: 14px; background: var(--ink); color: var(--bg); font: 500 .92rem var(--sans); box-shadow: 0 14px 40px rgba(0,0,0,.4); animation: sobe .45s var(--ease); display: flex; gap: 10px; align-items: center; }
+  .aviso-t.ok::before { content: "✓"; color: #0a0a0a; background: var(--acid); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; flex: none; }
+  .aviso-t.erro { background: var(--hot); color: #fff; }
+
+  /* ===== Rodapé ===== */
+  .rodape { margin-top: clamp(32px, 6vw, 80px); padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px) 110px; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+  .rodape .grande-t { font: 700 clamp(2.4rem, 10vw, 8rem)/.85 var(--sans); letter-spacing: -.06em; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px var(--muted); }
+  .legal { font: 400 .74rem/1.7 var(--mono); color: var(--muted); max-width: 90ch; }
+
+  /* ===== Responsivo ===== */
+  @media (max-width: 900px) {
+    .heroi { grid-template-columns: 1fr; }
+    .destaque { aspect-ratio: 16 / 11; }
+    .lote-grade { grid-template-columns: 1fr; }
+    .painel-lote { position: static; }
+    .barra-lance { display: flex; }
+    .duas { grid-template-columns: 1fr; }
+    .marca small { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+    .card { opacity: 1; transform: none; }
+    .letreiro .trilho { animation: none; }
+  }
+  ::view-transition-old(lote-foto), ::view-transition-new(lote-foto) { animation-duration: .5s; animation-timing-function: var(--ease); }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1 id="titulo">LEILÃO 33</h1>
-    <p id="subtitulo"></p>
-  </header>
+<div class="grao" aria-hidden="true"></div>
 
-  <div class="barra">
-    <div class="abas">
-      <button class="aba ativa" id="aba-lotes">Lotes</button>
-      <button class="aba" id="aba-conta">Minha conta</button>
-      <button class="aba oculto" id="aba-admin">Painel da equipe</button>
-    </div>
-    <div class="usuario" id="usuario"></div>
-  </div>
-  <div class="aviso" id="aviso"></div>
+<header class="topo">
+  <a class="marca" href="https://www.galeria33.com" target="_top" rel="noopener" aria-label="Galeria 33, página inicial">
+    <b><span id="titulo-marca">LEILÃO</span> <i>33</i></b><small>Galeria 33 · Joinville/SC</small>
+  </a>
+  <nav class="abas" aria-label="Seções">
+    <button class="aba ativa" id="aba-lotes">Lotes</button>
+    <button class="aba" id="aba-conta">Minha conta</button>
+    <button class="aba oculto" id="aba-admin">Painel da equipe</button>
+  </nav>
+  <div class="usuario"><span id="usuario"></span><button class="tema" id="tema" aria-label="Alternar tema claro e escuro" title="Tema">◐</button></div>
+</header>
 
+<main>
   <!-- ===== LOTES ===== -->
   <div id="view-lotes">
-    <p class="carregando" id="carregando">Carregando lotes…</p>
-    <section class="grid" id="lista"></section>
-
-    <section class="detalhe" id="detalhe">
-      <div><div class="img" id="d-img"></div></div>
+    <section class="heroi" id="heroi">
       <div>
-        <h2 id="d-artista"></h2>
-        <div class="obra" id="d-titulo"></div>
-        <h4 class="sub">Sobre a obra</h4>
-        <p class="fato" id="d-descricao"></p>
-        <div id="d-bio-bloco" class="oculto">
-          <h4 class="sub">Sobre o artista</h4>
-          <p class="fato" id="d-bio"></p>
-          <a id="d-bio-link" class="link" target="_blank" rel="noopener" href="#">Ver o currículo completo na Galeria 33</a>
+        <div class="kicker"><span class="ao-vivo">Ao vivo</span><span id="subtitulo">Leilão de obras da Galeria 33</span></div>
+        <h1 id="titulo" aria-label="Arte em disputa"><span>Arte em</span><span class="vazado">disputa</span><span class="serif">lance a lance.</span></h1>
+        <p class="sub">Obras de artistas catarinenses e brasileiros, com lances abertos até o encerramento de cada lote. Cadastre-se, habilite-se e dispute.</p>
+        <div class="numeros" aria-live="polite">
+          <div><b id="h-abertos">–</b><span>lotes abertos</span></div>
+          <div><b id="h-total">–</b><span>em lances</span></div>
+          <div><b id="h-prox" data-fim="">–</b><span>próximo encerramento</span></div>
         </div>
-        <p class="fato"><b>Lance inicial</b><span id="d-inicial"></span></p>
-        <p class="fato"><b>Lance atual</b><span id="d-atual"></span></p>
-        <p class="fato"><b>Próximo lance mínimo</b><span id="d-minimo"></span></p>
-        <p class="fato"><b>Encerramento</b><span id="d-fim"></span></p>
-        <div class="cronometro" id="d-tempo"></div>
+      </div>
+      <button class="destaque oculto" id="h-feat" aria-label="Abrir lote em destaque"></button>
+    </section>
 
-        <div id="d-acesso" class="painel oculto"></div>
-        <form id="form-lance" class="oculto">
-          <input id="f-valor" type="number" min="0" step="100" placeholder="Valor do lance (R$)" required>
-          <label style="font: 13px system-ui, sans-serif; color: var(--muted);">
-            <input type="checkbox" id="f-aceite" required style="margin-right:6px;">
-            Li e aceito as condições do leilão e a comissão do leiloeiro.
-          </label>
-          <button type="submit" id="f-enviar">Dar lance</button>
-          <div class="msg" id="f-msg"></div>
-        </form>
-        <button class="fechar" id="voltar">Voltar aos lotes</button>
-        <div class="historico" id="d-historico"></div>
+    <div class="letreiro" aria-hidden="true"><div class="trilho" id="ticker"></div></div>
+
+    <section class="passos" aria-label="Como funciona">
+      <div><i>01</i><b>Crie sua conta</b><span>Cadastro com documento e termo de compromisso.</span></div>
+      <div><i>02</i><b>Seja aprovado</b><span>A Galeria 33 e o leiloeiro conferem seus dados.</span></div>
+      <div><i>03</i><b>Habilite-se</b><span>Em cada leilão, confirme sua senha e aceite o edital.</span></div>
+      <div><i>04</i><b>Dê seus lances</b><span>Até o último segundo. Lances no fim prorrogam o lote.</span></div>
+      <div><i>05</i><b>Pague em 7 dias</b><span>Link de pagamento por e-mail: Pix, cartão em até 6x, boleto ou PayPal.</span></div>
+    </section>
+
+    <section class="filtros" id="filtros" aria-label="Filtrar lotes">
+      <h2>Os lotes <em>em jogo</em></h2>
+      <div class="barra">
+        <input type="search" id="f-busca" placeholder="Buscar artista ou obra" aria-label="Buscar artista ou obra">
+        <select id="f-ordem" aria-label="Ordenar">
+          <option value="fim">Encerra primeiro</option>
+          <option value="maior">Maior lance</option>
+          <option value="menor">Menor lance</option>
+          <option value="az">Artista A–Z</option>
+        </select>
+        <label class="check"><input type="checkbox" id="f-abertos"> só abertos</label>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Artistas"></div>
+    </section>
+
+    <p class="carregando" id="carregando">Carregando lotes…</p>
+    <section class="galeria" id="lista" aria-live="polite"></section>
+
+    <section class="lote oculto" id="detalhe" aria-label="Lote">
+      <button class="voltar" id="voltar">← Todos os lotes</button>
+      <div class="lote-grade">
+        <div>
+          <button class="midia" id="d-img" aria-label="Ampliar imagem da obra"></button>
+          <div class="midia-dica">clique na imagem para ampliar</div>
+        </div>
+        <div class="painel-lote">
+          <div class="etiqueta"><span id="d-tag"></span><span class="ao-vivo" id="d-vivo">ao vivo</span></div>
+          <h2 id="d-artista"></h2>
+          <div class="obra" id="d-titulo"></div>
+          <h4 class="sub">Sobre a obra</h4>
+          <p class="texto" id="d-descricao"></p>
+
+          <div class="lance">
+            <div class="rot">Lance atual</div>
+            <div class="valor" id="d-atual" aria-live="polite"></div>
+            <div class="meta2"><span>inicial <b id="d-inicial"></b></span><span>próximo mínimo <b id="d-minimo"></b></span><span id="d-nlances"></span></div>
+            <div class="cont" id="d-tempo" role="timer" aria-label="Tempo restante"></div>
+            <div class="meta" id="d-fimtxt">encerra em <span id="d-fim"></span></div>
+
+            <div id="d-acesso" class="aviso-caixa oculto"></div>
+            <form id="form-lance" class="oculto" autocomplete="off">
+              <div class="rapidos" id="f-rapidos" role="group" aria-label="Valores rápidos"></div>
+              <label class="campo">Seu lance (R$)<input id="f-valor" inputmode="numeric" pattern="[0-9]*" placeholder="Valor do lance" required></label>
+              <label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);">
+                <input type="checkbox" id="f-aceite" required> Li e aceito as condições do leilão e a comissão do leiloeiro.
+              </label>
+              <button type="submit" class="grande" id="f-enviar">Dar lance</button>
+              <div class="msg" id="f-msg" role="status"></div>
+            </form>
+          </div>
+
+          <details class="bio oculto" id="d-bio-bloco" open>
+            <summary>Sobre o artista</summary>
+            <p id="d-bio"></p>
+            <a id="d-bio-link" class="link" target="_blank" rel="noopener" href="#">Ver o currículo completo na Galeria 33 ↗</a>
+          </details>
+          <div class="historico" id="d-historico"></div>
+        </div>
       </div>
     </section>
   </div>
 
-  <!-- ===== MINHA CONTA ===== -->
-  <div id="view-conta" class="oculto">
+<!-- ===== MINHA CONTA ===== -->
+  <div id="view-conta" class="oculto conta-pag"><h2>Minha conta</h2>
     <div id="c-carregando" class="carregando">Carregando…</div>
 
     <!-- visitante -->
@@ -201,10 +458,10 @@
         <h3>2. Documentos</h3>
         <p class="meta">Envie fotos nítidas, sem cortes e sem reflexo (JPG, PNG ou PDF). Os arquivos ficam em área privada, vistos só pela equipe e pelo leiloeiro.</p>
         <div class="form">
-          <div class="arq" data-tipo="frente"><span>Documento com foto (RG ou CNH): <b>frente</b> <span class="status" data-ok="frente">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
-          <div class="arq" data-tipo="verso"><span>Documento com foto: <b>verso</b> <span class="status" data-ok="verso">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
-          <div class="arq" data-tipo="selfie"><span><b>Foto sua segurando o documento</b>, com o rosto visível <span class="status" data-ok="selfie">pendente</span></span><input type="file" accept="image/*" capture="user"></div>
-          <div class="arq oculto" data-tipo="extra"><span><b>Empresa:</b> cartão CNPJ ou contrato social <span class="status" data-ok="extra">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
+          <div class="arq" data-tipo="frente"><span>Documento com foto (RG ou CNH): <b>frente</b> <span class="status" data-ok="frente">pendente</span></span><input type="file" aria-label="Documento com foto, frente" accept="image/*,application/pdf"></div>
+          <div class="arq" data-tipo="verso"><span>Documento com foto: <b>verso</b> <span class="status" data-ok="verso">pendente</span></span><input type="file" aria-label="Documento com foto, verso" accept="image/*,application/pdf"></div>
+          <div class="arq" data-tipo="selfie"><span><b>Foto sua segurando o documento</b>, com o rosto visível <span class="status" data-ok="selfie">pendente</span></span><input type="file" aria-label="Foto sua segurando o documento" accept="image/*" capture="user"></div>
+          <div class="arq oculto" data-tipo="extra"><span><b>Empresa:</b> cartão CNPJ ou contrato social <span class="status" data-ok="extra">pendente</span></span><input type="file" aria-label="Documento da empresa" accept="image/*,application/pdf"></div>
         </div>
         <div class="msg" id="a-msg"></div>
       </div>
@@ -230,15 +487,29 @@
   </div>
 
   <!-- ===== PAINEL DA EQUIPE ===== -->
-  <div id="view-admin" class="oculto">
+  <div id="view-admin" class="oculto admin-pag"><h2>Painel da equipe</h2>
     <div class="painel"><h3>Cadastros aguardando análise</h3><div id="ad-cad" class="carregando">Carregando…</div></div>
     <div class="painel"><h3>Habilitações aguardando análise</h3><div id="ad-hab" class="carregando">Carregando…</div></div>
     <div class="painel oculto" id="ad-ver"></div>
     <div class="msg" id="ad-msg"></div>
   </div>
 
+
+</main>
+
+<footer class="rodape">
+  <div class="grande-t" aria-hidden="true">Leilão 33</div>
   <div class="legal" id="legal"></div>
-</div>
+  <div class="legal" id="aviso"></div>
+</footer>
+
+<div class="barra-lance" id="barra-lance"><div><small>Lance atual</small><span id="bl-valor">–</span></div><button id="bl-ir">Dar lance</button></div>
+<div class="avisos" id="avisos" aria-live="assertive"></div>
+
+<dialog id="lightbox" aria-label="Imagem ampliada">
+  <button class="fecha" id="lb-x" aria-label="Fechar">✕</button>
+  <div class="zoom" id="lb-zoom"><img id="lb-img" alt=""></div>
+</dialog>
 
 <!-- modal de habilitação -->
 <div class="modal oculto" id="modal-hab">
@@ -257,18 +528,22 @@
   </div>
 </div>
 
+
+
 <script>
 /* ===== ESTADO ===== */
 let CONFIG = null;
 let lotes = [];
-let aberto = null;
-let detalhe = null;
+let aberto = null;        // id do lote aberto
+let detalhe = null;       // lote aberto, com histórico
 let estado = { logado: false };
 let relogio = null;
 let atualizacao = null;
 let leilaoAlvo = null;
-
+let valorAnterior = null; // para o brilho quando o lance muda
+const filtro = { q: "", artista: "", ordem: "fim", abertos: false };
 const $ = id => document.getElementById(id);
+const reduz = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ===== PONTE COM O WIX (Velo) =====
    A página roda no componente HTML do Wix. Cada pedido vai ao código de página
@@ -309,22 +584,73 @@ function api(acao, dados, espera = 20000) {
 const brl = v => v == null ? "—" : "R$ " + Number(v).toLocaleString("pt-BR");
 const dataHora = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const pad = n => String(n).padStart(2, "0");
+function partes(ms) {
+  return { d: Math.floor(ms / 86400000), h: Math.floor(ms % 86400000 / 3600000), m: Math.floor(ms % 3600000 / 60000), s: Math.floor(ms % 60000 / 1000) };
+}
 function tempoRestante(iso) {
   const ms = new Date(iso).getTime() - Date.now();
   if (ms <= 0) return "Encerrado";
-  const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000),
-        m = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
-  return (d ? d + "d " : "") + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  const t = partes(ms);
+  return (t.d ? t.d + "d " : "") + pad(t.h) + ":" + pad(t.m) + ":" + pad(t.s);
+}
+function relativo(iso) {
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 45) return "agora";
+  if (s < 3600) return "há " + Math.round(s / 60) + " min";
+  if (s < 86400) return "há " + Math.round(s / 3600) + " h";
+  return dataHora(iso);
 }
 function msg(el, texto, tipo) { el.textContent = texto || ""; el.className = "msg" + (tipo ? " " + tipo : ""); }
 const soNum = s => String(s || "").replace(/\D/g, "");
+function numeroLote(id) { return String(id || "").replace(/\D/g, "").padStart(3, "0"); }
+function incrementoPara(v) {
+  const regras = CONFIG && CONFIG.regras || {};
+  const esc2 = regras.incremento_escala;
+  if (!esc2 || !esc2.length) return regras.incremento_minimo_reais || 100;
+  const f = esc2.find(x => x.ate == null || v < x.ate);
+  return (f || esc2[esc2.length - 1]).passo;
+}
+function avisar(texto, tipo = "ok") {
+  const el = document.createElement("div");
+  el.className = "aviso-t " + tipo;
+  el.textContent = texto;
+  $("avisos").appendChild(el);
+  setTimeout(() => el.remove(), 4800);
+}
+function animarNumero(el, de, para) {
+  if (reduz || de == null || de === para) { el.textContent = brl(para); return; }
+  const t0 = performance.now(), dur = 800;
+  (function passo(t) {
+    const k = Math.min(1, (t - t0) / dur), v = Math.round(de + (para - de) * (1 - Math.pow(1 - k, 3)));
+    el.textContent = brl(v);
+    if (k < 1) requestAnimationFrame(passo); else el.textContent = brl(para);
+  })(t0);
+}
+function trocar(fn) {
+  if (!reduz && document.startViewTransition) document.startViewTransition(fn);
+  else fn();
+}
+
+/* ===== TEMA ===== */
+function iniciarTema() {
+  let t = null;
+  try { t = localStorage.getItem("tema33"); } catch (e) {}
+  if (t === "claro" || t === "escuro") document.documentElement.dataset.tema = t;
+}
+$("tema").onclick = () => {
+  const atual = document.documentElement.dataset.tema || (matchMedia("(prefers-color-scheme: light)").matches ? "claro" : "escuro");
+  const novo = atual === "claro" ? "escuro" : "claro";
+  document.documentElement.dataset.tema = novo;
+  try { localStorage.setItem("tema33", novo); } catch (e) {}
+};
 
 /* ===== CONFIG E LOTES ===== */
 async function carregarConfig() {
   CONFIG = await api("config");
-  $("titulo").textContent = CONFIG.textos.titulo;
-  $("subtitulo").textContent = CONFIG.textos.subtitulo;
-  $("aviso").textContent = CONFIG.textos.aviso;
+  if (CONFIG.textos.subtitulo) $("subtitulo").textContent = CONFIG.textos.subtitulo;
+  $("aviso").textContent = CONFIG.textos.aviso || "";
   $("legal").textContent =
     `Leilão conduzido pelo leiloeiro oficial ${CONFIG.leiloeiro.nome}, matrícula ${CONFIG.leiloeiro.matricula}. ` +
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
@@ -332,17 +658,288 @@ async function carregarConfig() {
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
     `A reserva não é divulgada.`;
 }
+function renderEsqueleto() {
+  $("lista").innerHTML = Array.from({ length: 6 }, () =>
+    `<div class="card sk" aria-hidden="true"><div class="foto"></div><i style="width:70%"></i><i style="width:45%"></i></div>`).join("");
+}
 async function carregarLotes() {
   try {
     const { lotes: lista } = await api("lotes");
     lotes = lista;
-    $("carregando").style.display = "none";
+    $("carregando").classList.add("oculto");
+    renderHeroi(); renderLetreiro(); renderChips();
     if (!aberto) renderLista();
   } catch (e) {
+    $("lista").innerHTML = "";
+    $("carregando").classList.remove("oculto");
     $("carregando").textContent = e.message.startsWith("Esta página") ? e.message : "Não foi possível carregar os lotes. Tente de novo em instantes.";
   }
 }
-async function carregarDetalhe(id) { detalhe = await api("lote", { id }); renderDetalhe(); }
+
+/* ===== HERÓI, LETREIRO E FILTROS ===== */
+function renderHeroi() {
+  const abertos = lotes.filter(l => !l.encerrado);
+  $("h-abertos").textContent = abertos.length;
+  $("h-total").textContent = brl(lotes.reduce((s, l) => s + (l.n_lances ? l.valor_atual : 0), 0));
+  const prox = abertos.slice().sort((a, b) => new Date(a.encerra_em) - new Date(b.encerra_em))[0];
+  $("h-prox").dataset.fim = prox ? prox.encerra_em : "";
+  $("h-prox").textContent = prox ? tempoRestante(prox.encerra_em) : "–";
+  const feat = $("h-feat");
+  if (prox && prox.imagem) {
+    feat.classList.remove("oculto");
+    feat.innerHTML = `<span class="etq">encerra primeiro</span><img src="${esc(prox.imagem)}" alt="${esc(prox.artista + ", " + prox.titulo)}">` +
+      `<div class="legenda"><b>${esc(prox.artista || prox.titulo)}</b><small>${esc(prox.titulo)} · ${brl(prox.valor_atual)}</small></div>`;
+    feat.onclick = () => abrir(prox.id);
+  } else feat.classList.add("oculto");
+}
+function renderLetreiro() {
+  const nomes = [...new Set(lotes.map(l => l.artista).filter(Boolean))];
+  if (!nomes.length) { $("ticker").parentElement.classList.add("oculto"); return; }
+  $("ticker").parentElement.classList.remove("oculto");
+  let base = nomes.slice();
+  while (base.length < 10) base = base.concat(nomes);
+  const metade = base.map(n => `<span>${esc(n)}</span>`).join("");
+  $("ticker").innerHTML = metade + metade;
+}
+function renderChips() {
+  const nomes = [...new Set(lotes.map(l => l.artista).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const ch = [`<button class="chip" aria-pressed="${filtro.artista === ""}" data-a="">Todos</button>`]
+    .concat(nomes.map(n => `<button class="chip" aria-pressed="${filtro.artista === n}" data-a="${esc(n)}">${esc(n)}</button>`));
+  $("chips").innerHTML = ch.join("");
+  $("chips").querySelectorAll(".chip").forEach(c => c.onclick = () => { filtro.artista = c.dataset.a; renderChips(); renderLista(); });
+}
+$("f-busca").addEventListener("input", e => { filtro.q = e.target.value; renderLista(); });
+$("f-ordem").addEventListener("change", e => { filtro.ordem = e.target.value; renderLista(); });
+$("f-abertos").addEventListener("change", e => { filtro.abertos = e.target.checked; renderLista(); });
+
+function listaFiltrada() {
+  let r = lotes.slice();
+  const q = norm(filtro.q);
+  if (q) r = r.filter(l => norm(l.artista + " " + l.titulo).includes(q));
+  if (filtro.artista) r = r.filter(l => l.artista === filtro.artista);
+  if (filtro.abertos) r = r.filter(l => !l.encerrado);
+  const por = {
+    fim: (a, b) => (a.encerrado - b.encerrado) || (new Date(a.encerra_em) - new Date(b.encerra_em)),
+    maior: (a, b) => b.valor_atual - a.valor_atual,
+    menor: (a, b) => a.valor_atual - b.valor_atual,
+    az: (a, b) => String(a.artista).localeCompare(String(b.artista), "pt-BR")
+  }[filtro.ordem];
+  return r.sort(por);
+}
+function revelar() {
+  const cards = document.querySelectorAll(".card:not(.in):not(.sk)");
+  if (!("IntersectionObserver" in window)) { cards.forEach(c => c.classList.add("in")); return; }
+  const io = new IntersectionObserver((itens) => itens.forEach(i => { if (i.isIntersecting) { i.target.classList.add("in"); io.unobserve(i.target); } }), { threshold: .08 });
+  cards.forEach(c => io.observe(c));
+}
+
+/* ===== LISTA ===== */
+function renderLista() {
+  const el = $("lista");
+  const r = listaFiltrada();
+  el.innerHTML = r.length ? r.map((l, i) => {
+    const enc = l.encerrado;
+    return `<article class="card ${enc ? "encerrado" : ""}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
+      <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span>
+        <span class="tempo" data-fim="${enc ? "" : esc(l.encerra_em)}">${enc ? "Encerrado" : tempoRestante(l.encerra_em)}</span>
+        ${l.imagem ? `<img src="${esc(l.imagem)}" alt="" loading="lazy" decoding="async">` : ""}</div>
+      <h3>${esc(l.artista || l.titulo)}</h3>
+      <div class="obra">${esc(l.titulo)}</div>
+      <div class="preco"><span>${enc ? "lance final" : "lance atual"}</span><b>${brl(l.valor_atual)}</b></div></article>`;
+  }).join("") : `<p class="vazio">Nenhum lote encontrado.</p>`;
+  el.querySelectorAll(".card").forEach(c => {
+    c.onclick = () => abrir(c.dataset.id, c);
+    c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(c.dataset.id, c); } };
+  });
+  revelar();
+  tick();
+}
+
+/* ===== LOTE ===== */
+function mostrarVitrine(sim) {
+  for (const id of ["heroi", "ticker", "filtros", "lista"]) { const e = $(id); const alvo = id === "ticker" ? e.parentElement : e; alvo.classList.toggle("oculto", !sim); }
+  document.querySelector(".passos").classList.toggle("oculto", !sim);
+  $("detalhe").classList.toggle("oculto", sim);
+  if (sim) $("carregando").classList.toggle("oculto", lotes.length > 0);
+  else $("carregando").classList.add("oculto");
+}
+async function abrir(id, card) {
+  let dados;
+  try { dados = await api("lote", { id }); }
+  catch (e) { avisar(e.message, "erro"); return; }
+  const img = card && card.querySelector(".foto img");
+  if (img) img.style.viewTransitionName = "lote-foto";
+  aberto = id; detalhe = dados; valorAnterior = null;
+  trocar(() => {
+    mostrarVitrine(false);
+    renderDetalhe();
+    $("d-img").style.viewTransitionName = "lote-foto";
+    if (img) img.style.viewTransitionName = "";
+    window.scrollTo({ top: 0 });
+  });
+  clearInterval(atualizacao);
+  atualizacao = setInterval(() => { if (aberto && !document.hidden) atualizarDetalhe(); }, 8000);
+}
+async function atualizarDetalhe() {
+  try { detalhe = await api("lote", { id: aberto }); renderDetalhe(); } catch (e) { /* tenta no próximo ciclo */ }
+}
+function voltar() {
+  aberto = null; detalhe = null; valorAnterior = null;
+  clearInterval(atualizacao);
+  $("barra-lance").classList.remove("vis");
+  trocar(() => { $("d-img").style.viewTransitionName = ""; mostrarVitrine(true); renderLista(); window.scrollTo({ top: 0 }); });
+  carregarLotes();
+}
+function renderDetalhe() {
+  const l = detalhe; if (!l) return;
+  $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc((l.artista || "") + ", " + l.titulo)}">` : "";
+  $("d-tag").textContent = "Lote " + numeroLote(l.id);
+  $("d-vivo").classList.toggle("oculto", !!l.encerrado);
+  $("d-artista").textContent = l.artista || l.titulo;
+  $("d-titulo").textContent = l.titulo;
+  $("d-descricao").textContent = l.descricao;
+  $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio);
+  $("d-bio").textContent = l.artista_bio || "";
+  const ln = $("d-bio-link"); ln.classList.toggle("oculto", !l.artista_link); if (l.artista_link) ln.href = l.artista_link;
+  $("d-inicial").textContent = brl(l.lance_inicial);
+  $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
+  $("d-nlances").textContent = l.n_lances + (l.n_lances === 1 ? " lance" : " lances");
+  $("d-fim").textContent = dataHora(l.encerra_em);
+  const alvo = $("d-atual");
+  if (valorAnterior !== l.valor_atual) {
+    animarNumero(alvo, valorAnterior, l.valor_atual);
+    if (valorAnterior != null) { alvo.classList.remove("flash"); void alvo.offsetWidth; alvo.classList.add("flash"); }
+    valorAnterior = l.valor_atual;
+  }
+  $("bl-valor").textContent = brl(l.valor_atual);
+  renderRapidos();
+  $("f-enviar").disabled = !!l.encerrado;
+  if (l.encerrado) {
+    msg($("f-msg"), l.resultado?.arrematado
+      ? `Lote arrematado por ${brl(l.resultado.valor)}. A Galeria 33 envia o link de pagamento ao arrematante.`
+      : "Lote encerrado sem atingir a reserva.");
+  }
+  const h = l.historico.slice().reverse();
+  $("d-historico").innerHTML = h.length
+    ? `<h4>Lances</h4>` + h.slice(0, 12).map((x, i) => `<div class="h ${i === 0 ? "topo" : ""}"><span>${esc(x.nome)} · ${esc(relativo(x.criado_em))}</span><b>${brl(x.valor)}</b></div>`).join("")
+    : `<h4>Lances</h4><div class="h"><span>Nenhum lance ainda. Seja o primeiro.</span></div>`;
+  renderAcesso();
+  atualizarContagem();
+}
+function renderRapidos() {
+  const l = detalhe, cx = $("f-rapidos");
+  if (!l || l.encerrado) { cx.innerHTML = ""; return; }
+  const m = l.minimo_proximo, i = incrementoPara(m);
+  const valores = [m, m + i, m + 2 * i, m + 5 * i];
+  cx.innerHTML = valores.map(v => `<button type="button" class="rapido" data-v="${v}" aria-pressed="false">${brl(v)}</button>`).join("");
+  const campo = $("f-valor");
+  if (!campo.value || Number(soNum(campo.value)) < m) campo.value = String(m);
+  const marca = () => cx.querySelectorAll(".rapido").forEach(b => b.setAttribute("aria-pressed", String(soNum(campo.value) === b.dataset.v)));
+  cx.querySelectorAll(".rapido").forEach(b => b.onclick = () => { campo.value = b.dataset.v; marca(); });
+  campo.oninput = marca; marca();
+}
+// Mostra o formulário de lance só para quem pode dar lance; os demais veem o que falta.
+function renderAcesso() {
+  const l = detalhe; if (!l) return;
+  atualizarBarra();
+  const caixa = $("d-acesso"), form = $("form-lance");
+  const irConta = `<button type="button" class="link" id="a-conta">Ir para Minha conta</button>`;
+  let html = "", pode = false;
+  if (l.encerrado) { caixa.classList.add("oculto"); form.classList.add("oculto"); $("barra-lance").classList.remove("vis"); return; }
+  const p = estado.participante;
+  const leilao = (estado.leiloes || []).find(x => x.id === l.leilao_id);
+  if (!estado.logado) html = `Para dar lances você precisa de uma conta com cadastro aprovado. ${irConta}`;
+  else if (!p || p.status === "rascunho") html = `Complete seu cadastro (dados, documentos e termo) para participar. ${irConta}`;
+  else if (p.status === "pendente") html = `Seu cadastro está em análise pela Galeria 33. Você poderá se habilitar assim que for aprovado.`;
+  else if (p.status === "recusado") html = `Seu cadastro foi recusado: ${esc(p.motivo)}. ${irConta}`;
+  else if (p.status === "bloqueado") html = `Seu cadastro está bloqueado. Fale com a Galeria 33.`;
+  else if (leilao && !leilao.hab && leilao.habilitacao_aberta) html = `Cadastro aprovado. Habilite-se neste leilão para dar lances: <button type="button" id="a-hab">Habilitar-me agora</button>`;
+  else if (!leilao || !leilao.hab) html = `Cadastro aprovado. A habilitação para este leilão não está aberta.`;
+  else if (leilao.hab.status === "pendente") html = `Sua habilitação neste leilão está em análise.`;
+  else if (leilao.hab.status === "recusado") html = `Sua habilitação foi cancelada: ${esc(leilao.hab.motivo)}. Fale com a Galeria 33.`;
+  else pode = true;
+  caixa.classList.toggle("oculto", pode);
+  caixa.innerHTML = html;
+  form.classList.toggle("oculto", !pode);
+  $("bl-ir").textContent = pode ? "Dar lance" : "Participar";
+  const b = $("a-conta"); if (b) b.onclick = () => mostrar("conta");
+  const bh = $("a-hab"); if (bh) bh.onclick = () => abrirModalHab(l.leilao_id);
+}
+function atualizarContagem() {
+  const l = detalhe; if (!l) return;
+  const c = $("d-tempo");
+  const ms = new Date(l.encerra_em).getTime() - Date.now();
+  if (ms <= 0) {
+    c.className = "cont fim"; c.textContent = "Lote encerrado";
+    if (!l.encerrado) atualizarDetalhe();
+    return;
+  }
+  const t = partes(ms);
+  c.className = "cont" + (ms < 3600000 ? " urgente" : "");
+  const v = [[t.d, t.d === 1 ? "dia" : "dias"], [pad(t.h), "horas"], [pad(t.m), "min"], [pad(t.s), "seg"]];
+  c.innerHTML = v.map(x => `<div><b>${x[0]}</b><small>${x[1]}</small></div>`).join("");
+}
+function tick() {
+  document.querySelectorAll("[data-fim]").forEach(el => {
+    const iso = el.dataset.fim;
+    if (!iso) { if (el.classList.contains("tempo")) el.classList.remove("urgente"); return; }
+    const ms = new Date(iso).getTime() - Date.now();
+    el.textContent = ms <= 0 ? "Encerrado" : tempoRestante(iso);
+    if (el.classList.contains("tempo")) el.classList.toggle("urgente", ms > 0 && ms < 3600000);
+  });
+  if (detalhe) atualizarContagem();
+}
+$("form-lance").addEventListener("submit", async e => {
+  e.preventDefault();
+  const botao = $("f-enviar");
+  const valor = Number(soNum($("f-valor").value));
+  if (!valor) { msg($("f-msg"), "Informe o valor do lance.", "erro"); return; }
+  botao.disabled = true;
+  try {
+    const r = await api("lance", { id: aberto, corpo: { valor, aceite: $("f-aceite").checked } });
+    msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
+    avisar("Lance de " + brl(r.valor) + " registrado. Você está na frente.");
+    $("f-valor").value = "";
+    await atualizarDetalhe();
+  } catch (err) {
+    msg($("f-msg"), err.message, "erro");
+    avisar(err.message, "erro");
+  } finally {
+    botao.disabled = !!(detalhe && detalhe.encerrado);
+  }
+});
+$("voltar").addEventListener("click", voltar);
+
+/* imagem ampliada */
+$("d-img").addEventListener("click", () => {
+  if (!detalhe || !detalhe.imagem) return;
+  $("lb-img").src = detalhe.imagem; $("lb-img").alt = detalhe.titulo;
+  $("lb-zoom").classList.remove("ampliado");
+  $("lightbox").showModal();
+});
+$("lb-zoom").addEventListener("click", () => $("lb-zoom").classList.toggle("ampliado"));
+$("lb-zoom").addEventListener("pointermove", e => {
+  if (!$("lb-zoom").classList.contains("ampliado")) return;
+  const r = $("lb-zoom").getBoundingClientRect();
+  $("lb-img").style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+});
+$("lb-x").addEventListener("click", () => $("lightbox").close());
+
+/* barra fixa de lance (celular) */
+$("bl-ir").addEventListener("click", () => {
+  const alvo = !$("form-lance").classList.contains("oculto") ? $("form-lance") : $("d-acesso");
+  alvo.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+let painelNaTela = true;
+function atualizarBarra() {
+  $("barra-lance").classList.toggle("vis", !!detalhe && !detalhe.encerrado && !painelNaTela);
+}
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver((itens) => {
+    painelNaTela = itens[itens.length - 1].isIntersecting;
+    atualizarBarra();
+  }, { threshold: 0 }).observe(document.querySelector(".lance"));
+}
 
 /* ===== ESTADO DA CONTA ===== */
 async function carregarEstado() {
@@ -356,10 +953,10 @@ function renderUsuario() {
   $("aba-admin").classList.toggle("oculto", !estado.admin);
   if (estado.logado) {
     const nome = estado.participante ? estado.participante.nome.split(" ")[0] : estado.email;
-    u.innerHTML = `Olá, ${esc(nome)} · <button class="link" id="u-sair">Sair</button>`;
+    u.innerHTML = `<span>${esc(nome)}</span> <button class="link" id="u-sair">sair</button>`;
     $("u-sair").onclick = sair;
   } else {
-    u.innerHTML = `<button class="link" id="u-entrar">Entrar ou criar conta</button>`;
+    u.innerHTML = `<button class="link" id="u-entrar">entrar</button>`;
     $("u-entrar").onclick = () => mostrar("conta");
   }
 }
@@ -379,124 +976,11 @@ function mostrar(qual) {
   }
   if (qual === "conta") { renderConta(); carregarEstado(); }
   if (qual === "admin") carregarAdmin();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: reduz ? "auto" : "smooth" });
 }
 $("aba-lotes").onclick = () => mostrar("lotes");
 $("aba-conta").onclick = () => mostrar("conta");
 $("aba-admin").onclick = () => mostrar("admin");
-
-/* ===== LISTA E DETALHE DE LOTES ===== */
-function renderLista() {
-  const el = $("lista");
-  el.style.display = "";
-  el.innerHTML = lotes.map(l => {
-    const fim = l.encerrado;
-    return `<article class="card" data-id="${esc(l.id)}">
-      <div class="img">${l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "imagem da obra"}</div>
-      <div class="body">
-        <h3>${esc(l.artista || l.titulo)}</h3>
-        <div class="obra">${esc(l.titulo)}</div>
-        <div class="price">${fim ? "Lance final: " + brl(l.valor_atual) : "Lance atual: " + brl(l.valor_atual)}</div>
-        <span class="status ${fim ? "encerrado" : "ativo"}">${fim ? "Encerrado" : "Aberto · " + tempoRestante(l.encerra_em)}</span>
-      </div></article>`;
-  }).join("");
-  el.querySelectorAll(".card").forEach(c => c.onclick = () => abrir(c.dataset.id));
-}
-async function abrir(id) {
-  aberto = id;
-  $("lista").style.display = "none";
-  $("detalhe").classList.add("ativo");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  await carregarDetalhe(id);
-  clearInterval(relogio);
-  relogio = setInterval(atualizarTempo, 1000);
-  clearInterval(atualizacao);
-  atualizacao = setInterval(() => { if (aberto) carregarDetalhe(aberto).catch(() => {}); }, 10000);
-}
-function voltar() {
-  aberto = null; detalhe = null;
-  clearInterval(relogio);
-  $("detalhe").classList.remove("ativo");
-  carregarLotes();
-}
-function renderDetalhe() {
-  const l = detalhe; if (!l) return;
-  $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "";
-  $("d-titulo").textContent = l.titulo;
-  $("d-artista").textContent = l.artista;
-  $("d-descricao").textContent = l.descricao;
-  $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio);
-  $("d-bio").textContent = l.artista_bio || "";
-  const ln = $("d-bio-link"); ln.classList.toggle("oculto", !l.artista_link); if (l.artista_link) ln.href = l.artista_link;
-  $("d-inicial").textContent = brl(l.lance_inicial);
-  $("d-atual").textContent = brl(l.valor_atual);
-  $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
-  $("d-fim").textContent = dataHora(l.encerra_em);
-  const valor = $("f-valor");
-  valor.min = l.minimo_proximo;
-  if (l.encerrado) valor.value = "";
-  else if (!valor.value || Number(valor.value) < l.minimo_proximo) valor.value = l.minimo_proximo;
-  $("f-enviar").disabled = l.encerrado;
-  if (l.encerrado) {
-    msg($("f-msg"), l.resultado?.arrematado
-      ? `Lote arrematado por ${brl(l.resultado.valor)}. A Galeria 33 envia o link de pagamento ao arrematante.`
-      : "Lote encerrado sem atingir a reserva.");
-  }
-  $("d-historico").innerHTML = l.historico.length
-    ? "<b>Lances</b><br>" + l.historico.map(x => `${dataHora(x.criado_em)} · ${brl(x.valor)} · ${esc(x.nome)}`).join("<br>")
-    : "Nenhum lance ainda.";
-  renderAcesso();
-  atualizarTempo();
-}
-// Mostra o formulário de lance só para quem pode dar lance; os demais veem o que falta.
-function renderAcesso() {
-  const l = detalhe; if (!l) return;
-  const caixa = $("d-acesso"), form = $("form-lance");
-  const irConta = `<button type="button" class="link" id="a-conta">Ir para Minha conta</button>`;
-  let html = "", pode = false;
-  if (l.encerrado) { caixa.classList.add("oculto"); form.classList.add("oculto"); return; }
-  const p = estado.participante;
-  const leilao = (estado.leiloes || []).find(x => x.id === l.leilao_id);
-  if (!estado.logado) html = `Para dar lances você precisa de uma conta com cadastro aprovado. ${irConta}`;
-  else if (!p || p.status === "rascunho") html = `Complete seu cadastro (dados, documentos e termo) para participar. ${irConta}`;
-  else if (p.status === "pendente") html = `Seu cadastro está em análise pela Galeria 33. Você será habilitado assim que for aprovado.`;
-  else if (p.status === "recusado") html = `Seu cadastro foi recusado: ${esc(p.motivo)}. ${irConta}`;
-  else if (p.status === "bloqueado") html = `Seu cadastro está bloqueado. Fale com a Galeria 33.`;
-  else if (leilao && !leilao.hab && leilao.habilitacao_aberta) html = `Cadastro aprovado. Habilite-se neste leilão para dar lances: <button type="button" id="a-hab" style="margin-top:8px">Habilitar-me agora</button>`;
-  else if (!leilao || !leilao.hab) html = `Cadastro aprovado. A habilitação para este leilão não está aberta.`;
-  else if (leilao.hab.status === "pendente") html = `Sua habilitação neste leilão está em análise.`;
-  else if (leilao.hab.status === "recusado") html = `Sua habilitação foi recusada: ${esc(leilao.hab.motivo)}. ${irConta}`;
-  else pode = true;
-  caixa.classList.toggle("oculto", pode);
-  caixa.innerHTML = html;
-  form.classList.toggle("oculto", !pode);
-  const b = $("a-conta"); if (b) b.onclick = () => mostrar("conta");
-  const bh = $("a-hab"); if (bh) bh.onclick = () => abrirModalHab(l.leilao_id);
-}
-function atualizarTempo() {
-  const l = detalhe; if (!l) return;
-  const el = $("d-tempo");
-  if (new Date(l.encerra_em).getTime() <= Date.now()) {
-    el.textContent = "Lote encerrado";
-    if (!l.encerrado) carregarDetalhe(aberto).catch(() => {});
-  } else el.textContent = "Encerra em " + tempoRestante(l.encerra_em);
-}
-$("form-lance").addEventListener("submit", async e => {
-  e.preventDefault();
-  const botao = $("f-enviar");
-  botao.disabled = true;
-  try {
-    const r = await api("lance", { id: aberto, corpo: { valor: Number($("f-valor").value), aceite: $("f-aceite").checked } });
-    msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
-    $("f-valor").value = "";
-    await carregarDetalhe(aberto);
-  } catch (err) {
-    msg($("f-msg"), err.message, "erro");
-  } finally {
-    botao.disabled = !!(detalhe && detalhe.encerrado);
-  }
-});
-$("voltar").addEventListener("click", voltar);
 
 /* ===== MINHA CONTA ===== */
 $("t-entrar").onclick = () => { $("form-entrar").classList.remove("oculto"); $("form-criar").classList.add("oculto"); $("t-entrar").classList.add("ativa"); $("t-criar").classList.remove("ativa"); };
@@ -777,12 +1261,17 @@ async function decidirHab(id, decisao) {
 }
 
 /* ===== INÍCIO ===== */
+iniciarTema();
+renderEsqueleto();
 carregarConfig()
   .then(() => Promise.all([carregarLotes(), carregarEstado()]))
   .catch((e) => {
+    $("lista").innerHTML = "";
+    $("carregando").classList.remove("oculto");
     $("carregando").textContent = e && e.message && e.message.startsWith("Esta página") ? e.message : "Não foi possível conectar ao servidor do leilão.";
   });
-setInterval(() => { if (!aberto && !$("view-lotes").classList.contains("oculto")) carregarLotes(); }, 15000);
+setInterval(tick, 1000);
+setInterval(() => { if (!aberto && !document.hidden && !$("view-lotes").classList.contains("oculto")) carregarLotes(); }, 15000);
 </script>
 </body>
 </html>
