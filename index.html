@@ -937,38 +937,41 @@ function renderDetalhe() {
   atualizarContagem();
 }
 
-// Oferta da reserva: só quem deu o último lance vê, e só depois do fim, se o valor mínimo não foi atingido.
-let ofertaConfirma = null; // "aceitar" | "recusar" | null
+// Oferta do valor mínimo de venda: só quem recebeu a oferta vê, e só depois do fim, se a reserva não foi atingida.
+// Primeiro vai ao último licitante (24 h); se ele recusar ou não responder, ao segundo colocado (mais 24 h).
+let ofertaConfirma = false; // confirmando a recusa
 function renderOferta(l) {
   const box = $("d-oferta"), o = l && l.oferta_reserva;
-  if (!o) { box.classList.add("oculto"); box.innerHTML = ""; ofertaConfirma = null; return; }
+  if (!o) { box.classList.add("oculto"); box.innerHTML = ""; ofertaConfirma = false; return; }
   const pc = comissaoPct();
   const total = pc ? Math.round(o.valor * (1 + pc / 100) * 100) / 100 : o.valor;
-  const confirmando = ofertaConfirma;
+  const segundo = o.posicao === 2;
+  const marcado = box.querySelector("#of-aceite") ? box.querySelector("#of-aceite").checked : false;
   box.classList.remove("oculto");
-  box.innerHTML = `<h4 id="of-tit">Seu lance foi o último, mas não atingiu o valor mínimo de venda.</h4>
-    <p>Você pode levar esta obra pelo valor mínimo de venda:</p>
+  box.innerHTML = `<h4 id="of-tit">${segundo ? "O primeiro colocado não ficou com a obra. Você pode levá-la." : "Seu lance foi o último, mas não atingiu o valor mínimo de venda."}</h4>
+    <p>${segundo ? "Você deu o segundo maior lance e pode levar esta obra pelo valor mínimo de venda:" : "Você pode levar esta obra pelo valor mínimo de venda:"}</p>
     <div class="valor-of">${brl(o.valor)}</div>
     ${pc ? `<p class="meta">Com a comissão do leiloeiro (${pc}%): ${brl(total)}</p>` : ""}
-    <p class="meta">Responda até ${dataHora(o.prazo)}. Sem resposta, o lote é encerrado sem venda e volta à loja.</p>
-    ${confirmando === "aceitar" ? `<p><b>Confirma que aceita arrematar por ${brl(o.valor)}?</b></p>` : confirmando === "recusar" ? `<p><b>Confirma que recusa? O lote será encerrado sem venda e voltará à loja.</b></p>` : ""}
-    <div class="bts">
-      ${confirmando ? `<button type="button" class="${confirmando === "aceitar" ? "aceitar" : "recusar"}" id="of-sim">${confirmando === "aceitar" ? "Sim, aceito" : "Sim, recuso"}</button><button type="button" class="recusar" id="of-nao">Voltar</button>`
-        : `<button type="button" class="aceitar" id="of-aceitar">Aceitar por ${brl(o.valor)}</button><button type="button" class="recusar" id="of-recusar">Recusar</button>`}
-    </div>`;
+    <p class="meta">Responda até ${dataHora(o.prazo)}. ${segundo ? "Sem resposta ou com recusa, o lote é encerrado sem venda e volta à loja." : "Sem resposta ou com recusa, a oferta passa ao segundo colocado."}</p>
+    ${ofertaConfirma ? `<p><b>Confirma que recusa? ${segundo ? "O lote será encerrado sem venda e voltará à loja." : "A oferta passará ao segundo colocado."}</b></p>
+      <div class="bts"><button type="button" class="recusar" id="of-sim-recusa">Sim, recuso</button><button type="button" class="recusar" id="of-nao">Voltar</button></div>`
+    : `<label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);"><input type="checkbox" id="of-aceite"${marcado ? " checked" : ""}> Li e aceito as condições do novo preço: levarei esta obra por ${brl(o.valor)}${pc ? `, mais ${pc}% de comissão do leiloeiro (total ${brl(total)})` : ""}, com pagamento em até 7 dias pelo link enviado por e-mail, conforme o edital do leilão.</label>
+      <div class="bts"><button type="button" class="aceitar" id="of-aceitar"${marcado ? "" : " disabled"}>Confirmar e arrematar por ${brl(o.valor)}</button><button type="button" class="recusar" id="of-recusar">Recusar</button></div>`}`;
   const q = id => box.querySelector("#" + id);
-  if (q("of-aceitar")) q("of-aceitar").onclick = () => { ofertaConfirma = "aceitar"; renderOferta(l); };
-  if (q("of-recusar")) q("of-recusar").onclick = () => { ofertaConfirma = "recusar"; renderOferta(l); };
-  if (q("of-nao")) q("of-nao").onclick = () => { ofertaConfirma = null; renderOferta(l); };
-  if (q("of-sim")) q("of-sim").onclick = async () => {
-    const aceitar = ofertaConfirma === "aceitar"; q("of-sim").disabled = true;
+  const enviar = async (aceitar, botao) => {
+    botao.disabled = true;
     try {
-      await api("responder_reserva", { id: l.id, aceitar });
-      avisar(aceitar ? "Você aceitou. A Galeria 33 envia o link de pagamento por e-mail." : "Você recusou. O lote volta à loja.", "ok");
+      await api("responder_reserva", { id: l.id, aceitar, aceite: aceitar ? !!(q("of-aceite") && q("of-aceite").checked) : false });
+      avisar(aceitar ? "Arremate confirmado. A Galeria 33 envia o link de pagamento por e-mail." : "Você recusou a oferta.", "ok");
     } catch (e) { avisar(e.message, "erro"); }
-    ofertaConfirma = null;
+    ofertaConfirma = false;
     await carregarLupa(); if (aberto === l.id) await atualizarDetalhe();
   };
+  if (q("of-aceite")) q("of-aceite").onchange = () => { q("of-aceitar").disabled = !q("of-aceite").checked; };
+  if (q("of-aceitar")) q("of-aceitar").onclick = () => enviar(true, q("of-aceitar"));
+  if (q("of-recusar")) q("of-recusar").onclick = () => { ofertaConfirma = true; renderOferta(l); };
+  if (q("of-nao")) q("of-nao").onclick = () => { ofertaConfirma = false; renderOferta(l); };
+  if (q("of-sim-recusa")) q("of-sim-recusa").onclick = () => enviar(false, q("of-sim-recusa"));
 }
 function renderEstimativa(l) {
   const e = $("d-estim");
@@ -1160,7 +1163,7 @@ function aplicarLupa(novos) {
     agora[l.id] = st;
     const a = statusAnt[l.id];
     if (st === "oferta" && a !== st && a) {
-      avisar("Reserva mínima não atingida em " + (l.artista || l.titulo) + ". Veja a oferta e responda.", "erro"); tom("mau"); vibrar([200, 100, 200]); return;
+      avisar("Você recebeu uma oferta para levar " + (l.artista || l.titulo) + ". Entre no lote e responda.", "erro"); tom("mau"); vibrar([200, 100, 200]); return;
     }
     if (!lupaLigada || !a || a === st) return;
     if (st === "coberto") {
@@ -1235,7 +1238,7 @@ function renderLupa() {
   if (logado && ofertas.length) {
     const l = ofertas[0];
     faixa.className = "lupa-faixa oferta-f";
-    faixa.innerHTML = `<div class="txt"><span>Reserva mínima não atingida em <b>${esc(l.artista || l.titulo)}</b>. Você pode levar a obra por ${brl(l.oferta_reserva.valor)}.</span><small>Responda até <span class="tempo-f" data-fim="${esc(l.oferta_reserva.prazo)}">${tempoRestante(l.oferta_reserva.prazo)}</span></small></div>
+    faixa.innerHTML = `<div class="txt"><span>${l.oferta_reserva.posicao === 2 ? "Você pode levar" : "Reserva mínima não atingida em"} <b>${esc(l.artista || l.titulo)}</b>${l.oferta_reserva.posicao === 2 ? "" : ". Você pode levar a obra"} por ${brl(l.oferta_reserva.valor)}.</span><small>Responda até <span class="tempo-f" data-fim="${esc(l.oferta_reserva.prazo)}">${tempoRestante(l.oferta_reserva.prazo)}</span></small></div>
       <div class="acoes"><button type="button" class="cobrir" data-abrir="${esc(l.id)}">Ver oferta</button></div>`;
     faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
   } else if (ligada) {
@@ -1308,6 +1311,16 @@ function renderLances() {
   alvo.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
 }
 
+
+// Link específico da oferta (galeria33.com/...?oferta=L002): abre direto o lote, depois do login.
+let linkOferta = null;
+function tratarLinkOferta() {
+  if (!linkOferta) return;
+  if (!estado.logado) { if ($("view-conta").classList.contains("oculto")) { avisar("Entre na sua conta para responder à oferta.", "erro"); mostrar("conta"); } return; }
+  const id = linkOferta; linkOferta = null;
+  mostrar("lotes"); abrir(id);
+}
+
 /* ===== ESTADO DA CONTA ===== */
 async function carregarEstado() {
   try { estado = await api("estado"); } catch (e) { estado = { logado: false, erro: e.message }; }
@@ -1315,6 +1328,7 @@ async function carregarEstado() {
   if (!$("view-conta").classList.contains("oculto")) renderConta();
   if (detalhe) renderAcesso();
   await carregarLupa();
+  tratarLinkOferta();
 }
 function renderUsuario() {
   const u = $("usuario");
@@ -1635,6 +1649,7 @@ async function decidirHab(id, decisao) {
 iniciarTema();
 renderEsqueleto();
 carregarConfig()
+  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; }, () => {}))
   .then(() => Promise.all([carregarLotes(), carregarEstado()]))
   .catch((e) => {
     $("lista").innerHTML = "";
