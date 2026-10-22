@@ -450,7 +450,8 @@ function renderAcesso() {
   else if (p.status === "pendente") html = `Seu cadastro está em análise pela Galeria 33. Você será habilitado assim que for aprovado.`;
   else if (p.status === "recusado") html = `Seu cadastro foi recusado: ${esc(p.motivo)}. ${irConta}`;
   else if (p.status === "bloqueado") html = `Seu cadastro está bloqueado. Fale com a Galeria 33.`;
-  else if (!leilao || !leilao.hab) html = `Cadastro aprovado. Falta se habilitar neste leilão. ${irConta}`;
+  else if (leilao && !leilao.hab && leilao.habilitacao_aberta) html = `Cadastro aprovado. Habilite-se neste leilão para dar lances: <button type="button" id="a-hab" style="margin-top:8px">Habilitar-me agora</button>`;
+  else if (!leilao || !leilao.hab) html = `Cadastro aprovado. A habilitação para este leilão não está aberta.`;
   else if (leilao.hab.status === "pendente") html = `Sua habilitação neste leilão está em análise.`;
   else if (leilao.hab.status === "recusado") html = `Sua habilitação foi recusada: ${esc(leilao.hab.motivo)}. ${irConta}`;
   else pode = true;
@@ -458,6 +459,7 @@ function renderAcesso() {
   caixa.innerHTML = html;
   form.classList.toggle("oculto", !pode);
   const b = $("a-conta"); if (b) b.onclick = () => mostrar("conta");
+  const bh = $("a-hab"); if (bh) bh.onclick = () => abrirModalHab(l.leilao_id);
 }
 function atualizarTempo() {
   const l = detalhe; if (!l) return;
@@ -691,6 +693,7 @@ $("form-hab").addEventListener("submit", async e => {
     $("modal-hab").classList.add("oculto");
     msg($("h-msg"), "Você está habilitado neste leilão e já pode dar lances.", "ok");
     await carregarEstado();
+    if (detalhe) { renderAcesso(); msg($("f-msg"), "Você está habilitado neste leilão. Já pode dar lances.", "ok"); }
   } catch (err) { msg($("m-msg"), err.message, "erro"); }
   finally { botao.disabled = false; }
 });
