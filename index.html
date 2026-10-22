@@ -836,11 +836,17 @@ function listaFiltrada() {
   }[filtro.ordem];
   return r.sort(por);
 }
+const jaVistos = new Set(); // lotes que já apareceram: nas atualizações da lista não somem nem animam de novo
 function revelar() {
   const cards = document.querySelectorAll(".card:not(.in):not(.sk)");
-  if (!("IntersectionObserver" in window)) { cards.forEach(c => c.classList.add("in")); return; }
-  const io = new IntersectionObserver((itens) => itens.forEach(i => { if (i.isIntersecting) { i.target.classList.add("in"); io.unobserve(i.target); } }), { threshold: .08 });
-  cards.forEach(c => io.observe(c));
+  const mostrar = c => { c.classList.add("in"); if (c.dataset.id) jaVistos.add(c.dataset.id); };
+  cards.forEach(c => { if (jaVistos.has(c.dataset.id)) { c.style.transition = "none"; mostrar(c); } });
+  const faltam = [...cards].filter(c => !c.classList.contains("in"));
+  if (!("IntersectionObserver" in window)) { faltam.forEach(mostrar); return; }
+  const io = new IntersectionObserver((itens) => itens.forEach(i => { if (i.isIntersecting) { mostrar(i.target); io.unobserve(i.target); } }), { threshold: .08 });
+  faltam.forEach(c => io.observe(c));
+  // Rede de segurança: dentro do Wix a observação pode falhar; nenhum lote fica escondido.
+  setTimeout(() => faltam.forEach(mostrar), 1800);
 }
 
 /* ===== LISTA ===== */
