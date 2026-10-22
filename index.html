@@ -27,7 +27,8 @@
   .card .img { aspect-ratio: 4/3; background:#ddd7cc; display:flex; align-items:center; justify-content:center; color:var(--muted); font: 14px system-ui, sans-serif; }
   .card .img img { width:100%; height:100%; object-fit:cover; }
   .card .body { padding:12px 14px 14px; }
-  .card h3 { margin:0 0 2px; font-size:1.05rem; }
+  .card h3 { margin:0 0 2px; font-size:1.3rem; line-height:1.2; }
+  .card .obra { font: 500 15px Georgia, serif; font-style: italic; margin: 0 0 4px; }
   .meta { font: 13px system-ui, sans-serif; color: var(--muted); }
   .price { font: 600 15px system-ui, sans-serif; margin-top:8px; }
   .status { display:inline-block; font:12px system-ui, sans-serif; padding:2px 8px; border-radius:99px; border:1px solid var(--line); margin-top:6px; }
@@ -40,7 +41,8 @@
   @media (max-width: 760px) { .detalhe.ativo { grid-template-columns: 1fr; } }
   .detalhe .img { background:#ddd7cc; aspect-ratio:4/3; border-radius:8px; overflow:hidden; }
   .detalhe .img img { width:100%; height:100%; object-fit:cover; }
-  .detalhe h2 { margin:0 0 4px; }
+  .detalhe h2 { margin:0 0 2px; font-size:2rem; line-height:1.15; }
+  .detalhe .obra { font: italic 500 1.2rem Georgia, serif; margin: 0 0 10px; }
   .fato { font: 14px/1.5 system-ui, sans-serif; margin: 6px 0; }
   .sub { margin: 14px 0 2px; font: 600 13px system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .fato b { display:inline-block; min-width:150px; margin-right:10px; color: var(--muted); font-weight:500; }
@@ -100,8 +102,8 @@
     <section class="detalhe" id="detalhe">
       <div><div class="img" id="d-img"></div></div>
       <div>
-        <h2 id="d-titulo"></h2>
-        <div class="meta" id="d-artista"></div>
+        <h2 id="d-artista"></h2>
+        <div class="obra" id="d-titulo"></div>
         <h4 class="sub">Sobre a obra</h4>
         <p class="fato" id="d-descricao"></p>
         <div id="d-bio-bloco" class="oculto">
@@ -392,8 +394,8 @@ function renderLista() {
     return `<article class="card" data-id="${esc(l.id)}">
       <div class="img">${l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "imagem da obra"}</div>
       <div class="body">
-        <h3>${esc(l.titulo)}</h3>
-        <div class="meta">${esc(l.artista)}</div>
+        <h3>${esc(l.artista || l.titulo)}</h3>
+        <div class="obra">${esc(l.titulo)}</div>
         <div class="price">${fim ? "Lance final: " + brl(l.valor_atual) : "Lance atual: " + brl(l.valor_atual)}</div>
         <span class="status ${fim ? "encerrado" : "ativo"}">${fim ? "Encerrado" : "Aberto · " + tempoRestante(l.encerra_em)}</span>
       </div></article>`;
