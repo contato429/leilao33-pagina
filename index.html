@@ -631,6 +631,7 @@
     <div class="painel" id="ad-arr-painel">
       <div class="ad-topo"><h3>Arremates e cobranças</h3>
         <div class="ad-bts"><button type="button" id="ad-arr-atualizar">Atualizar</button><button type="button" id="ad-rotina" title="Roda agora o que normalmente roda de hora em hora">Rodar a rotina agora</button><button type="button" id="ad-csv">Copiar planilha</button></div></div>
+      <div class="ad-bts" style="margin:8px 0"><input id="ad-teste-para" type="email" placeholder="e-mail para o teste" autocomplete="off" style="flex:1; min-width:200px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink); font:400 .85rem var(--sans)"><button type="button" id="ad-teste">Enviar 4 e-mails de teste</button></div>
       <div class="meta" id="ad-arr-resumo"></div>
       <div class="msg" id="ad-arr-msg" role="status"></div>
       <div id="ad-arr" class="carregando">Carregando…</div>
@@ -1838,6 +1839,14 @@ async function acaoArremate(id, ac, el) {
   await carregarArremates(true);
 }
 $("ad-arr-atualizar").onclick = () => carregarArremates();
+$("ad-teste").onclick = async () => {
+  const para = $("ad-teste-para").value.trim();
+  if (!para) { msg($("ad-arr-msg"), "Digite o e-mail que vai receber o teste.", "erro"); return; }
+  $("ad-teste").disabled = true; msg($("ad-arr-msg"), "Enviando os e-mails de teste…");
+  try { const r = await api("admin_email_teste", { para, id: "L99" }, 60000); msg($("ad-arr-msg"), "Enviados para " + r.para + ": " + r.feito.join(", ") + ". Confira a caixa de entrada e o spam.", "ok"); }
+  catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
+  $("ad-teste").disabled = false;
+};
 $("ad-rotina").onclick = async () => {
   msg($("ad-arr-msg"), "Rodando a rotina…");
   try { const r = await api("admin_rotina"); msg($("ad-arr-msg"), r.feito && r.feito.length ? "Rotina feita: " + r.feito.join("; ") : "Rotina feita: nada a mudar.", "ok"); }
