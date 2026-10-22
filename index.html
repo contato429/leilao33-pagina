@@ -5,15 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LEILÃO 33 · Galeria 33</title>
 <style>
-  :root { --ink:#1b1b1b; --muted:#6b6b6b; --line:#e6e3dc; --paper:#faf9f6; --accent:#8a1c1c; --ok:#2e6b3a; }
+  :root { --ink:#1b1b1b; --muted:#6b6b6b; --line:#e6e3dc; --paper:#faf9f6; --accent:#8a1c1c; --ok:#2e6b3a; --warn:#8a5a00; }
   @media (prefers-color-scheme: dark) {
-    :root { --ink:#f1efe9; --muted:#a4a099; --line:#34322e; --paper:#161514; --accent:#e07b7b; --ok:#8fd19e; }
+    :root { --ink:#f1efe9; --muted:#a4a099; --line:#34322e; --paper:#161514; --accent:#e07b7b; --ok:#8fd19e; --warn:#e8c36a; }
   }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--paper); color:var(--ink); font-family: Georgia, "Times New Roman", serif; }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
   header h1 { font-size: 2rem; letter-spacing: .08em; margin: 0 0 4px; }
   header p { color: var(--muted); margin: 0 0 8px; }
+  .barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin: 14px 0 6px; font: 14px system-ui, sans-serif; }
+  .abas { display:flex; gap:6px; flex-wrap:wrap; }
+  .aba { background:transparent; color:var(--muted); border:1px solid var(--line); padding:8px 12px; font: 600 14px system-ui, sans-serif; }
+  .aba.ativa { color:var(--ink); border-color:var(--ink); }
+  .usuario { color:var(--muted); display:flex; gap:10px; align-items:center; }
+  .link { background:none; border:0; color:var(--accent); padding:0; font: 14px system-ui, sans-serif; text-decoration:underline; cursor:pointer; }
   .aviso { font: 14px/1.4 system-ui, sans-serif; background: #fff4d6; color:#5b4500; padding:10px 12px; border-radius:6px; margin: 12px 0 20px; }
   @media (prefers-color-scheme: dark) { .aviso { background:#3a3112; color:#f3e3a6; } }
   .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:18px; }
@@ -25,8 +31,10 @@
   .meta { font: 13px system-ui, sans-serif; color: var(--muted); }
   .price { font: 600 15px system-ui, sans-serif; margin-top:8px; }
   .status { display:inline-block; font:12px system-ui, sans-serif; padding:2px 8px; border-radius:99px; border:1px solid var(--line); margin-top:6px; }
-  .status.ativo { color: var(--ok); border-color: var(--ok); }
+  .status.ativo, .status.ok { color: var(--ok); border-color: var(--ok); }
   .status.encerrado { color: var(--muted); }
+  .status.pend { color: var(--warn); border-color: var(--warn); }
+  .status.neg { color: var(--accent); border-color: var(--accent); }
   .detalhe { display:none; margin-top:24px; border-top:1px solid var(--line); padding-top:20px; }
   .detalhe.ativo { display:grid; grid-template-columns: 1fr 1fr; gap:24px; }
   @media (max-width: 760px) { .detalhe.ativo { grid-template-columns: 1fr; } }
@@ -36,10 +44,14 @@
   .fato { font: 14px/1.5 system-ui, sans-serif; margin: 6px 0; }
   .fato b { display:inline-block; min-width:150px; color: var(--muted); font-weight:500; }
   .cronometro { font: 600 18px system-ui, sans-serif; margin: 12px 0; }
-  form { display:grid; gap:10px; margin-top:12px; font: 14px system-ui, sans-serif; }
-  input { padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); font: 15px system-ui, sans-serif; }
+  form, .form { display:grid; gap:10px; margin-top:12px; font: 14px system-ui, sans-serif; }
+  label.campo { display:grid; gap:4px; color:var(--muted); font: 13px system-ui, sans-serif; }
+  input, select, textarea { padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); font: 15px system-ui, sans-serif; width:100%; }
+  input[type=checkbox], input[type=radio] { width:auto; }
+  textarea { min-height: 70px; }
   button { padding:11px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; font: 600 15px system-ui, sans-serif; cursor:pointer; }
   button:disabled { opacity:.45; cursor:not-allowed; }
+  button.sec { background:transparent; color:var(--ink); border:1px solid var(--line); }
   .msg { font: 14px system-ui, sans-serif; min-height: 20px; }
   .msg.erro { color: var(--accent); }
   .msg.ok { color: var(--ok); }
@@ -47,6 +59,19 @@
   .legal { font: 12px/1.5 system-ui, sans-serif; color: var(--muted); margin-top: 28px; border-top:1px solid var(--line); padding-top:14px; }
   .fechar { background:transparent; color:var(--muted); border:1px solid var(--line); margin-top:8px; }
   .carregando { font: 14px system-ui, sans-serif; color: var(--muted); }
+  .oculto { display:none !important; }
+  .painel { border:1px solid var(--line); border-radius:10px; padding:16px; margin: 14px 0; font: 14px/1.5 system-ui, sans-serif; }
+  .painel h3 { margin: 0 0 6px; font: 600 16px system-ui, sans-serif; }
+  .duas { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  @media (max-width: 640px) { .duas { grid-template-columns: 1fr; } }
+  .termo { max-height: 260px; overflow:auto; white-space: pre-wrap; border:1px solid var(--line); border-radius:6px; padding:12px; font: 13px/1.5 system-ui, sans-serif; background: rgba(127,127,127,.06); }
+  .arq { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border:1px dashed var(--line); border-radius:8px; padding:10px; }
+  .arq input { width:auto; max-width:100%; }
+  .linha { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-bottom:1px solid var(--line); padding:8px 0; }
+  .docs { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:10px; }
+  .docs img { width:100%; border-radius:6px; border:1px solid var(--line); }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; z-index:10; }
+  .modal .caixa { background:var(--paper); border-radius:10px; padding:18px; max-width:560px; width:100%; max-height:92vh; overflow:auto; }
 </style>
 </head>
 <body>
@@ -55,62 +80,202 @@
     <h1 id="titulo">LEILÃO 33</h1>
     <p id="subtitulo"></p>
   </header>
+
+  <div class="barra">
+    <div class="abas">
+      <button class="aba ativa" id="aba-lotes">Lotes</button>
+      <button class="aba" id="aba-conta">Minha conta</button>
+      <button class="aba oculto" id="aba-admin">Painel da equipe</button>
+    </div>
+    <div class="usuario" id="usuario"></div>
+  </div>
   <div class="aviso" id="aviso"></div>
 
-  <p class="carregando" id="carregando">Carregando lotes…</p>
-  <section class="grid" id="lista"></section>
+  <!-- ===== LOTES ===== -->
+  <div id="view-lotes">
+    <p class="carregando" id="carregando">Carregando lotes…</p>
+    <section class="grid" id="lista"></section>
 
-  <section class="detalhe" id="detalhe">
-    <div>
-      <div class="img" id="d-img"></div>
-    </div>
-    <div>
-      <h2 id="d-titulo"></h2>
-      <div class="meta" id="d-artista"></div>
-      <p class="fato" id="d-descricao"></p>
-      <p class="fato"><b>Lance inicial</b><span id="d-inicial"></span></p>
-      <p class="fato"><b>Lance atual</b><span id="d-atual"></span></p>
-      <p class="fato"><b>Próximo lance mínimo</b><span id="d-minimo"></span></p>
-      <p class="fato"><b>Encerramento</b><span id="d-fim"></span></p>
-      <div class="cronometro" id="d-tempo"></div>
+    <section class="detalhe" id="detalhe">
+      <div><div class="img" id="d-img"></div></div>
+      <div>
+        <h2 id="d-titulo"></h2>
+        <div class="meta" id="d-artista"></div>
+        <p class="fato" id="d-descricao"></p>
+        <p class="fato"><b>Lance inicial</b><span id="d-inicial"></span></p>
+        <p class="fato"><b>Lance atual</b><span id="d-atual"></span></p>
+        <p class="fato"><b>Próximo lance mínimo</b><span id="d-minimo"></span></p>
+        <p class="fato"><b>Encerramento</b><span id="d-fim"></span></p>
+        <div class="cronometro" id="d-tempo"></div>
 
-      <form id="form-lance">
-        <input id="f-nome" placeholder="Nome completo" required>
-        <input id="f-email" type="email" placeholder="E-mail" required>
-        <input id="f-valor" type="number" min="0" step="100" placeholder="Valor do lance (R$)" required>
-        <label style="font: 13px system-ui, sans-serif; color: var(--muted);">
-          <input type="checkbox" id="f-aceite" required style="margin-right:6px;">
-          Li e aceito as condições do leilão e a comissão do leiloeiro.
-        </label>
-        <button type="submit" id="f-enviar">Dar lance</button>
-        <div class="msg" id="f-msg"></div>
+        <div id="d-acesso" class="painel oculto"></div>
+        <form id="form-lance" class="oculto">
+          <input id="f-valor" type="number" min="0" step="100" placeholder="Valor do lance (R$)" required>
+          <label style="font: 13px system-ui, sans-serif; color: var(--muted);">
+            <input type="checkbox" id="f-aceite" required style="margin-right:6px;">
+            Li e aceito as condições do leilão e a comissão do leiloeiro.
+          </label>
+          <button type="submit" id="f-enviar">Dar lance</button>
+          <div class="msg" id="f-msg"></div>
+        </form>
+        <button class="fechar" id="voltar">Voltar aos lotes</button>
+        <div class="historico" id="d-historico"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== MINHA CONTA ===== -->
+  <div id="view-conta" class="oculto">
+    <div id="c-carregando" class="carregando">Carregando…</div>
+
+    <!-- visitante -->
+    <div id="c-visitante" class="oculto">
+      <div class="abas" style="margin-bottom:10px">
+        <button class="aba ativa" id="t-entrar">Entrar</button>
+        <button class="aba" id="t-criar">Criar conta</button>
+      </div>
+      <form id="form-entrar" class="painel">
+        <label class="campo">E-mail<input id="e-email" type="email" autocomplete="username" required></label>
+        <label class="campo">Senha<input id="e-senha" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Entrar</button>
+        <button type="button" class="link" id="e-esqueci">Esqueci minha senha</button>
+        <div class="msg" id="e-msg"></div>
       </form>
-      <button class="fechar" id="voltar">Voltar aos lotes</button>
-      <div class="historico" id="d-historico"></div>
+      <form id="form-criar" class="painel oculto">
+        <p class="meta">Para dar lances você cria uma conta, envia seus documentos e assina o termo de compromisso. A Galeria 33 confere tudo antes de liberar.</p>
+        <label class="campo">Nome completo<input id="r-nome" autocomplete="name" required></label>
+        <label class="campo">E-mail<input id="r-email" type="email" autocomplete="username" required></label>
+        <div class="duas">
+          <label class="campo">Senha (mínimo 8 caracteres)<input id="r-senha" type="password" autocomplete="new-password" minlength="8" required></label>
+          <label class="campo">Repita a senha<input id="r-senha2" type="password" autocomplete="new-password" minlength="8" required></label>
+        </div>
+        <button type="submit">Criar conta</button>
+        <div class="msg" id="r-msg"></div>
+      </form>
     </div>
-  </section>
+
+    <!-- logado -->
+    <div id="c-logado" class="oculto">
+      <div class="painel" id="c-resumo"></div>
+
+      <!-- passo 1: dados -->
+      <form id="form-dados" class="painel oculto">
+        <h3>1. Seus dados</h3>
+        <div class="duas">
+          <label class="campo">CPF ou CNPJ<input id="d-doc" inputmode="numeric" required></label>
+          <label class="campo" id="l-nome">Nome completo<input id="d-nome" autocomplete="name" required></label>
+        </div>
+        <div class="duas oculto" id="bloco-rep">
+          <label class="campo">Nome completo do representante<input id="d-rep-nome"></label>
+          <label class="campo">CPF do representante<input id="d-rep-cpf" inputmode="numeric"></label>
+        </div>
+        <div class="duas">
+          <label class="campo" id="l-nasc">Data de nascimento<input id="d-nasc" type="date" required></label>
+          <label class="campo">Telefone com DDD<input id="d-tel" type="tel" autocomplete="tel" required></label>
+        </div>
+        <div class="duas">
+          <label class="campo">CEP<input id="d-cep" inputmode="numeric" autocomplete="postal-code" required></label>
+          <label class="campo">Cidade/UF<input id="d-cidade" autocomplete="address-level2" placeholder="Joinville/SC" required></label>
+        </div>
+        <label class="campo">Endereço (rua, número, bairro)<input id="d-end" autocomplete="street-address" required></label>
+        <fieldset style="border:1px solid var(--line); border-radius:6px; padding:8px 12px;">
+          <legend class="meta">Você é pessoa politicamente exposta (PEP)?</legend>
+          <label><input type="radio" name="pep" value="nao" checked> Não</label>
+          <label style="margin-left:14px"><input type="radio" name="pep" value="sim"> Sim</label>
+        </fieldset>
+        <button type="submit" id="d-salvar">Salvar dados</button>
+        <div class="msg" id="d-msg"></div>
+      </form>
+
+      <!-- passo 2: documentos -->
+      <div id="p-docs" class="painel oculto">
+        <h3>2. Documentos</h3>
+        <p class="meta">Envie fotos nítidas, sem cortes e sem reflexo (JPG, PNG ou PDF). Os arquivos ficam em área privada, vistos só pela equipe e pelo leiloeiro.</p>
+        <div class="form">
+          <div class="arq" data-tipo="frente"><span>Documento com foto (RG ou CNH): <b>frente</b> <span class="status" data-ok="frente">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
+          <div class="arq" data-tipo="verso"><span>Documento com foto: <b>verso</b> <span class="status" data-ok="verso">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
+          <div class="arq" data-tipo="selfie"><span><b>Foto sua segurando o documento</b>, com o rosto visível <span class="status" data-ok="selfie">pendente</span></span><input type="file" accept="image/*" capture="user"></div>
+          <div class="arq oculto" data-tipo="extra"><span><b>Empresa:</b> cartão CNPJ ou contrato social <span class="status" data-ok="extra">pendente</span></span><input type="file" accept="image/*,application/pdf"></div>
+        </div>
+        <div class="msg" id="a-msg"></div>
+      </div>
+
+      <!-- passo 3: termo -->
+      <form id="form-termo" class="painel oculto">
+        <h3>3. Termo de compromisso</h3>
+        <div class="termo" id="t-texto"></div>
+        <label style="font: 13px system-ui, sans-serif;"><input type="checkbox" id="t-aceite" style="margin-right:6px;">Li e aceito o termo acima.</label>
+        <label class="campo" id="l-assina">Para assinar, digite seu nome completo<input id="t-nome" autocomplete="off"></label>
+        <button type="submit" id="t-enviar">Assinar e enviar para análise</button>
+        <div class="msg" id="t-msg"></div>
+      </form>
+
+      <!-- leilões -->
+      <div id="p-leiloes" class="painel oculto">
+        <h3>Habilitação nos leilões</h3>
+        <p class="meta">Para dar lances em cada leilão você precisa se habilitar nele, confirmando sua senha. A Galeria 33 aprova cada habilitação.</p>
+        <div id="l-lista"></div>
+        <div class="msg" id="h-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAINEL DA EQUIPE ===== -->
+  <div id="view-admin" class="oculto">
+    <div class="painel"><h3>Cadastros aguardando análise</h3><div id="ad-cad" class="carregando">Carregando…</div></div>
+    <div class="painel"><h3>Habilitações aguardando análise</h3><div id="ad-hab" class="carregando">Carregando…</div></div>
+    <div class="painel oculto" id="ad-ver"></div>
+    <div class="msg" id="ad-msg"></div>
+  </div>
 
   <div class="legal" id="legal"></div>
 </div>
 
-<script>
-/* ===== ENDEREÇO DA API ===== */
+<!-- modal de habilitação -->
+<div class="modal oculto" id="modal-hab">
+  <div class="caixa">
+    <h3 id="m-titulo" style="margin-top:0"></h3>
+    <div class="termo" id="m-texto"></div>
+    <form id="form-hab">
+      <label style="font: 13px system-ui, sans-serif;"><input type="checkbox" id="m-aceite" style="margin-right:6px;">Li e aceito.</label>
+      <label class="campo">Digite sua senha para confirmar<input id="m-senha" type="password" autocomplete="current-password" required></label>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" id="m-ok">Confirmar habilitação</button>
+        <button type="button" class="sec" id="m-cancelar">Cancelar</button>
+      </div>
+      <div class="msg" id="m-msg"></div>
+    </form>
+  </div>
+</div>
 
+<script>
 /* ===== ESTADO ===== */
 let CONFIG = null;
-let lotes = [];        // resumo de cada lote (vem de /api/lotes)
-let aberto = null;     // id do lote aberto
-let detalhe = null;    // lote aberto com histórico (vem de /api/lotes/:id)
+let lotes = [];
+let aberto = null;
+let detalhe = null;
+let estado = { logado: false };
 let relogio = null;
 let atualizacao = null;
+let leilaoAlvo = null;
 
-/* ===== API ===== */
+const $ = id => document.getElementById(id);
+
 /* ===== PONTE COM O WIX (Velo) =====
    A página roda no componente HTML do Wix. Cada pedido vai ao código de página
-   por postMessage, e a resposta volta com o mesmo id. */
+   por postMessage, e a resposta volta com o mesmo id. Só conversa com o site da Galeria 33:
+   senhas e documentos nunca são enviados a outra origem. */
+const ORIGENS_OK = /^https:\/\/([a-z0-9-]+\.)*(galeria33\.com|wix\.com|wixsite\.com|wixstudio\.com|wixstudio\.io|editorx\.io)$/;
+function origemDoSite() {
+  let o = "";
+  try { o = (location.ancestorOrigins && location.ancestorOrigins[0]) || ""; } catch (e) {}
+  if (!o && document.referrer) { try { o = new URL(document.referrer).origin; } catch (e) {} }
+  return ORIGENS_OK.test(o) ? o : null;
+}
 const pendentes = new Map();
 let sequencia = 0;
 window.addEventListener("message", (e) => {
+  if (e.source !== window.parent) return;
   const m = e.data;
   if (!m || m.id === undefined || !pendentes.has(m.id)) return;
   const p = pendentes.get(m.id);
@@ -118,44 +283,17 @@ window.addEventListener("message", (e) => {
   if (m.ok) p.resolve(m.dados);
   else p.reject(new Error(m.erro || "Falha no servidor."));
 });
-function api(acao, dados) {
+function api(acao, dados, espera = 20000) {
   return new Promise((resolve, reject) => {
+    const alvo = origemDoSite();
+    if (!alvo) { reject(new Error("Esta página só funciona dentro do site galeria33.com.")); return; }
     const id = ++sequencia;
     pendentes.set(id, { resolve, reject });
-    window.parent.postMessage({ id, acao, dados }, "*");
+    window.parent.postMessage({ id, acao, dados }, alvo);
     setTimeout(() => {
       if (pendentes.has(id)) { pendentes.delete(id); reject(new Error("O servidor demorou para responder. Tente de novo.")); }
-    }, 15000);
+    }, espera);
   });
-}
-
-async function carregarConfig() {
-  CONFIG = await api("config");
-  document.getElementById("titulo").textContent = CONFIG.textos.titulo;
-  document.getElementById("subtitulo").textContent = CONFIG.textos.subtitulo;
-  document.getElementById("aviso").textContent = CONFIG.textos.aviso;
-  document.getElementById("legal").textContent =
-    `Leilão conduzido pelo leiloeiro oficial ${CONFIG.leiloeiro.nome}, matrícula ${CONFIG.leiloeiro.matricula}. ` +
-    `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
-    `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
-    `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
-    `A reserva não é divulgada.`;
-}
-
-async function carregarLotes() {
-  try {
-    const { lotes: lista } = await api("lotes");
-    lotes = lista;
-    document.getElementById("carregando").style.display = "none";
-    if (!aberto) renderLista();
-  } catch (e) {
-    document.getElementById("carregando").textContent = "Não foi possível carregar os lotes. Tente de novo em instantes.";
-  }
-}
-
-async function carregarDetalhe(id) {
-  detalhe = await api("lote", { id });
-  renderDetalhe();
 }
 
 /* ===== FORMATAÇÃO ===== */
@@ -169,10 +307,78 @@ function tempoRestante(iso) {
         m = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
   return (d ? d + "d " : "") + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
+function msg(el, texto, tipo) { el.textContent = texto || ""; el.className = "msg" + (tipo ? " " + tipo : ""); }
+const soNum = s => String(s || "").replace(/\D/g, "");
 
-/* ===== TELAS ===== */
+/* ===== CONFIG E LOTES ===== */
+async function carregarConfig() {
+  CONFIG = await api("config");
+  $("titulo").textContent = CONFIG.textos.titulo;
+  $("subtitulo").textContent = CONFIG.textos.subtitulo;
+  $("aviso").textContent = CONFIG.textos.aviso;
+  $("legal").textContent =
+    `Leilão conduzido pelo leiloeiro oficial ${CONFIG.leiloeiro.nome}, matrícula ${CONFIG.leiloeiro.matricula}. ` +
+    `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
+    `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
+    `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
+    `A reserva não é divulgada.`;
+}
+async function carregarLotes() {
+  try {
+    const { lotes: lista } = await api("lotes");
+    lotes = lista;
+    $("carregando").style.display = "none";
+    if (!aberto) renderLista();
+  } catch (e) {
+    $("carregando").textContent = e.message.startsWith("Esta página") ? e.message : "Não foi possível carregar os lotes. Tente de novo em instantes.";
+  }
+}
+async function carregarDetalhe(id) { detalhe = await api("lote", { id }); renderDetalhe(); }
+
+/* ===== ESTADO DA CONTA ===== */
+async function carregarEstado() {
+  try { estado = await api("estado"); } catch (e) { estado = { logado: false, erro: e.message }; }
+  renderUsuario();
+  if (!$("view-conta").classList.contains("oculto")) renderConta();
+  if (detalhe) renderAcesso();
+}
+function renderUsuario() {
+  const u = $("usuario");
+  $("aba-admin").classList.toggle("oculto", !estado.admin);
+  if (estado.logado) {
+    const nome = estado.participante ? estado.participante.nome.split(" ")[0] : estado.email;
+    u.innerHTML = `Olá, ${esc(nome)} · <button class="link" id="u-sair">Sair</button>`;
+    $("u-sair").onclick = sair;
+  } else {
+    u.innerHTML = `<button class="link" id="u-entrar">Entrar ou criar conta</button>`;
+    $("u-entrar").onclick = () => mostrar("conta");
+  }
+}
+async function sair() {
+  try { await api("sair"); } catch (e) {}
+  estado = { logado: false };
+  renderUsuario(); renderConta();
+  if (detalhe) renderAcesso();
+  setTimeout(carregarEstado, 800);
+}
+
+/* ===== ABAS ===== */
+function mostrar(qual) {
+  for (const v of ["lotes", "conta", "admin"]) {
+    $("view-" + v).classList.toggle("oculto", v !== qual);
+    $("aba-" + v).classList.toggle("ativa", v === qual);
+  }
+  if (qual === "conta") { renderConta(); carregarEstado(); }
+  if (qual === "admin") carregarAdmin();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+$("aba-lotes").onclick = () => mostrar("lotes");
+$("aba-conta").onclick = () => mostrar("conta");
+$("aba-admin").onclick = () => mostrar("admin");
+
+/* ===== LISTA E DETALHE DE LOTES ===== */
 function renderLista() {
-  const el = document.getElementById("lista");
+  const el = $("lista");
   el.style.display = "";
   el.innerHTML = lotes.map(l => {
     const fim = l.encerrado;
@@ -187,102 +393,381 @@ function renderLista() {
   }).join("");
   el.querySelectorAll(".card").forEach(c => c.onclick = () => abrir(c.dataset.id));
 }
-
 async function abrir(id) {
   aberto = id;
-  document.getElementById("lista").style.display = "none";
-  document.getElementById("detalhe").classList.add("ativo");
+  $("lista").style.display = "none";
+  $("detalhe").classList.add("ativo");
   window.scrollTo({ top: 0, behavior: "smooth" });
   await carregarDetalhe(id);
   clearInterval(relogio);
   relogio = setInterval(atualizarTempo, 1000);
-  // Atualiza o lote aberto a cada 10 s, para ver lances de outros.
   clearInterval(atualizacao);
   atualizacao = setInterval(() => { if (aberto) carregarDetalhe(aberto).catch(() => {}); }, 10000);
 }
-
 function voltar() {
   aberto = null; detalhe = null;
   clearInterval(relogio);
-  document.getElementById("detalhe").classList.remove("ativo");
+  $("detalhe").classList.remove("ativo");
   carregarLotes();
 }
-
 function renderDetalhe() {
   const l = detalhe; if (!l) return;
-  document.getElementById("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "";
-  document.getElementById("d-titulo").textContent = l.titulo;
-  document.getElementById("d-artista").textContent = l.artista;
-  document.getElementById("d-descricao").textContent = l.descricao;
-  document.getElementById("d-inicial").textContent = brl(l.lance_inicial);
-  document.getElementById("d-atual").textContent = brl(l.valor_atual);
-  document.getElementById("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
-  document.getElementById("d-fim").textContent = dataHora(l.encerra_em);
-  // Não mexe no que a pessoa já digitou; só preenche se estiver vazio ou abaixo do novo mínimo.
-  const valor = document.getElementById("f-valor");
+  $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc(l.titulo)}">` : "";
+  $("d-titulo").textContent = l.titulo;
+  $("d-artista").textContent = l.artista;
+  $("d-descricao").textContent = l.descricao;
+  $("d-inicial").textContent = brl(l.lance_inicial);
+  $("d-atual").textContent = brl(l.valor_atual);
+  $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
+  $("d-fim").textContent = dataHora(l.encerra_em);
+  const valor = $("f-valor");
   valor.min = l.minimo_proximo;
   if (l.encerrado) valor.value = "";
   else if (!valor.value || Number(valor.value) < l.minimo_proximo) valor.value = l.minimo_proximo;
-  document.getElementById("f-enviar").disabled = l.encerrado;
-  const msg = document.getElementById("f-msg");
+  $("f-enviar").disabled = l.encerrado;
   if (l.encerrado) {
-    msg.textContent = l.resultado?.arrematado
-      ? `Lote arrematado por ${brl(l.resultado.valor)}. O leiloeiro entra em contato com o arrematante.`
-      : "Lote encerrado sem atingir a reserva.";
-    msg.className = "msg";
+    msg($("f-msg"), l.resultado?.arrematado
+      ? `Lote arrematado por ${brl(l.resultado.valor)}. A Galeria 33 envia o link de pagamento ao arrematante.`
+      : "Lote encerrado sem atingir a reserva.");
   }
-  document.getElementById("d-historico").innerHTML = l.historico.length
+  $("d-historico").innerHTML = l.historico.length
     ? "<b>Lances</b><br>" + l.historico.map(x => `${dataHora(x.criado_em)} · ${brl(x.valor)} · ${esc(x.nome)}`).join("<br>")
     : "Nenhum lance ainda.";
+  renderAcesso();
   atualizarTempo();
 }
-
+// Mostra o formulário de lance só para quem pode dar lance; os demais veem o que falta.
+function renderAcesso() {
+  const l = detalhe; if (!l) return;
+  const caixa = $("d-acesso"), form = $("form-lance");
+  const irConta = `<button type="button" class="link" id="a-conta">Ir para Minha conta</button>`;
+  let html = "", pode = false;
+  if (l.encerrado) { caixa.classList.add("oculto"); form.classList.add("oculto"); return; }
+  const p = estado.participante;
+  const leilao = (estado.leiloes || []).find(x => x.id === l.leilao_id);
+  if (!estado.logado) html = `Para dar lances você precisa de uma conta com cadastro aprovado. ${irConta}`;
+  else if (!p || p.status === "rascunho") html = `Complete seu cadastro (dados, documentos e termo) para participar. ${irConta}`;
+  else if (p.status === "pendente") html = `Seu cadastro está em análise pela Galeria 33. Você será habilitado assim que for aprovado.`;
+  else if (p.status === "recusado") html = `Seu cadastro foi recusado: ${esc(p.motivo)}. ${irConta}`;
+  else if (p.status === "bloqueado") html = `Seu cadastro está bloqueado. Fale com a Galeria 33.`;
+  else if (!leilao || !leilao.hab) html = `Cadastro aprovado. Falta se habilitar neste leilão. ${irConta}`;
+  else if (leilao.hab.status === "pendente") html = `Sua habilitação neste leilão está em análise.`;
+  else if (leilao.hab.status === "recusado") html = `Sua habilitação foi recusada: ${esc(leilao.hab.motivo)}. ${irConta}`;
+  else pode = true;
+  caixa.classList.toggle("oculto", pode);
+  caixa.innerHTML = html;
+  form.classList.toggle("oculto", !pode);
+  const b = $("a-conta"); if (b) b.onclick = () => mostrar("conta");
+}
 function atualizarTempo() {
   const l = detalhe; if (!l) return;
-  const el = document.getElementById("d-tempo");
+  const el = $("d-tempo");
   if (new Date(l.encerra_em).getTime() <= Date.now()) {
     el.textContent = "Lote encerrado";
     if (!l.encerrado) carregarDetalhe(aberto).catch(() => {});
-  } else {
-    el.textContent = "Encerra em " + tempoRestante(l.encerra_em);
-  }
+  } else el.textContent = "Encerra em " + tempoRestante(l.encerra_em);
 }
-
-/* ===== LANCE ===== */
-document.getElementById("form-lance").addEventListener("submit", async e => {
+$("form-lance").addEventListener("submit", async e => {
   e.preventDefault();
-  const msg = document.getElementById("f-msg");
-  const botao = document.getElementById("f-enviar");
+  const botao = $("f-enviar");
   botao.disabled = true;
   try {
-    const r = await api("lance", { id: aberto, corpo: {
-        nome: document.getElementById("f-nome").value,
-        email: document.getElementById("f-email").value,
-        valor: Number(document.getElementById("f-valor").value),
-        aceite: document.getElementById("f-aceite").checked,
-      },
-    });
-    msg.textContent = "Lance registrado: " + brl(r.valor) + ".";
-    msg.className = "msg ok";
-    document.getElementById("f-valor").value = "";
+    const r = await api("lance", { id: aberto, corpo: { valor: Number($("f-valor").value), aceite: $("f-aceite").checked } });
+    msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
+    $("f-valor").value = "";
     await carregarDetalhe(aberto);
   } catch (err) {
-    msg.textContent = err.message;
-    msg.className = "msg erro";
+    msg($("f-msg"), err.message, "erro");
   } finally {
     botao.disabled = !!(detalhe && detalhe.encerrado);
   }
 });
+$("voltar").addEventListener("click", voltar);
 
-document.getElementById("voltar").addEventListener("click", voltar);
+/* ===== MINHA CONTA ===== */
+$("t-entrar").onclick = () => { $("form-entrar").classList.remove("oculto"); $("form-criar").classList.add("oculto"); $("t-entrar").classList.add("ativa"); $("t-criar").classList.remove("ativa"); };
+$("t-criar").onclick = () => { $("form-criar").classList.remove("oculto"); $("form-entrar").classList.add("oculto"); $("t-criar").classList.add("ativa"); $("t-entrar").classList.remove("ativa"); };
+
+$("form-entrar").addEventListener("submit", async e => {
+  e.preventDefault();
+  msg($("e-msg"), "Entrando…");
+  try {
+    await api("entrar", { email: $("e-email").value, senha: $("e-senha").value });
+    $("e-senha").value = "";
+    msg($("e-msg"), "");
+    await carregarEstado();
+    if (!estado.logado) msg($("e-msg"), "Não foi possível entrar. Confira e-mail e senha, ou confirme seu e-mail se acabou de criar a conta.", "erro");
+  } catch (err) { msg($("e-msg"), err.message, "erro"); }
+});
+$("e-esqueci").onclick = async () => { try { await api("esqueci"); } catch (err) { msg($("e-msg"), err.message, "erro"); } };
+
+$("form-criar").addEventListener("submit", async e => {
+  e.preventDefault();
+  const m = $("r-msg");
+  const senha = $("r-senha").value;
+  if (senha.length < 8) { msg(m, "A senha precisa ter pelo menos 8 caracteres.", "erro"); return; }
+  if (senha !== $("r-senha2").value) { msg(m, "As senhas não são iguais.", "erro"); return; }
+  if ($("r-nome").value.trim().split(/\s+/).length < 2) { msg(m, "Informe seu nome completo.", "erro"); return; }
+  msg(m, "Criando conta…");
+  try {
+    const r = await api("registrar", { nome: $("r-nome").value, email: $("r-email").value, senha });
+    $("r-senha").value = ""; $("r-senha2").value = "";
+    if (r && r.status === "PENDING") {
+      msg(m, "Conta criada. Enviamos um e-mail para confirmar seu endereço. Depois de confirmar, entre aqui.", "ok");
+    } else {
+      msg(m, "Conta criada.", "ok");
+      await carregarEstado();
+    }
+  } catch (err) { msg(m, err.message, "erro"); }
+});
+
+const ROTULO_STATUS = { rascunho: "Cadastro em preenchimento", pendente: "Em análise pela Galeria 33", aprovado: "Cadastro aprovado", recusado: "Cadastro recusado", bloqueado: "Cadastro bloqueado" };
+
+function renderConta() {
+  $("c-carregando").classList.add("oculto");
+  const logado = !!estado.logado;
+  $("c-visitante").classList.toggle("oculto", logado);
+  $("c-logado").classList.toggle("oculto", !logado);
+  if (!logado) { if (estado.erro) { $("c-visitante").classList.remove("oculto"); msg($("e-msg"), estado.erro, "erro"); } return; }
+
+  const p = estado.participante;
+  const status = p ? p.status : "novo";
+  const editavel = !p || p.status === "rascunho" || p.status === "recusado";
+  let resumo = `<h3>${p ? esc(ROTULO_STATUS[status] || status) : "Vamos começar seu cadastro"}</h3><div class="meta">${esc(estado.email)}${p ? " · " + esc(p.documento_mascarado) : ""}</div>`;
+  if (status === "recusado") resumo += `<p class="msg erro">Motivo: ${esc(p.motivo)}. Corrija os dados e os documentos e assine de novo.</p>`;
+  if (status === "pendente") resumo += `<p>Recebemos seu cadastro e o termo assinado. A Galeria 33 e o leiloeiro vão conferir os documentos. Volte aqui para ver o resultado.</p>`;
+  if (status === "aprovado") resumo += `<p>Seu cadastro está aprovado. Agora é só se habilitar em cada leilão.</p>`;
+  if (status === "bloqueado") resumo += `<p class="msg erro">Fale com a Galeria 33: contato@galeria33.com.</p>`;
+  $("c-resumo").innerHTML = resumo;
+
+  $("form-dados").classList.toggle("oculto", !editavel);
+  $("p-docs").classList.toggle("oculto", !(editavel && p));
+  $("form-termo").classList.toggle("oculto", !(editavel && p));
+  $("p-leiloes").classList.toggle("oculto", status !== "aprovado");
+
+  if (editavel) preencherDados(p);
+  if (editavel && p) { renderDocs(p); renderTermo(p); }
+  if (status === "aprovado") renderLeiloes();
+}
+
+function preencherDados(p) {
+  if (!p || $("form-dados").dataset.pronto === (p.documento_mascarado || "")) return;
+  $("form-dados").dataset.pronto = p.documento_mascarado || "";
+  const d = p.dados;
+  $("d-doc").value = d.documento || ""; $("d-nome").value = d.nome || ""; $("d-nasc").value = d.nascimento || "";
+  $("d-tel").value = d.telefone || ""; $("d-cep").value = d.cep || ""; $("d-cidade").value = d.cidade_uf || ""; $("d-end").value = d.endereco || "";
+  $("d-rep-nome").value = d.representante_nome || ""; $("d-rep-cpf").value = d.representante_cpf || "";
+  document.querySelector(`input[name=pep][value=${d.pep ? "sim" : "nao"}]`).checked = true;
+  ajustarTipo();
+}
+function ajustarTipo() {
+  const pj = soNum($("d-doc").value).length === 14;
+  $("bloco-rep").classList.toggle("oculto", !pj);
+  $("l-nome").firstChild.textContent = pj ? "Razão social" : "Nome completo";
+  $("l-nasc").firstChild.textContent = pj ? "Nascimento do representante" : "Data de nascimento";
+  document.querySelector('[data-tipo=extra]').classList.toggle("oculto", !pj);
+}
+$("d-doc").addEventListener("input", ajustarTipo);
+
+$("form-dados").addEventListener("submit", async e => {
+  e.preventDefault();
+  const botao = $("d-salvar"); botao.disabled = true;
+  msg($("d-msg"), "Salvando…");
+  try {
+    await api("salvar_dados", {
+      documento: $("d-doc").value, nome: $("d-nome").value, nascimento: $("d-nasc").value, telefone: $("d-tel").value,
+      cep: $("d-cep").value, cidade_uf: $("d-cidade").value, endereco: $("d-end").value,
+      representante_nome: $("d-rep-nome").value, representante_cpf: $("d-rep-cpf").value,
+      pep: document.querySelector("input[name=pep]:checked").value === "sim"
+    });
+    msg($("d-msg"), "Dados salvos. Agora envie os documentos.", "ok");
+    $("form-dados").dataset.pronto = "";
+    await carregarEstado();
+  } catch (err) { msg($("d-msg"), err.message, "erro"); }
+  finally { botao.disabled = false; }
+});
+
+/* documentos */
+function renderDocs(p) {
+  for (const t of ["frente", "verso", "selfie", "extra"]) {
+    const el = document.querySelector(`[data-ok=${t}]`);
+    const ok = !!p.arquivos[t];
+    el.textContent = ok ? "enviado" : "pendente";
+    el.className = "status " + (ok ? "ok" : "pend");
+  }
+}
+function lerBase64(blobOuArquivo) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1] || "");
+    r.onerror = () => rej(new Error("Não foi possível ler o arquivo."));
+    r.readAsDataURL(blobOuArquivo);
+  });
+}
+// Reduz fotos para no máximo 1600 px (JPG), para o envio ser rápido e leve.
+async function prepararArquivo(arq) {
+  if (arq.type === "application/pdf") {
+    if (arq.size > 3.5 * 1024 * 1024) throw new Error("PDF muito grande (máximo 3,5 MB). Envie uma foto do documento.");
+    return { mime: "application/pdf", base64: await lerBase64(arq) };
+  }
+  if (!arq.type.startsWith("image/")) throw new Error("Envie uma foto (JPG ou PNG) ou um PDF.");
+  let img;
+  try { img = await createImageBitmap(arq); }
+  catch (e) { throw new Error("Não consegui abrir essa foto. Use JPG ou PNG."); }
+  const escala = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * escala); c.height = Math.round(img.height * escala);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.85));
+  if (!blob) throw new Error("Não consegui preparar a foto.");
+  return { mime: "image/jpeg", base64: await lerBase64(blob) };
+}
+document.querySelectorAll(".arq input[type=file]").forEach(inp => {
+  inp.addEventListener("change", async () => {
+    const tipo = inp.closest(".arq").dataset.tipo, m = $("a-msg");
+    if (!inp.files[0]) return;
+    msg(m, "Enviando…"); inp.disabled = true;
+    try {
+      const a = await prepararArquivo(inp.files[0]);
+      await api("enviar_arquivo", { tipo, mime: a.mime, base64: a.base64 }, 60000);
+      msg(m, "Arquivo enviado.", "ok");
+      inp.value = "";
+      await carregarEstado();
+    } catch (err) { msg(m, err.message, "erro"); }
+    finally { inp.disabled = false; }
+  });
+});
+
+/* termo */
+function renderTermo(p) {
+  $("t-texto").textContent = estado.termoCadastro.texto;
+  const pj = p.tipo_pessoa === "PJ";
+  $("l-assina").firstChild.textContent = pj ? "Para assinar, o representante digita seu nome completo" : "Para assinar, digite seu nome completo";
+  const pronto = p.faltando.length === 0;
+  $("t-enviar").disabled = !pronto;
+  msg($("t-msg"), pronto ? "" : "Envie todos os documentos para liberar a assinatura.");
+}
+$("form-termo").addEventListener("submit", async e => {
+  e.preventDefault();
+  const botao = $("t-enviar"); botao.disabled = true;
+  msg($("t-msg"), "Enviando…");
+  try {
+    await api("assinar_termo", { nomeDigitado: $("t-nome").value, aceite: $("t-aceite").checked, agente: navigator.userAgent });
+    msg($("t-msg"), "Termo assinado. Seu cadastro foi enviado para análise.", "ok");
+    $("t-nome").value = ""; $("t-aceite").checked = false;
+    await carregarEstado();
+  } catch (err) { msg($("t-msg"), err.message, "erro"); botao.disabled = false; }
+});
+
+/* habilitação */
+function renderLeiloes() {
+  const lista = estado.leiloes || [];
+  $("l-lista").innerHTML = lista.length ? lista.map(l => {
+    let acao = "";
+    if (!l.hab) acao = l.habilitacao_aberta ? `<button data-hab="${esc(l.id)}">Habilitar-me</button>` : `<span class="status">habilitação fechada</span>`;
+    else if (l.hab.status === "pendente") acao = `<span class="status pend">em análise</span>`;
+    else if (l.hab.status === "habilitado") acao = `<span class="status ok">habilitado</span>`;
+    else acao = `<span class="status neg">recusada: ${esc(l.hab.motivo)}</span> ${l.habilitacao_aberta ? `<button class="sec" data-hab="${esc(l.id)}">Pedir de novo</button>` : ""}`;
+    return `<div class="linha"><span>${esc(l.nome)}</span><span>${acao}</span></div>`;
+  }).join("") : "<p class='meta'>Nenhum leilão aberto no momento.</p>";
+  $("l-lista").querySelectorAll("[data-hab]").forEach(b => b.onclick = () => abrirModalHab(b.dataset.hab));
+}
+function abrirModalHab(id) {
+  const l = (estado.leiloes || []).find(x => x.id === id); if (!l) return;
+  leilaoAlvo = id;
+  $("m-titulo").textContent = l.termo.titulo;
+  $("m-texto").textContent = l.termo.texto;
+  $("m-aceite").checked = false; $("m-senha").value = ""; msg($("m-msg"), "");
+  $("modal-hab").classList.remove("oculto");
+}
+$("m-cancelar").onclick = () => { $("modal-hab").classList.add("oculto"); $("m-senha").value = ""; };
+$("form-hab").addEventListener("submit", async e => {
+  e.preventDefault();
+  const botao = $("m-ok"); botao.disabled = true;
+  msg($("m-msg"), "Conferindo sua senha…");
+  try {
+    const r = await api("habilitar", { leilaoId: leilaoAlvo, aceite: $("m-aceite").checked, email: estado.email, senha: $("m-senha").value });
+    $("m-senha").value = "";
+    $("modal-hab").classList.add("oculto");
+    msg($("h-msg"), r.status === "habilitado" ? "Você já está habilitado." : "Pedido enviado. A Galeria 33 vai analisar sua habilitação.", "ok");
+    await carregarEstado();
+  } catch (err) { msg($("m-msg"), err.message, "erro"); }
+  finally { botao.disabled = false; }
+});
+
+/* ===== PAINEL DA EQUIPE ===== */
+async function carregarAdmin() {
+  $("ad-ver").classList.add("oculto");
+  try {
+    const r = await api("admin_listar");
+    $("ad-cad").className = "";
+    $("ad-cad").innerHTML = r.cadastros.length ? r.cadastros.map(c =>
+      `<div class="linha"><span>${esc(c.nome)} <span class="meta">(${c.tipo_pessoa === "PJ" ? "empresa" : "pessoa"} · ${esc(c.email)} · ${c.enviado_em ? dataHora(c.enviado_em) : ""})</span></span><button class="sec" data-ver="${esc(c.id)}">Analisar</button></div>`
+    ).join("") : "<span class='meta'>Nenhum cadastro aguardando.</span>";
+    $("ad-hab").className = "";
+    $("ad-hab").innerHTML = r.habilitacoes.length ? r.habilitacoes.map(h =>
+      `<div class="linha"><span>${esc(h.nome)} <span class="meta">(leilão ${esc(h.leilao_id)} · ${dataHora(h.solicitado_em)})</span></span>
+       <span><button data-hab-ok="${esc(h.id)}">Habilitar</button> <button class="sec" data-hab-no="${esc(h.id)}">Recusar</button></span></div>`
+    ).join("") : "<span class='meta'>Nenhuma habilitação aguardando.</span>";
+    document.querySelectorAll("[data-ver]").forEach(b => b.onclick = () => verCadastro(b.dataset.ver));
+    document.querySelectorAll("[data-hab-ok]").forEach(b => b.onclick = () => decidirHab(b.dataset.habOk, "aprovar"));
+    document.querySelectorAll("[data-hab-no]").forEach(b => b.onclick = () => decidirHab(b.dataset.habNo, "recusar"));
+  } catch (err) { msg($("ad-msg"), err.message, "erro"); }
+}
+async function verCadastro(id) {
+  msg($("ad-msg"), "Abrindo documentos…");
+  try {
+    const r = await api("admin_ver", { id });
+    const c = r.cadastro;
+    const campo = (k, v) => v ? `<p class="fato"><b>${k}</b>${esc(v)}</p>` : "";
+    const docs = Object.entries(r.arquivos).map(([t, a]) =>
+      a.mime === "application/pdf" ? `<div><p class="meta">${esc(t)}</p><a href="${esc(a.url)}" target="_blank" rel="noopener">Abrir PDF</a></div>`
+        : `<div><p class="meta">${esc(t)}</p><a href="${esc(a.url)}" target="_blank" rel="noopener"><img src="${esc(a.url)}" alt="${esc(t)}"></a></div>`).join("");
+    const el = $("ad-ver");
+    el.classList.remove("oculto");
+    el.innerHTML = `<h3>${esc(c.nome)}</h3>
+      ${campo("Tipo", c.tipo_pessoa === "PJ" ? "Empresa" : "Pessoa física")}${campo("CPF/CNPJ", c.documento)}${campo("Representante", c.representante_nome)}${campo("CPF do representante", c.representante_cpf)}
+      ${campo("Nascimento", c.nascimento)}${campo("Telefone", c.telefone)}${campo("E-mail", c.email)}${campo("Endereço", `${c.endereco}, ${c.cidade_uf}, CEP ${c.cep}`)}
+      ${campo("Pessoa politicamente exposta", c.pep ? "SIM" : "não")}
+      ${campo("Termo assinado", `${c.termo_nome} em ${c.termo_em ? dataHora(c.termo_em) : ""} (versão ${c.termo_versao})`)}
+      ${campo("Hash do termo", c.termo_hash)}
+      <div class="docs">${docs}</div>
+      <p class="meta">Confira: o rosto da foto é o do documento, o documento é legível e os dados batem com o cadastro. Os links dos arquivos valem por 10 minutos.</p>
+      <label class="campo">Motivo (obrigatório para recusar ou bloquear)<textarea id="ad-motivo"></textarea></label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="ad-aprovar">Aprovar cadastro</button><button class="sec" id="ad-recusar">Recusar</button><button class="sec" id="ad-bloquear">Bloquear</button>
+      </div>`;
+    $("ad-aprovar").onclick = () => decidirCad(id, "aprovar");
+    $("ad-recusar").onclick = () => decidirCad(id, "recusar");
+    $("ad-bloquear").onclick = () => decidirCad(id, "bloquear");
+    msg($("ad-msg"), "");
+    el.scrollIntoView({ behavior: "smooth" });
+  } catch (err) { msg($("ad-msg"), err.message, "erro"); }
+}
+async function decidirCad(id, decisao) {
+  try {
+    await api("admin_decidir_cadastro", { id, decisao, motivo: $("ad-motivo").value });
+    msg($("ad-msg"), "Decisão registrada.", "ok");
+    carregarAdmin();
+  } catch (err) { msg($("ad-msg"), err.message, "erro"); }
+}
+async function decidirHab(id, decisao) {
+  let motivo = "";
+  if (decisao === "recusar") { motivo = prompt("Motivo da recusa:") || ""; if (!motivo.trim()) return; }
+  try {
+    await api("admin_decidir_habilitacao", { id, decisao, motivo });
+    msg($("ad-msg"), "Decisão registrada.", "ok");
+    carregarAdmin();
+  } catch (err) { msg($("ad-msg"), err.message, "erro"); }
+}
 
 /* ===== INÍCIO ===== */
 carregarConfig()
-  .then(carregarLotes)
-  .catch(() => {
-    document.getElementById("carregando").textContent = "Não foi possível conectar ao servidor do leilão.";
+  .then(() => Promise.all([carregarLotes(), carregarEstado()]))
+  .catch((e) => {
+    $("carregando").textContent = e && e.message && e.message.startsWith("Esta página") ? e.message : "Não foi possível conectar ao servidor do leilão.";
   });
-setInterval(() => { if (!aberto) carregarLotes(); }, 15000);
+setInterval(() => { if (!aberto && !$("view-lotes").classList.contains("oculto")) carregarLotes(); }, 15000);
 </script>
 </body>
 </html>
