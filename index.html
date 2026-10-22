@@ -250,6 +250,16 @@
   legend { font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
   fieldset label { margin-right: 18px; font-size: .95rem; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.66); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; z-index: 70; }
+
+  #modal-pf .caixa { max-width: 720px; }
+  .pf h3 { margin: 0; font: italic 400 1.7rem/1.1 var(--serif); }
+  .pf .pf-num { font: 400 .72rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .pf .pf-aviso { font-size: .82rem; color: var(--muted); }
+  .pf section { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+  .pf section h5 { margin: 0 0 2px; font: 400 .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .pf .linha { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
+  .pf .linha.total { font-weight: 700; border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 4px; }
+  .pf ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: .86rem; }
   .modal .caixa { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 24px; max-width: 580px; width: 100%; max-height: 92vh; overflow: auto; display: grid; gap: 14px; animation: sobe .45s var(--ease); }
   @keyframes sobe { from { opacity: 0; transform: translateY(24px) scale(.98); } }
 
@@ -495,6 +505,7 @@
               </label>
               <button type="submit" class="grande" id="f-enviar">Dar lance</button>
               <div class="msg" id="f-msg" role="status"></div>
+              <div id="f-pf"></div>
             </form>
           </div>
 
@@ -647,6 +658,18 @@
   <button class="fecha" id="lb-x" aria-label="Fechar">✕</button>
   <div class="zoom" id="lb-zoom"><img id="lb-img" alt=""></div>
 </dialog>
+
+<!-- modal do pro forma -->
+<div class="modal oculto" id="modal-pf">
+  <div class="caixa">
+    <div class="pf" id="pf-corpo"></div>
+    <div class="msg" id="pf-msg" role="status"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button type="button" id="pf-copiar">Copiar texto</button>
+      <button type="button" class="sec" id="pf-fechar">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- modal de habilitação -->
 <div class="modal oculto" id="modal-hab">
@@ -967,11 +990,13 @@ function renderDetalhe() {
   renderStatusLote();
   $("f-enviar").disabled = !!l.encerrado;
   renderOferta(l);
+  $("f-pf").innerHTML = l.voce_arrematou ? `<button type="button" class="cobrir" data-pf="${esc(l.id)}">Ver pro forma e instruções</button>` : "";
+  $("f-pf").querySelectorAll("[data-pf]").forEach(b => b.onclick = () => abrirProforma(b.dataset.pf));
   if (l.encerrado) {
     // Dados de venda não aparecem para o público: só que o lote fechou e o último valor de arremate.
     const vf = l.resultado && l.resultado.valor_final;
     msg($("f-msg"), l.oferta_reserva ? ""
-      : l.voce_arrematou ? `Você arrematou este lote por ${brl(vf)}. A Galeria 33 envia o link de pagamento por e-mail.`
+      : l.voce_arrematou ? `Você arrematou este lote por ${brl(vf)}. A Galeria 33 envia o link de pagamento por e-mail e você tem 7 dias para pagar.`
       : vf != null ? `Lote encerrado. Valor final: ${brl(vf)}.` : "Lote encerrado.");
   }
   const h = l.historico.slice().reverse();
@@ -1349,17 +1374,68 @@ function renderLances() {
         <div class="l2"><span>${esc(l.titulo)}</span><span>seu maior lance <b>${brl(l.meu_maior)}</b></span><span>atual <b>${brl(l.valor_atual)}</b></span><span>${l.encerrado ? "encerrado" : `encerra em <b data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</b>`}</span></div>
         <div class="bt"><span class="sel ${st}">${rot}</span>
           ${l.oferta_reserva ? `<button type="button" class="cobrir" data-abrir="${esc(l.id)}">Responder à oferta</button>` : ""}
+          ${l.voce_arrematou ? `<button type="button" class="cobrir" data-pf="${esc(l.id)}">Pro forma e instruções</button>` : ""}
           ${!l.encerrado && !l.lider ? `<button type="button" class="cobrir" data-cobrir="${esc(l.id)}">Cobrir ${brl(l.minimo_proximo)}</button>` : ""}
           <button type="button" data-abrir="${esc(l.id)}">Abrir lote</button></div></div></div>`;
   }).join("");
   alvo.querySelectorAll("[data-cobrir]").forEach(b => b.onclick = () => cobrir(b.dataset.cobrir, b));
   alvo.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
+  alvo.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => abrirProforma(b.dataset.pf));
 }
 
 
+
+/* ===== PRO FORMA DO ARREMATE ===== */
+let pfTexto = "";
+function textoProforma(d) {
+  const v = d.valores, a = d.arrematante, o = d.obra;
+  return [
+    "PRO FORMA " + d.numero, d.aviso, "",
+    "VENDEDOR: " + d.vendedor.nome + " · " + d.vendedor.cidade + " · CNPJ " + d.vendedor.cnpj + " · " + d.vendedor.email,
+    "LEILOEIRO: " + d.leiloeiro.nome + " · matrícula " + d.leiloeiro.matricula,
+    "ARREMATANTE: " + a.nome + " · documento " + a.documento + " · " + a.email + (a.telefone ? " · " + a.telefone : ""),
+    a.endereco ? "ENDEREÇO: " + a.endereco : "",
+    "OBRA: Lote " + o.lote + " · " + o.artista + " · " + o.titulo,
+    "", "Valor do arremate: " + brl(v.arremate), "Comissão do leiloeiro (" + v.comissao_percentual + "%): " + brl(v.comissao), "TOTAL A PAGAR: " + brl(v.total),
+    "Prazo para pagar: " + (d.pagamento.prazo_texto || "7 dias corridos do envio do link"), "Multa por falta de pagamento (" + v.multa_percentual + "%): " + brl(v.multa),
+    "", "CONDIÇÕES:", ...d.clausulas.map((c, i) => (i + 1) + ". " + c)
+  ].filter((x, i, arr) => x !== "" || arr[i - 1] !== "").join("\n");
+}
+function renderProforma(d) {
+  const v = d.valores, a = d.arrematante, o = d.obra, linha = (k, x) => x ? `<div class="linha"><span>${k}</span><b>${x}</b></div>` : "";
+  const status = { pago: "Pago", aguardando: "Aguardando pagamento", vencido: "Prazo vencido" }[d.pagamento.status] || "Link de pagamento ainda não enviado";
+  $("pf-corpo").innerHTML = `<div class="pf-num">Pro forma ${esc(d.numero)}</div><h3>${esc(o.artista)} · ${esc(o.titulo)}</h3><p class="pf-aviso">${esc(d.aviso)}</p>
+    <section><h5>Obra</h5>${linha("Lote", esc(o.lote))}${o.descricao ? `<div class="meta">${esc(o.descricao)}</div>` : ""}</section>
+    <section><h5>Arrematante</h5>${linha("Nome", esc(a.nome))}${linha("Documento", esc(a.documento))}${linha("E-mail", esc(a.email))}${linha("Telefone", esc(a.telefone))}${linha("Endereço", esc(a.endereco))}</section>
+    <section><h5>Vendedor e leiloeiro</h5>${linha("Galeria 33", esc(d.vendedor.cidade) + " · CNPJ " + esc(d.vendedor.cnpj))}${linha("Contato", esc(d.vendedor.email))}${linha("Leiloeiro", esc(d.leiloeiro.nome))}${linha("Matrícula", esc(d.leiloeiro.matricula))}</section>
+    <section><h5>Valores</h5>${linha("Valor do arremate", brl(v.arremate))}${linha("Comissão do leiloeiro (" + v.comissao_percentual + "%)", brl(v.comissao))}<div class="linha total"><span>Total a pagar</span><b>${brl(v.total)}</b></div>
+      ${linha("Prazo para pagar", esc(d.pagamento.prazo_texto || "7 dias corridos do envio do link"))}${linha("Multa por falta de pagamento (" + v.multa_percentual + "%)", brl(v.multa))}${linha("Situação", esc(status))}
+      ${d.pagamento.link ? `<a class="link" href="${esc(d.pagamento.link)}" target="_blank" rel="noopener">Abrir o link de pagamento</a>` : ""}</section>
+    <section><h5>Condições do negócio</h5><ol>${d.clausulas.map(c => `<li>${esc(c)}</li>`).join("")}</ol></section>`;
+  pfTexto = textoProforma(d);
+}
+async function abrirProforma(id) {
+  $("pf-corpo").innerHTML = "<p class='meta'>Carregando o pro forma…</p>"; msg($("pf-msg"), "");
+  $("modal-pf").classList.remove("oculto");
+  try { renderProforma(await api("proforma", { id })); }
+  catch (e) { $("pf-corpo").innerHTML = ""; msg($("pf-msg"), e.message, "erro"); }
+}
+$("pf-fechar").onclick = () => $("modal-pf").classList.add("oculto");
+$("pf-copiar").onclick = async () => {
+  try { await navigator.clipboard.writeText(pfTexto); msg($("pf-msg"), "Texto copiado.", "ok"); }
+  catch (e) {
+    const r = document.createRange(); r.selectNodeContents($("pf-corpo")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    msg($("pf-msg"), "Texto selecionado: use copiar do seu aparelho.", "ok");
+  }
+};
+
 // Link específico da oferta (galeria33.com/...?oferta=L002): abre direto o lote, depois do login.
-let linkOferta = null;
+let linkOferta = null, linkProforma = null;
 function tratarLinkOferta() {
+  if (linkProforma) {
+    if (!estado.logado) { if ($("view-conta").classList.contains("oculto")) { avisar("Entre na sua conta para ver o pro forma.", "erro"); mostrar("conta"); } return; }
+    const pid = linkProforma; linkProforma = null; abrirProforma(pid); return;
+  }
   if (!linkOferta) return;
   if (!estado.logado) { if ($("view-conta").classList.contains("oculto")) { avisar("Entre na sua conta para responder à oferta.", "erro"); mostrar("conta"); } return; }
   const id = linkOferta; linkOferta = null;
@@ -1721,6 +1797,7 @@ function renderArremates() {
     const b = (ac, txt, perigo) => bt.push(`<button type="button" data-arr="${esc(l.id)}" data-ac="${ac}" class="${perigo ? "perigo" : ""}">${txt}</button>`);
     if (l.tem_produto && !l.lancado && l.situacao === "aberto") b("lancar", "Lançar lote (liga a rotina da loja)");
     if (l.lancado && l.situacao === "aberto") b("desfazer_lancar", "Desfazer lançamento");
+    if (l.situacao === "vendido") bt.push(`<button type="button" data-pf="${esc(l.id)}">Ver pro forma</button>`);
     if (l.situacao === "vendido" && l.pagamento_status !== "pago") { b("marcar_pago", "Marcar como pago"); b("reenviar_link", "Enviar novo link de pagamento"); b("invalidar", "Invalidar arremate", true); }
     if (l.situacao !== "aberto" && l.loja_estado !== "devolvido_loja" && l.pagamento_status !== "pago" && l.tem_produto) b("devolver_loja", "Devolver a obra à loja", true);
     return `<div class="arr-item"><header><div><h4>${esc(l.artista || l.titulo)}</h4><div class="sub">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)}</div></div>
@@ -1740,6 +1817,7 @@ function renderArremates() {
       </div>
       ${bt.length ? `<div class="acoes">${bt.join("")}</div>` : ""}</div>`;
   }).join("") || "<p class='meta'>Nenhum lote.</p>";
+  $("ad-arr").querySelectorAll("[data-pf]").forEach(el => el.onclick = () => abrirProforma(el.dataset.pf));
   $("ad-arr").querySelectorAll("[data-arr]").forEach(el => {
     const chave = el.dataset.arr + ":" + el.dataset.ac;
     if (arrConfirma === chave) { el.textContent = "Confirmar: " + el.textContent; el.classList.add("confirma"); }
@@ -1848,7 +1926,7 @@ async function decidirHab(id, decisao) {
 iniciarTema();
 renderEsqueleto();
 carregarConfig()
-  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; }, () => {}))
+  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; linkProforma = c && c.proforma ? String(c.proforma).slice(0, 40) : null; }, () => {}))
   .then(() => Promise.all([carregarLotes(), carregarEstado()]))
   .catch((e) => {
     $("lista").innerHTML = "";
