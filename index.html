@@ -2191,6 +2191,7 @@ async function abrirCatalogo() {
   const buscar = async () => {
     try {
       const r = await api("admin_catalogo", { q: $("cat-q").value }, 40000);
+      if (r.erro) { $("cat-itens").innerHTML = `<span class="meta" style="color:var(--bad,#ff6a4d)">${esc(r.erro)}</span>`; return; }
       $("cat-itens").innerHTML = r.itens.map(p => `<div class="cat-item"><img src="${esc(p.imagem)}" alt=""><div class="nm"><b>${esc(p.nome)}</b><br><span class="meta">${p.preco != null ? brl(p.preco) : ""}${p.em_uso ? " · já em um lote" : ""}</span></div><button type="button" data-prod="${esc(p.id)}"${p.em_uso ? " disabled" : ""}>Incluir</button></div>`).join("") || "<span class='meta'>Nada encontrado.</span>";
       $("cat-itens").querySelectorAll("[data-prod]").forEach(b => b.onclick = async () => {
         b.disabled = true; leiMsg("Incluindo a obra…");
