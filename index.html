@@ -292,6 +292,7 @@
   .lei-problemas { color: #ff6a4d; font-size: .85rem; margin: 8px 0; }
 
   .abas-estado { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .bio-foto { float: right; width: 72px; height: 72px; object-fit: cover; border-radius: 50%; margin: 6px 0 6px 12px; opacity: .92; filter: grayscale(.2); border: 1px solid var(--line); }
   .curr { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 5px; font-size: .9rem; line-height: 1.45; color: color-mix(in srgb, var(--ink) 85%, var(--muted)); }
   .lei-aviso { font-size: .82rem; color: var(--muted); margin: 6px 0; }
   .pf .obra-lin { display: flex; gap: 14px; align-items: flex-start; }
@@ -553,7 +554,8 @@ Cadastre-se, habilite-se e dispute.</span></div>
           </div>
 
           <details class="bio oculto" id="d-bio-bloco" open>
-            <summary id="d-bio-tit">Sobre o artista</summary>
+            <summary><span id="d-bio-tit">Sobre o artista</span></summary>
+            <img id="d-bio-foto" class="bio-foto oculto" alt="" loading="lazy">
             <p id="d-bio"></p>
             <ul class="curr" id="d-curr"></ul>
           </details>
@@ -1054,6 +1056,7 @@ function renderDetalhe() {
   $("d-bio").textContent = l.artista_bio || "";
   $("d-curr").innerHTML = curr.map(x => `<li>${esc(x)}</li>`).join("");
   $("d-bio-tit").textContent = "Sobre " + (l.artista || "o artista");
+  const bf = $("d-bio-foto"); bf.classList.toggle("oculto", !l.artista_foto); if (l.artista_foto) { bf.src = l.artista_foto; bf.alt = "Retrato de " + (l.artista || "o artista"); }
   $("d-inicial").textContent = brl(l.lance_inicial);
   $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
   $("d-nlances").textContent = l.n_lances + (l.n_lances === 1 ? " lance" : " lances");
@@ -1128,7 +1131,7 @@ function renderEstimativa(l) {
   e.innerHTML = l.estimativa_min && l.estimativa_max ? `estimativa <b>${brl(l.estimativa_min)} a ${brl(l.estimativa_max)}</b>` : "";
   $("d-estim-bloco").classList.toggle("oculto", !e.innerHTML);
 }
-const ROTULOS_FICHA = { assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", proveniencia: "Proveniência", estado: "Estado de conservação", certificado: "Certificado" };
+const ROTULOS_FICHA = { ano: "Ano", assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", proveniencia: "Proveniência", estado: "Estado de conservação", certificado: "Certificado" };
 function renderFichaEFotos(l) {
   const f = $("d-ficha"), itens = Object.keys(ROTULOS_FICHA).filter(k => l.ficha && l.ficha[k]);
   f.classList.toggle("oculto", !itens.length);
@@ -2089,7 +2092,7 @@ function renderLeilao() {
         <label>Sobre o artista (resumo mostrado no lote)<textarea data-f="artista_bio"${d}>${esc(l.artista_bio)}</textarea></label>
         <label>Currículo resumido (uma linha por item; em branco usa o texto padrão do artista, se houver)<textarea data-f="artista_curriculo"${d}>${esc(l.artista_curriculo)}</textarea></label>
         <div class="grade2">${f("lance_inicial", "Lance inicial (R$)", l.lance_inicial, "number")}${f("reserva", "Reserva (R$, só equipe)", l.reserva, "number")}${f("estimativa_min", "Estimativa mínima", l.estimativa_min, "number")}${f("estimativa_max", "Estimativa máxima", l.estimativa_max, "number")}</div>
-        <div class="grade2">${["assinatura", "tecnica", "medidas", "moldura", "proveniencia", "estado", "certificado"].map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k])).join("")}</div>
+        <div class="grade2">${["ano", "assinatura", "tecnica", "medidas", "moldura", "proveniencia", "estado", "certificado"].map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k])).join("")}</div>
         <div class="meta">Exceções só para esta obra (em branco = usa o padrão do leilão):</div>
         <div class="grade2">${f("comissao_pct", "Comissão %", l.comissao_pct, "number", "padrão " + L.comissao_pct)}${f("multa_pct", "Multa %", l.multa_pct, "number", "padrão " + L.multa_pct)}${f("prazo_pagamento_dias", "Pagamento (dias)", l.prazo_pagamento_dias, "number", "padrão " + L.prazo_pagamento_dias)}${f("prazo_aceite_horas", "Aceite da reserva (h)", l.prazo_aceite_horas, "number", "padrão " + L.prazo_aceite_horas)}</div>
         <div class="acoes">${bt.join("")}</div></div></details>`;
