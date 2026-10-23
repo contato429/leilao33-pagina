@@ -1843,7 +1843,11 @@ $("ad-teste").onclick = async () => {
   const para = $("ad-teste-para").value.trim();
   if (!para) { msg($("ad-arr-msg"), "Digite o e-mail que vai receber o teste.", "erro"); return; }
   $("ad-teste").disabled = true; msg($("ad-arr-msg"), "Enviando os e-mails de teste…");
-  try { const r = await api("admin_email_teste", { para, id: "L99" }, 60000); msg($("ad-arr-msg"), "Enviados para " + r.para + ": " + r.feito.join(", ") + ". Confira a caixa de entrada e o spam.", "ok"); }
+  try {
+    const r = await api("admin_email_teste", { para, id: "L99" }, 60000);
+    if (r.ok) msg($("ad-arr-msg"), "Enviados para " + r.para + ": " + r.feito.join(", ") + ". Confira a caixa de entrada e o spam.", "ok");
+    else msg($("ad-arr-msg"), "Falhou na etapa \"" + r.etapa + "\": " + (r.erro || (r.falhas || []).join(" | ")) + (r.feito && r.feito.length ? " (enviados: " + r.feito.join(", ") + ")" : ""), "erro");
+  }
   catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
   $("ad-teste").disabled = false;
 };
