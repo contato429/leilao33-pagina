@@ -2222,6 +2222,8 @@ $("lim-ver").onclick = async () => {
     const corpo = $("lim-corpo"); corpo.classList.remove("oculto"); msg($("lim-msg"), "");
     corpo.innerHTML = `
       <label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" id="lim-lances"> Apagar <b>todos os ${r.lances} lance(s)</b> (somente se nenhum leilão real começou)</label>
+      <h5 style="margin:12px 0 4px">Leilões inteiros (apaga o leilão, os lotes, os lances e as habilitações dele; as obras escondidas voltam à loja)</h5>
+      ${(r.leiloes || []).length ? r.leiloes.map(l => `<label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" data-lim-leilao="${esc(l.id)}"> ${esc(l.id)} · ${esc(l.nome)} · ${l.n_lotes} lote(s), ${l.n_lances} lance(s)</label>`).join("") : "<p class='meta'>Nenhum leilão cadastrado (o leilão original não aparece aqui; para apagá-lo marque os lances e o lote de teste).</p>"}
       <h5 style="margin:12px 0 4px">Lotes de teste (com TESTE no nome)</h5>
       ${r.lotes_teste.length ? r.lotes_teste.map(l => `<label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" data-lim-lote="${esc(l.id)}"> ${esc(l.id)} · ${esc(l.titulo)}</label>`).join("") : "<p class='meta'>Nenhum.</p>"}
       <h5 style="margin:12px 0 4px">Participantes (marque só os de teste)</h5>
@@ -2232,6 +2234,7 @@ $("lim-ver").onclick = async () => {
     $("lim-apagar").onclick = async () => {
       const dados = {
         confirmacao: $("lim-conf").value, apagar_lances: $("lim-lances").checked,
+        leiloes: [...corpo.querySelectorAll("[data-lim-leilao]:checked")].map(x => x.dataset.limLeilao),
         lotes: [...corpo.querySelectorAll("[data-lim-lote]:checked")].map(x => x.dataset.limLote),
         participantes: [...corpo.querySelectorAll("[data-lim-part]:checked")].map(x => x.dataset.limPart)
       };
@@ -2239,7 +2242,7 @@ $("lim-ver").onclick = async () => {
       try {
         const x = await api("admin_limpeza", dados, 120000);
         if (x && x.ok === false) { msg($("lim-msg"), `Parou em "${x.etapa || "início"}": ${x.erro}. Já apagado: ${(x.feito && x.feito.lances) || 0} lance(s), ${(x.feito && x.feito.lotes) || 0} lote(s).`, "erro"); return; }
-        msg($("lim-msg"), `Apagado: ${x.feito.lances} lance(s), ${x.feito.lotes} lote(s), ${x.feito.participantes} participante(s), ${x.feito.habilitacoes} habilitação(ões).`, "ok");
+        msg($("lim-msg"), `Apagado: ${x.feito.lances} lance(s), ${x.feito.lotes} lote(s), ${x.feito.participantes} participante(s), ${x.feito.habilitacoes} habilitação(ões), ${x.feito.leiloes || 0} leilão(ões).`, "ok");
         corpo.classList.add("oculto"); carregarArremates(true); carregarLeiloes();
       } catch (e) { msg($("lim-msg"), e.message, "erro"); }
     };
