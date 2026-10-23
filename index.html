@@ -257,6 +257,9 @@
   .pf .pf-aviso { font-size: .82rem; color: var(--muted); }
   .pf section { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
   .pf section h5 { margin: 0 0 2px; font: 400 .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .pf .obra-lin { display: flex; gap: 14px; align-items: flex-start; }
+  .pf .foto { width: 92px; height: 92px; flex: none; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); }
+  .pf .obra-dados { flex: 1; min-width: 0; display: grid; gap: 4px; }
   .pf .linha { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
   .pf .linha.total { font-weight: 700; border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 4px; }
   .pf ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: .86rem; line-height: 1.5; text-align: justify; }
@@ -1404,7 +1407,7 @@ function renderProforma(d) {
   const v = d.valores, a = d.arrematante, o = d.obra, linha = (k, x) => x ? `<div class="linha"><span>${k}</span><b>${x}</b></div>` : "";
   const status = { pago: "Pago", aguardando: "Aguardando pagamento", vencido: "Prazo vencido" }[d.pagamento.status] || "Link de pagamento ainda não enviado";
   $("pf-corpo").innerHTML = `<div class="pf-num">Pro forma ${esc(d.numero)}</div><h3>${esc(o.artista)} · ${esc(o.titulo)}</h3><p class="pf-aviso">${esc(d.aviso)}</p>
-    <section><h5>Obra</h5>${linha("Lote", esc(o.lote))}${o.descricao ? `<div class="meta">${esc(o.descricao)}</div>` : ""}</section>
+    <section><h5>Obra</h5><div class="obra-lin">${o.imagem ? `<img class="foto" src="${esc(o.imagem)}" alt="${esc(o.artista + ", " + o.titulo)}">` : ""}<div class="obra-dados">${linha("Lote", esc(o.lote))}${linha("Artista", esc(o.artista))}${linha("Título", esc(o.titulo))}${o.descricao ? `<div class="meta">${esc(o.descricao)}</div>` : ""}</div></div></section>
     <section><h5>Arrematante</h5>${linha("Nome", esc(a.nome))}${linha("Documento", esc(a.documento))}${linha("E-mail", esc(a.email))}${linha("Telefone", esc(a.telefone))}${linha("Endereço", esc(a.endereco))}</section>
     <section><h5>Vendedor e leiloeiro</h5>${linha("Galeria 33", esc(d.vendedor.cidade) + " · CNPJ " + esc(d.vendedor.cnpj))}${linha("Contato", esc(d.vendedor.email))}${linha("Leiloeiro", esc(d.leiloeiro.nome))}${linha("Matrícula", esc(d.leiloeiro.matricula))}</section>
     <section><h5>Valores</h5>${linha("Valor do arremate", brl(v.arremate))}${linha("Comissão do leiloeiro (" + v.comissao_percentual + "%)", brl(v.comissao))}<div class="linha total"><span>Total a pagar</span><b>${brl(v.total)}</b></div>
