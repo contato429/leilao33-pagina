@@ -259,7 +259,7 @@
   .pf section h5 { margin: 0 0 2px; font: 400 .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   .pf .linha { display: flex; justify-content: space-between; gap: 12px; font-size: .92rem; }
   .pf .linha.total { font-weight: 700; border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 4px; }
-  .pf ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: .86rem; }
+  .pf ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: .86rem; line-height: 1.5; text-align: justify; }
   .modal .caixa { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 24px; max-width: 580px; width: 100%; max-height: 92vh; overflow: auto; display: grid; gap: 14px; animation: sobe .45s var(--ease); }
   @keyframes sobe { from { opacity: 0; transform: translateY(24px) scale(.98); } }
 
@@ -1397,7 +1397,7 @@ function textoProforma(d) {
     "OBRA: Lote " + o.lote + " · " + o.artista + " · " + o.titulo,
     "", "Valor do arremate: " + brl(v.arremate), "Comissão do leiloeiro (" + v.comissao_percentual + "%): " + brl(v.comissao), "TOTAL A PAGAR: " + brl(v.total),
     "Prazo para pagar: " + (d.pagamento.prazo_texto || "7 dias corridos do envio do link"), "Multa por falta de pagamento (" + v.multa_percentual + "%): " + brl(v.multa),
-    "", "CONDIÇÕES:", ...d.clausulas.map((c, i) => (i + 1) + ". " + c)
+    "", "CONDIÇÕES:", ...d.clausulas.map((c, i) => "Cláusula " + (i + 1) + " – " + c.replace(" — ", ". "))
   ].filter((x, i, arr) => x !== "" || arr[i - 1] !== "").join("\n");
 }
 function renderProforma(d) {
@@ -1410,7 +1410,7 @@ function renderProforma(d) {
     <section><h5>Valores</h5>${linha("Valor do arremate", brl(v.arremate))}${linha("Comissão do leiloeiro (" + v.comissao_percentual + "%)", brl(v.comissao))}<div class="linha total"><span>Total a pagar</span><b>${brl(v.total)}</b></div>
       ${linha("Prazo para pagar", esc(d.pagamento.prazo_texto || "7 dias corridos do envio do link"))}${linha("Multa por falta de pagamento (" + v.multa_percentual + "%)", brl(v.multa))}${linha("Situação", esc(status))}
       ${d.pagamento.link ? `<a class="link" href="${esc(d.pagamento.link)}" target="_blank" rel="noopener">Abrir o link de pagamento</a>` : ""}</section>
-    <section><h5>Condições do negócio</h5><ol>${d.clausulas.map(c => `<li>${esc(c)}</li>`).join("")}</ol></section>`;
+    <section><h5>Condições do negócio</h5><ol>${d.clausulas.map(c => { const i = c.indexOf(" — "); return i > 0 ? `<li><b>${esc(c.slice(0, i))}.</b> ${esc(c.slice(i + 3))}</li>` : `<li>${esc(c)}</li>`; }).join("")}</ol></section>`;
   pfTexto = textoProforma(d);
 }
 async function abrirProforma(id) {
