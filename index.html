@@ -283,6 +283,10 @@
   .cat-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex: none; }
   .cat-item .nm { flex: 1; min-width: 0; font-size: .85rem; }
   .lei-problemas { color: #ff6a4d; font-size: .85rem; margin: 8px 0; }
+
+  .abas-estado { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .curr { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 5px; font-size: .9rem; line-height: 1.45; color: color-mix(in srgb, var(--ink) 85%, var(--muted)); }
+  .lei-aviso { font-size: .82rem; color: var(--muted); margin: 6px 0; }
   .pf .obra-lin { display: flex; gap: 14px; align-items: flex-start; }
   .pf .foto { width: 92px; height: 92px; flex: none; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); }
   .pf .obra-dados { flex: 1; min-width: 0; display: grid; gap: 4px; }
@@ -458,7 +462,7 @@
         <div class="numeros" aria-live="polite">
           <div><b id="h-abertos">–</b><span>lotes abertos</span></div>
           <div><b id="h-total">–</b><span>em lances</span></div>
-          <div><b id="h-prox" data-fim="">–</b><span>próximo encerramento</span></div>
+          <div><b id="h-prox" data-fim="">–</b><span id="h-prox-rot">próximo encerramento</span></div>
         </div>
       </div>
       <button class="destaque oculto" id="h-feat" aria-label="Abrir lote em destaque"></button>
@@ -478,14 +482,15 @@
       <h2>Os lotes <em>em jogo</em></h2>
       <div class="barra">
         <input type="search" id="f-busca" placeholder="Buscar artista ou obra" aria-label="Buscar artista ou obra">
+        <select id="f-leilao" aria-label="Leilão" class="oculto"></select>
         <select id="f-ordem" aria-label="Ordenar">
           <option value="fim">Encerra primeiro</option>
           <option value="maior">Maior lance</option>
           <option value="menor">Menor lance</option>
           <option value="az">Artista A–Z</option>
         </select>
-        <label class="check"><input type="checkbox" id="f-abertos"> só abertos</label>
       </div>
+      <div class="abas-estado" id="f-estados" role="group" aria-label="Situação dos lotes"></div>
       <div class="chips" id="chips" role="group" aria-label="Artistas"></div>
     </section>
 
@@ -541,6 +546,7 @@
           <details class="bio oculto" id="d-bio-bloco" open>
             <summary id="d-bio-tit">Sobre o artista</summary>
             <p id="d-bio"></p>
+            <ul class="curr" id="d-curr"></ul>
           </details>
           <div class="historico" id="d-historico"></div>
         </div>
@@ -736,7 +742,8 @@ let relogio = null;
 let atualizacao = null;
 let leilaoAlvo = null;
 let valorAnterior = null; // para o brilho quando o lance muda
-const filtro = { q: "", artista: "", ordem: "fim", abertos: false };
+const filtro = { q: "", artista: "", ordem: "fim", estado: "", leilao: "" };
+let leiloesPub = [], estadoAuto = true;
 const $ = id => document.getElementById(id);
 const reduz = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -861,10 +868,10 @@ function renderEsqueleto() {
 }
 async function carregarLotes() {
   try {
-    const { lotes: lista } = await api("lotes");
-    lotes = lista;
+    const { lotes: lista, leiloes: ls } = await api("lotes");
+    lotes = lista; leiloesPub = ls || [];
     $("carregando").classList.add("oculto");
-    renderHeroi(); renderLetreiro(); renderChips();
+    renderSeletorLeilao(); renderEstados(); renderHeroi(); renderLetreiro(); renderChips();
     if (!aberto) renderLista();
   } catch (e) {
     $("lista").innerHTML = "";
@@ -875,12 +882,15 @@ async function carregarLotes() {
 
 /* ===== HERÓI, LETREIRO E FILTROS ===== */
 function renderHeroi() {
-  const abertos = lotes.filter(l => !l.encerrado);
+  const abertos = lotes.filter(l => estadoDoLote(l) === "aberto");
+  const breves = lotes.filter(l => estadoDoLote(l) === "breve");
   $("h-abertos").textContent = abertos.length;
   $("h-total").textContent = brl(lotes.reduce((s, l) => s + (l.n_lances ? l.valor_atual : 0), 0));
   const prox = abertos.slice().sort((a, b) => new Date(a.encerra_em) - new Date(b.encerra_em))[0];
-  $("h-prox").dataset.fim = prox ? prox.encerra_em : "";
-  $("h-prox").textContent = prox ? tempoRestante(prox.encerra_em) : "–";
+  const proxAbre = !prox && breves.length ? breves.slice().sort((a, b) => new Date(a.abre_em) - new Date(b.abre_em))[0] : null;
+  $("h-prox-rot").textContent = proxAbre ? "próxima abertura" : "próximo encerramento";
+  $("h-prox").dataset.fim = prox ? prox.encerra_em : proxAbre ? proxAbre.abre_em : "";
+  $("h-prox").textContent = prox ? tempoRestante(prox.encerra_em) : proxAbre ? tempoRestante(proxAbre.abre_em) : "–";
   const feat = $("h-feat");
   if (prox && prox.imagem) {
     feat.classList.remove("oculto");
@@ -907,16 +917,35 @@ function renderChips() {
 }
 $("f-busca").addEventListener("input", e => { filtro.q = e.target.value; renderLista(); });
 $("f-ordem").addEventListener("change", e => { filtro.ordem = e.target.value; renderLista(); });
-$("f-abertos").addEventListener("change", e => { filtro.abertos = e.target.checked; renderLista(); });
+function estadoDoLote(l) { return l.encerrado ? "encerrado" : l.em_breve ? "breve" : "aberto"; }
+const ROT_ESTADO = { aberto: "Abertos agora", breve: "Em breve", encerrado: "Encerrados" };
+function renderEstados() {
+  const base = lotes.filter(l => !filtro.leilao || l.leilao_id === filtro.leilao);
+  const n = { aberto: 0, breve: 0, encerrado: 0 };
+  base.forEach(l => n[estadoDoLote(l)]++);
+  if (estadoAuto) { estadoAuto = false; filtro.estado = n.aberto ? "aberto" : n.breve ? "breve" : n.encerrado ? "encerrado" : ""; }
+  if (filtro.estado && !n[filtro.estado]) filtro.estado = n.aberto ? "aberto" : n.breve ? "breve" : "";
+  const itens = ["aberto", "breve", "encerrado"].filter(k => n[k]).map(k => [k, `${ROT_ESTADO[k]} (${n[k]})`]).concat([["", `Todos (${base.length})`]]);
+  $("f-estados").innerHTML = itens.map(([k, t]) => `<button class="chip" aria-pressed="${filtro.estado === k}" data-e="${k}">${t}</button>`).join("");
+  $("f-estados").querySelectorAll(".chip").forEach(b => b.onclick = () => { filtro.estado = b.dataset.e; renderEstados(); renderLista(); });
+}
+function renderSeletorLeilao() {
+  const s = $("f-leilao");
+  s.classList.toggle("oculto", leiloesPub.length < 2);
+  s.innerHTML = `<option value="">Todos os leilões</option>` + leiloesPub.map(x => `<option value="${esc(x.id)}">${esc(x.nome)}</option>`).join("");
+  s.value = filtro.leilao;
+}
+$("f-leilao").addEventListener("change", e => { filtro.leilao = e.target.value; renderEstados(); renderLista(); });
 
 function listaFiltrada() {
   let r = lotes.slice();
   const q = norm(filtro.q);
   if (q) r = r.filter(l => norm(l.artista + " " + l.titulo).includes(q));
   if (filtro.artista) r = r.filter(l => l.artista === filtro.artista);
-  if (filtro.abertos) r = r.filter(l => !l.encerrado);
+  if (filtro.leilao) r = r.filter(l => l.leilao_id === filtro.leilao);
+  if (filtro.estado) r = r.filter(l => estadoDoLote(l) === filtro.estado);
   const por = {
-    fim: (a, b) => (a.encerrado - b.encerrado) || (new Date(a.encerra_em) - new Date(b.encerra_em)),
+    fim: (a, b) => (a.encerrado - b.encerrado) || ((a.em_breve ? new Date(a.abre_em) : 0) - (b.em_breve ? new Date(b.abre_em) : 0)) || (new Date(a.encerra_em) - new Date(b.encerra_em)),
     maior: (a, b) => b.valor_atual - a.valor_atual,
     menor: (a, b) => a.valor_atual - b.valor_atual,
     az: (a, b) => String(a.artista).localeCompare(String(b.artista), "pt-BR")
@@ -948,7 +977,7 @@ function renderLista() {
         ${l.imagem ? `<img src="${esc(l.imagem)}" alt="" loading="lazy" decoding="async">` : ""}</div>
       <h3>${esc(l.artista || l.titulo)}</h3>
       <div class="obra">${esc(l.titulo)}</div>
-      <div class="preco"><span>${enc ? "lance final" : "lance atual"}</span><b>${brl(l.valor_atual)}</b></div></article>`;
+      <div class="preco"><span>${enc ? "lance final" : l.em_breve ? "lance inicial" : "lance atual"}</span><b>${brl(l.valor_atual)}</b></div></article>`;
   }).join("") : `<p class="vazio">Nenhum lote encontrado.</p>`;
   el.querySelectorAll(".card").forEach(c => {
     c.onclick = () => abrir(c.dataset.id, c);
@@ -1005,8 +1034,10 @@ function renderDetalhe() {
   $("d-artista").textContent = l.artista || l.titulo;
   $("d-titulo").textContent = l.titulo;
   $("d-descricao").textContent = l.descricao;
-  $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio);
+  const curr = Array.isArray(l.artista_curriculo) ? l.artista_curriculo : [];
+  $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio && !curr.length);
   $("d-bio").textContent = l.artista_bio || "";
+  $("d-curr").innerHTML = curr.map(x => `<li>${esc(x)}</li>`).join("");
   $("d-bio-tit").textContent = "Sobre " + (l.artista || "o artista");
   $("d-inicial").textContent = brl(l.lance_inicial);
   $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
@@ -1838,6 +1869,7 @@ function renderArremates() {
     const fato = (k, v) => v === "" || v == null ? "" : `<div><b>${k}</b>${v}</div>`;
     const bt = [];
     const b = (ac, txt, perigo) => bt.push(`<button type="button" data-arr="${esc(l.id)}" data-ac="${ac}" class="${perigo ? "perigo" : ""}">${txt}</button>`);
+    if (l.teste && l.lancado && l.situacao === "aberto" && !l.n_lances) b("simular_arremate", "Simular arremate (só teste)");
     if (l.tem_produto && !l.lancado && l.situacao === "aberto") b("lancar", "Lançar lote (liga a rotina da loja)");
     if (l.lancado && l.situacao === "aberto") b("desfazer_lancar", "Desfazer lançamento");
     if (l.situacao === "vendido") bt.push(`<button type="button" data-pf="${esc(l.id)}">Ver pro forma</button>`);
@@ -1981,7 +2013,7 @@ async function decidirHab(id, decisao) {
 
 
 /* ===== MONTAGEM DE LEILÕES (equipe) ===== */
-const ROT_LEILAO = { rascunho: ["Rascunho", ""], agendado: ["Agendado", "ok"], aberto: ["Aberto", "ok"], encerrado: ["Encerrado", ""], cancelado: ["Cancelado", "mau"] };
+const ROT_LEILAO = { rascunho: ["Rascunho", ""], agendado: ["Em breve", "ok"], aberto: ["Aberto", "ok"], encerrado: ["Encerrado", ""], cancelado: ["Cancelado", "mau"] };
 let leiPadroes = null, leiAtual = null, leiLotes = [], leiConfirma = null, leiTimer = null, leiCatalogo = null;
 const numOuVazio = v => (v === null || v === undefined ? "" : v);
 const paraLocal = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; const p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()); };
@@ -1994,8 +2026,8 @@ async function carregarLeiloes() {
     $("lei-lista").className = "lei-lista";
     $("lei-lista").innerHTML = r.leiloes.map(l => {
       const [rs, cls] = ROT_LEILAO[l.situacao] || [l.situacao, ""];
-      return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</div></div>
-        <div><span class="chip-st ${cls}">${rs}</span> <button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
+      return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}${l.situacao === "agendado" && l.abre_em ? " · em divulgação: faltam " + Math.max(0, Math.ceil((new Date(l.abre_em) - Date.now()) / 864e5)) + " dia(s) para abrir" : ""}</div></div>
+        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> <button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
     }).join("") || "<p class='meta'>Nenhum leilão.</p>";
     $("lei-lista").querySelectorAll("[data-lei]").forEach(b => b.onclick = () => abrirLeilao(b.dataset.lei));
   } catch (e) { leiMsg(e.message, "erro"); }
@@ -2039,6 +2071,7 @@ function renderLeilao() {
         <div class="grade2">${f("titulo", "Título", l.titulo)}${f("artista", "Artista", l.artista)}${f("imagem", "Imagem (endereço https)", l.imagem)}</div>
         <label>Descrição da obra<textarea data-f="descricao"${d}>${esc(l.descricao)}</textarea></label>
         <label>Sobre o artista (resumo mostrado no lote)<textarea data-f="artista_bio"${d}>${esc(l.artista_bio)}</textarea></label>
+        <label>Currículo resumido (uma linha por item; em branco usa o texto padrão do artista, se houver)<textarea data-f="artista_curriculo"${d}>${esc(l.artista_curriculo)}</textarea></label>
         <div class="grade2">${f("lance_inicial", "Lance inicial (R$)", l.lance_inicial, "number")}${f("reserva", "Reserva (R$, só equipe)", l.reserva, "number")}${f("estimativa_min", "Estimativa mínima", l.estimativa_min, "number")}${f("estimativa_max", "Estimativa máxima", l.estimativa_max, "number")}</div>
         <div class="grade2">${["assinatura", "tecnica", "medidas", "moldura", "proveniencia", "estado", "certificado"].map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k])).join("")}</div>
         <div class="meta">Exceções só para esta obra (em branco = usa o padrão do leilão):</div>
@@ -2061,7 +2094,7 @@ function renderLeilao() {
       ${campo("lf-pag", "Prazo de pagamento (dias)", L.prazo_pagamento_dias, "number", 'min="1" max="60"')}
       ${campo("lf-aceite", "Aceite da reserva (horas)", L.prazo_aceite_horas, "number", 'min="1" max="168"')}
     </div>
-    ${rasc ? `<div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button></div>` : ""}
+    ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e fica em divulgação por, no mínimo, 15 dias antes de abrir (leilões com TESTE no nome são dispensados). Escolha uma abertura a partir de ${esc(new Date(Date.now() + 15 * 864e5).toLocaleDateString("pt-BR"))}.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
     <h4 style="margin:18px 0 4px">Obras do leilão</h4>
     ${rasc ? `<div class="lei-rodape"><button type="button" id="lei-loja">Escolher da loja</button><button type="button" id="lei-nova-btn">Cadastrar obra nova</button></div><div id="lei-cat" class="oculto"></div><div id="lei-nova" class="oculto lei-nova"></div>` : ""}
     <div id="lei-lotes">${lotes}</div>
@@ -2070,11 +2103,27 @@ function renderLeilao() {
   ligarLeilao();
 }
 
+
+function textoDeAnuncio() {
+  const L = leiAtual, ativos = leiLotes.filter(l => l.status !== "removido" && l.status !== "cancelado");
+  const abre = L.abre_em ? new Date(L.abre_em) : null;
+  const ini = abre ? new Date(abre.getTime() + (Number(L.duracao_min) || 0) * 60000) : null;
+  const fmt = d => d ? d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "a definir";
+  const linhas = ativos.map(l => "• " + (l.artista || "Obra") + " — " + (l.titulo || "sem título") + (l.lance_inicial ? " · lance inicial " + brl(l.lance_inicial) : ""));
+  return ["LEILÃO 33 · " + L.nome, "Abertura dos lances: " + fmt(abre) + (ini ? " (primeiro lote encerra " + fmt(ini) + ")" : ""), "", "Obras:"].concat(linhas, ["", "Cadastre-se e habilite-se desde já: https://www.galeria33.com/leilao-33?leilao=" + encodeURIComponent(L.id)]).join("\n");
+}
+
 function ligarLeilao() {
   const L = leiAtual;
   $("lei-voltar").onclick = () => { leiAtual = null; $("lei-edit").classList.add("oculto"); $("lei-lista").classList.remove("oculto"); leiMsg(""); carregarLeiloes(); };
   const dur = $("lf-dur"), durMin = $("lf-dur-min");
   if (dur) dur.onchange = () => { durMin.style.display = dur.value === "" ? "" : "none"; };
+  const anu = $("lf-anuncio");
+  if (anu) anu.onclick = async () => {
+    const t = textoDeAnuncio(), ta = $("lf-anuncio-txt"); ta.value = t; ta.classList.remove("oculto"); ta.focus(); ta.select();
+    try { await navigator.clipboard.writeText(t); leiMsg("Texto de anúncio copiado. Cole nas redes e no e-mail.", "ok"); }
+    catch (e) { try { document.execCommand("copy"); leiMsg("Texto de anúncio copiado.", "ok"); } catch (e2) { leiMsg("Selecione o texto abaixo e copie (Ctrl+C).", "ok"); } }
+  };
   const salvar = $("lf-salvar");
   if (salvar) salvar.onclick = async () => {
     const dm = dur.value === "" ? durMin.value : dur.value;
@@ -2158,7 +2207,7 @@ function abrirObraNova() {
 iniciarTema();
 renderEsqueleto();
 carregarConfig()
-  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; linkProforma = c && c.proforma ? String(c.proforma).slice(0, 40) : null; }, () => {}))
+  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; linkProforma = c && c.proforma ? String(c.proforma).slice(0, 40) : null; if (c && c.leilao) { filtro.leilao = String(c.leilao).slice(0, 40); filtro.estado = ""; estadoAuto = false; } }, () => {}))
   .then(() => Promise.all([carregarLotes(), carregarEstado()]))
   .catch((e) => {
     $("lista").innerHTML = "";
