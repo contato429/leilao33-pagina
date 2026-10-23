@@ -278,6 +278,13 @@
   .lei-rodape button.principal { background: var(--acid); color: #11140a; border-color: var(--acid); }
   .lei-rodape button.confirma, .lote-ed button.confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
   .lei-topo { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cat-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 10px 0; max-height: 70vh; overflow: auto; }
+  .cat-card { appearance: none; text-align: left; border: 2px solid var(--line); border-radius: 12px; padding: 8px; background: var(--bg2); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 4px; font: inherit; }
+  .cat-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+  .cat-card.sel { border-color: var(--acid); box-shadow: 0 0 0 2px var(--acid) inset; }
+  .cat-card:disabled { opacity: .45; cursor: not-allowed; }
+  .cat-card .cat-art { font: 700 .72rem var(--sans); text-transform: uppercase; letter-spacing: .06em; color: var(--acid); }
+  .cat-card .cat-nm { font-size: .82rem; line-height: 1.25; }
   .cat-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 10px 0; }
   .cat-item { border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: flex; gap: 10px; align-items: center; background: var(--bg2); }
   .cat-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex: none; }
@@ -2187,21 +2194,26 @@ async function acaoLeilao(ac, el) {
 
 async function abrirCatalogo() {
   const box = $("lei-cat"); box.classList.remove("oculto"); $("lei-nova").classList.add("oculto");
-  box.innerHTML = `<div class="ad-bts" style="margin:8px 0"><input id="cat-q" type="search" placeholder="buscar na loja pelo nome" style="flex:1; min-width:180px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink)"><button type="button" id="cat-ok" style="border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px; padding:8px 14px; cursor:pointer">Buscar</button></div><div id="cat-itens" class="cat-lista"><span class="meta">Carregando a loja…</span></div>`;
-  const buscar = async () => {
-    try {
-      const r = await api("admin_catalogo", { q: $("cat-q").value }, 40000);
-      if (r.erro) { $("cat-itens").innerHTML = `<span class="meta" style="color:var(--bad,#ff6a4d)">${esc(r.erro)}</span>`; return; }
-      $("cat-itens").innerHTML = r.itens.map(p => `<div class="cat-item"><img src="${esc(p.imagem)}" alt=""><div class="nm"><b>${esc(p.nome)}</b><br><span class="meta">${p.preco != null ? brl(p.preco) : ""}${p.em_uso ? " · já em um lote" : ""}</span></div><button type="button" data-prod="${esc(p.id)}"${p.em_uso ? " disabled" : ""}>Incluir</button></div>`).join("") || "<span class='meta'>Nada encontrado.</span>";
-      $("cat-itens").querySelectorAll("[data-prod]").forEach(b => b.onclick = async () => {
-        b.disabled = true; leiMsg("Incluindo a obra…");
-        try { await api("admin_obra_incluir", { leilaoId: leiAtual.id, produtoId: b.dataset.prod }); leiMsg("Obra incluída. Abra o lote abaixo para definir preços.", "ok"); await abrirLeilao(leiAtual.id, true); }
-        catch (e) { leiMsg(e.message, "erro"); b.disabled = false; }
-      });
-    } catch (e) { $("cat-itens").innerHTML = `<span class="meta">${esc(e.message)}</span>`; }
+  box.innerHTML = `<div class="ad-bts" style="margin:8px 0"><select id="cat-art" aria-label="Filtrar por artista" style="padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:var(--bg2); color:var(--ink)"><option value="">Todos os artistas</option></select><input id="cat-q" type="search" placeholder="buscar por título ou artista" style="flex:1; min-width:160px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink)"><button type="button" id="cat-inc" disabled>Incluir selecionadas (0)</button></div><div id="cat-itens" class="cat-grade"><span class="meta">Carregando a loja…</span></div>`;
+  let dados = null; const marcadas = new Set();
+  const contar = () => { const b = $("cat-inc"); b.textContent = `Incluir selecionadas (${marcadas.size})`; b.disabled = !marcadas.size; };
+  const desenhar = () => {
+    const art = $("cat-art").value, q = $("cat-q").value.trim().toLowerCase();
+    const lista = dados.itens.filter(p => (!art || p.artista === art) && (!q || `${p.nome} ${p.artista}`.toLowerCase().includes(q)));
+    $("cat-itens").innerHTML = lista.map(p => `<button type="button" class="cat-card${marcadas.has(p.id) ? " sel" : ""}" data-prod="${esc(p.id)}"${p.em_uso ? " disabled" : ""} aria-pressed="${marcadas.has(p.id)}"><img src="${esc(p.imagem)}" alt="${esc(p.nome)}" loading="lazy"><span class="cat-art">${esc(p.artista || "—")}</span><span class="cat-nm">${esc(p.nome)}</span><span class="meta">${p.preco != null ? brl(p.preco) : ""}${p.em_uso ? " · já em um lote" : ""}</span></button>`).join("") || "<span class='meta'>Nada encontrado.</span>";
+    $("cat-itens").querySelectorAll("[data-prod]").forEach(b => b.onclick = () => { const id = b.dataset.prod; if (marcadas.has(id)) marcadas.delete(id); else marcadas.add(id); b.classList.toggle("sel", marcadas.has(id)); b.setAttribute("aria-pressed", marcadas.has(id)); contar(); });
   };
-  $("cat-ok").onclick = buscar; $("cat-q").onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); buscar(); } };
-  buscar();
+  try {
+    dados = await api("admin_catalogo", {}, 60000);
+    if (dados.erro) { $("cat-itens").innerHTML = `<span class="meta" style="color:#ff6a4d">${esc(dados.erro)}</span>`; return; }
+    $("cat-art").innerHTML += (dados.artistas || []).map(a => `<option value="${esc(a.nome)}">${esc(a.nome)} (${a.n})</option>`).join("");
+    $("cat-art").onchange = desenhar; $("cat-q").oninput = desenhar; desenhar();
+  } catch (e) { $("cat-itens").innerHTML = `<span class="meta">${esc(e.message)}</span>`; return; }
+  $("cat-inc").onclick = async () => {
+    const b = $("cat-inc"); b.disabled = true; leiMsg(`Incluindo ${marcadas.size} obra(s)…`);
+    try { const r = await api("admin_obra_incluir", { leilaoId: leiAtual.id, produtoIds: [...marcadas] }, 120000); leiMsg(`${r.n} obra(s) incluída(s). Abra cada lote abaixo para definir preços.`, "ok"); marcadas.clear(); await abrirLeilao(leiAtual.id, true); box.classList.add("oculto"); }
+    catch (e) { leiMsg(e.message, "erro"); contar(); }
+  };
 }
 function abrirObraNova() {
   const box = $("lei-nova"); box.classList.remove("oculto"); $("lei-cat").classList.add("oculto");
