@@ -1844,8 +1844,8 @@ $("ad-teste").onclick = async () => {
   $("ad-teste").disabled = true; msg($("ad-arr-msg"), "Enviando os e-mails de teste…");
   try {
     const r = await api("admin_email_teste", { para, id: "L99" }, 60000);
-    if (r.ok) msg($("ad-arr-msg"), "Enviados para " + r.para + ": " + r.feito.join(", ") + ". Confira a caixa de entrada e o spam.", "ok");
-    else msg($("ad-arr-msg"), "Falhou na etapa \"" + r.etapa + "\": " + (r.erro || (r.falhas || []).join(" | ")) + (r.feito && r.feito.length ? " (enviados: " + r.feito.join(", ") + ")" : ""), "erro");
+    if (r.ok) msg($("ad-arr-msg"), "Enviados para " + r.para + " (" + r.feito.length + " de " + r.total + "): " + r.feito.join("; ") + ". Confira a caixa de entrada e o spam.", "ok");
+    else msg($("ad-arr-msg"), "Falhou na etapa \"" + r.etapa + "\": " + (r.erro || (r.falhas || []).join(" | ") || "nenhum e-mail foi enviado") + (r.feito && r.feito.length ? " (enviados: " + r.feito.join("; ") + ")" : "") + " [resposta: " + JSON.stringify(r).slice(0, 300) + "]", "erro");
   }
   catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
   $("ad-teste").disabled = false;
