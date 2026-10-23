@@ -510,9 +510,8 @@
           </div>
 
           <details class="bio oculto" id="d-bio-bloco" open>
-            <summary>Sobre o artista</summary>
+            <summary id="d-bio-tit">Sobre o artista</summary>
             <p id="d-bio"></p>
-            <a id="d-bio-link" class="link" target="_blank" rel="noopener" href="#">Ver o currículo completo na Galeria 33 ↗</a>
           </details>
           <div class="historico" id="d-historico"></div>
         </div>
@@ -973,7 +972,7 @@ function renderDetalhe() {
   $("d-descricao").textContent = l.descricao;
   $("d-bio-bloco").classList.toggle("oculto", !l.artista_bio);
   $("d-bio").textContent = l.artista_bio || "";
-  const ln = $("d-bio-link"); ln.classList.toggle("oculto", !l.artista_link); if (l.artista_link) ln.href = l.artista_link;
+  $("d-bio-tit").textContent = "Sobre " + (l.artista || "o artista");
   $("d-inicial").textContent = brl(l.lance_inicial);
   $("d-minimo").textContent = l.encerrado ? "—" : brl(l.minimo_proximo);
   $("d-nlances").textContent = l.n_lances + (l.n_lances === 1 ? " lance" : " lances");
