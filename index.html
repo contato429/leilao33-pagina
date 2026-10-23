@@ -1869,6 +1869,7 @@ function renderArremates() {
     const fato = (k, v) => v === "" || v == null ? "" : `<div><b>${k}</b>${v}</div>`;
     const bt = [];
     const b = (ac, txt, perigo) => bt.push(`<button type="button" data-arr="${esc(l.id)}" data-ac="${ac}" class="${perigo ? "perigo" : ""}">${txt}</button>`);
+    if (l.teste) b(l.oculto ? "mostrar_teste" : "ocultar_teste", l.oculto ? "Mostrar de novo na página" : "Ocultar da página (lote de teste)");
     if (l.teste && l.lancado && l.situacao === "aberto" && !l.n_lances) b("simular_arremate", "Simular arremate (só teste)");
     if (l.tem_produto && !l.lancado && l.situacao === "aberto") b("lancar", "Lançar lote (liga a rotina da loja)");
     if (l.lancado && l.situacao === "aberto") b("desfazer_lancar", "Desfazer lançamento");
