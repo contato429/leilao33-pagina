@@ -1856,6 +1856,7 @@ function renderArremates() {
         ${l.pagamento_url ? fato("Link de pagamento", `<a class="link" href="${esc(l.pagamento_url)}" target="_blank" rel="noopener">abrir</a>`) : ""}
         ${l.invalidado_em ? fato("Arremate invalidado", dataHora(l.invalidado_em) + "; a obra volta ao acervo") : ""}
         ${fato("Loja", l.lancado ? esc(l.loja_estado.replace("_", " ")) : "não lançado")}
+        ${l.email_falha ? `<div style="grid-column:1/-1;color:#ff6a4d"><b style="color:#ff6a4d">E-mail não entregue</b>${esc(l.email_falha)}</div>` : ""}
         ${l.ultima_acao ? fato("Última ação da equipe", esc(l.ultima_acao)) : ""}
       </div>
       ${bt.length ? `<div class="acoes">${bt.join("")}</div>` : ""}</div>`;
