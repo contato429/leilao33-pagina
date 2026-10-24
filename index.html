@@ -2221,7 +2221,7 @@ async function abrirCatalogo() {
   const desenhar = () => {
     const art = $("cat-art").value, q = $("cat-q").value.trim().toLowerCase();
     const lista = dados.itens.filter(p => (!art || p.artista === art) && (!q || `${p.nome} ${p.artista}`.toLowerCase().includes(q)));
-    $("cat-itens").innerHTML = lista.map(p => `<button type="button" class="cat-card${marcadas.has(p.id) ? " sel" : ""}" data-prod="${esc(p.id)}"${p.em_uso ? " disabled" : ""} aria-pressed="${marcadas.has(p.id)}"><img src="${esc(p.imagem)}" alt="${esc(p.nome)}" loading="lazy"><span class="cat-art">${esc(p.artista || "—")}</span><span class="cat-nm">${esc(p.nome)}</span><span class="meta">${p.preco != null ? brl(p.preco) : ""}${p.em_uso ? " · já em um lote" : ""}</span></button>`).join("") || "<span class='meta'>Nada encontrado.</span>";
+    $("cat-itens").innerHTML = lista.map(p => `<button type="button" class="cat-card${marcadas.has(p.id) ? " sel" : ""}" data-prod="${esc(p.id)}"${p.em_uso || p.esgotado ? " disabled" : ""} aria-pressed="${marcadas.has(p.id)}"><img src="${esc(p.imagem)}" alt="${esc(p.nome)}" loading="lazy"><span class="cat-art">${esc(p.artista || "—")}</span><span class="cat-nm">${esc(p.nome)}</span><span class="meta">${p.preco != null ? brl(p.preco) : ""}${p.em_uso ? " · já em um lote" : ""}${p.esgotado ? " · vendida na loja" : ""}</span></button>`).join("") || "<span class='meta'>Nada encontrado.</span>";
     $("cat-itens").querySelectorAll("[data-prod]").forEach(b => b.onclick = () => { const id = b.dataset.prod; if (marcadas.has(id)) marcadas.delete(id); else marcadas.add(id); b.classList.toggle("sel", marcadas.has(id)); b.setAttribute("aria-pressed", marcadas.has(id)); contar(); });
   };
   try {
