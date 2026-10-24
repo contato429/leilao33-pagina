@@ -776,7 +776,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
   <!-- ===== PAINEL DA EQUIPE ===== -->
   <div id="view-admin" class="oculto admin-pag"><h2>Painel da equipe</h2>
     <div class="painel" id="lim-painel">
-      <div class="ad-topo"><h3>Limpar dados de teste</h3><div class="ad-bts"><button type="button" id="lim-ver">Ver o que existe</button><button type="button" id="lim-diag">Diagnosticar a loja</button></div></div>
+      <div class="ad-topo"><h3>Limpar dados de teste</h3><div class="ad-bts"><button type="button" id="lim-ver">Ver o que existe</button></div></div>
       <p class="lei-aviso">Aqui quem apaga é você, e não tem volta. Nada é apagado sem você marcar e digitar a frase de confirmação.</p>
       <div class="msg" id="lim-msg" role="status"></div>
       <div id="lim-corpo" class="oculto"></div>
@@ -2450,11 +2450,6 @@ function ligarPrecos() {
 
 /* ===== LIMPEZA DE DADOS DE TESTE (administrador) ===== */
 let limFrase = "APAGAR TESTES";
-$("lim-diag").onclick = async () => {
-  msg($("lim-msg"), "Consultando a loja…");
-  try { const r = await api("admin_diag_loja", {}, 60000); const el = $("lim-msg"); el.textContent = JSON.stringify(r); el.className = "msg ok"; el.style.whiteSpace = "pre-wrap"; el.style.wordBreak = "break-all"; }
-  catch (e) { msg($("lim-msg"), e.message, "erro"); }
-};
 $("lim-ver").onclick = async () => {
   msg($("lim-msg"), "Conferindo…");
   try {
