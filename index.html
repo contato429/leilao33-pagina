@@ -337,6 +337,15 @@
 
   /* ===== LUPA ===== */
   .lupa-btn { appearance: none; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; height: 36px; padding: 0 14px 0 11px; font: 700 .74rem var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: all .25s var(--ease); }
+
+  .som-btn { padding: 0; width: 36px; justify-content: center; }
+  .som-btn svg { width: 18px; height: 18px; }
+  .som-btn .off { display: none; }
+  .som-btn.mudo-off { color: var(--muted); }
+  .som-btn.mudo-off .on { display: none; }
+  .som-btn.mudo-off .off { display: inline; }
+  .lupa-btn.som-btn[aria-pressed="true"] { background: transparent; color: var(--ink); border-color: var(--line); }
+  .lupa-btn.som-btn.mudo-off { color: var(--muted); }
   .lupa-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.3; stroke-linecap: round; }
   .lupa-btn:hover { border-color: var(--acid); }
   .lupa-btn[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
@@ -443,6 +452,59 @@
     input, select, textarea { font-size: 16px; } /* evita o zoom automático do iPhone ao tocar num campo */
     .barra-lance { bottom: 10px; }
   }
+
+  /* ===== CELULAR: menos botões na frente da obra, lotes em duas colunas, filtros enxutos ===== */
+  @media (max-width: 700px) {
+    .topo { padding: 6px 12px; gap: 8px; }
+    .topo .usuario { gap: 6px; }
+    .marca b { font-size: 1rem; }
+    .marca small { display: none; }
+    .lupa-btn { height: 34px; padding: 0 10px; }
+    .lupa-btn .rot { display: none; }
+    .lupa-btn:not(.som-btn) { width: 36px; padding: 0; justify-content: center; }
+    .tema { width: 34px; height: 34px; }
+    #usuario .aba, #usuario button { padding: 6px 10px; font-size: .78rem; }
+    .abas-cel { padding-top: 4px; padding-bottom: 4px; }
+    .abas-cel button { min-height: 34px; padding: 6px 4px; font-size: .7rem; }
+    .abas-cel button svg { width: 16px; height: 16px; }
+    .lupa-faixa { padding: 8px 12px; gap: 6px 10px; font-size: .8rem; }
+    .lupa-faixa .txt small { display: none; }
+    .lupa-faixa .txt small:has(.tempo-f) { display: block; font-size: .66rem; }
+    .lupa-faixa button { padding: 7px 12px; font-size: .78rem; }
+    .lupa-faixa .acoes { gap: 6px; }
+    /* abertura mais curta: o texto grande não repete o de cima e os passos viram uma fileira que desliza */
+    .heroi { padding-top: 18px; padding-bottom: 14px; }
+    .heroi p.sub { display: none; }
+    .heroi h1 { font-size: clamp(2.4rem, 13vw, 3.4rem); }
+    .passos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1px; margin-top: 14px; scrollbar-width: none; }
+    .passos::-webkit-scrollbar { display: none; }
+    .passos div { flex: 0 0 62%; scroll-snap-align: start; padding: 14px; }
+    /* filtros: busca em uma linha, selects lado a lado, chips deslizando na horizontal */
+    .filtros h2 { font-size: 1.6rem; margin-bottom: 8px; }
+    .filtros .barra { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .filtros .barra input { grid-column: 1 / -1; }
+    .filtros .barra input, .filtros .barra select { height: 38px; padding-block: 0; }
+    .filtros .barra select.oculto { display: none; }
+    .abas-estado, .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .abas-estado::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
+    .abas-estado > *, .chips > * { flex: none; }
+    /* lotes: duas colunas, foto vertical, texto curto */
+    #lista.galeria { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 0; }
+    .card .foto { aspect-ratio: 4 / 5; }
+    .card .foto .n { font-size: .52rem; padding: 3px 6px; }
+    .card .foto .tempo { font-size: .58rem; padding: 3px 6px; }
+    .card h3 { font-size: .92rem; margin: 8px 2px 0; }
+    .card .obra { font-size: .72rem; margin: 2px 2px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card .preco { margin: 6px 2px 8px; }
+    .card .preco span { font-size: .56rem; }
+    .card .preco b { font-size: .95rem; }
+    /* barra de lance mais baixa para não cobrir a obra */
+    .barra-lance { left: 8px; right: 8px; bottom: 8px; padding: 6px 8px 6px 14px; }
+    .barra-lance span { font-size: .92rem; }
+    .barra-lance small { font-size: .5rem; }
+    .barra-lance button { padding: 8px 14px; font-size: .8rem; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -465,7 +527,7 @@
     <button class="aba oculto" id="aba-lances">Meus lances<span class="cont-mau oculto" id="ml-cont"></span></button>
     <button class="aba oculto" id="aba-admin">Painel da equipe</button>
   </nav>
-  <div class="usuario"><button class="lupa-btn oculto" id="lupa" aria-pressed="false" title="Lupa: acompanha seus lances e avisa quando forem cobertos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>Lupa</button><span id="usuario"></span><button class="tema" id="tema" aria-label="Alternar tema claro e escuro" title="Tema">◐</button></div>
+  <div class="usuario"><button class="lupa-btn oculto" id="lupa" aria-pressed="false" title="Lupa: acompanha seus lances e avisa quando forem cobertos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span class="rot">Lupa</span></button><button class="lupa-btn som-btn oculto" id="som" aria-pressed="true" aria-label="Som dos avisos da Lupa" title="Som dos avisos: ligado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="off" d="m16 9.5 5 5m0-5-5 5"/></svg></button><span id="usuario"></span><button class="tema" id="tema" aria-label="Alternar tema claro e escuro" title="Tema">◐</button></div>
 </header>
 <nav class="abas-cel" id="abas-cel" aria-label="Navegação"></nav>
 
@@ -1400,9 +1462,23 @@ async function cobrir(id, botao) {
   }
 }
 
+function atualizarSom() {
+  const b = $("som"); if (!b) return;
+  b.classList.toggle("oculto", !estado.logado);
+  b.setAttribute("aria-pressed", String(!lupaMudo));
+  b.classList.toggle("mudo-off", lupaMudo);
+  b.title = lupaMudo ? "Som dos avisos: desligado (toque para ligar)" : "Som dos avisos: ligado (toque para desligar)";
+}
+$("som").onclick = () => {
+  lupaMudo = !lupaMudo;
+  try { localStorage.setItem("l33-lupa-mudo", lupaMudo ? "1" : "0"); } catch (e) {}
+  if (!lupaMudo) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.resume) audioCtx.resume(); } catch (e) {} tom("ok"); }
+  atualizarSom();
+};
 function renderLupa() {
   const logado = !!estado.logado;
   $("lupa").classList.toggle("oculto", !logado);
+  atualizarSom();
   $("lupa").setAttribute("aria-pressed", String(lupaLigada));
   $("aba-lances").classList.toggle("oculto", !logado);
   const ab = abertosMeus();
@@ -1422,7 +1498,7 @@ function renderLupa() {
       <div class="acoes"><button type="button" class="cobrir" data-abrir="${esc(l.id)}">Ver oferta</button></div>`;
     faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
   } else if (ligada) {
-    const mudoBtn = `<button type="button" class="mudo" id="lupa-mudo" aria-pressed="${lupaMudo}">${lupaMudo ? "Som off" : "Som on"}</button>`;
+    const mudoBtn = "";
     if (!ab.length) {
       faixa.className = "lupa-faixa neutro";
       faixa.innerHTML = `<div class="txt"><span>Lupa ligada</span><small>Dê um lance em um lote para acompanhar aqui.</small></div><div class="acoes">${mudoBtn}<button type="button" class="mudo" id="lupa-off">Desligar</button></div>`;
