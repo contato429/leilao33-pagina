@@ -1660,6 +1660,7 @@ function tratarLinkOferta() {
 /* ===== ESTADO DA CONTA ===== */
 async function carregarEstado() {
   try { estado = await api("estado"); } catch (e) { estado = { logado: false, erro: e.message }; }
+  if (estado && estado.erro) { try { console.error("Estado da conta:", estado.erro); avisar("Não consegui carregar sua conta: " + estado.erro, "erro"); } catch (e3) {} }
   renderUsuario();
   if (!$("view-conta").classList.contains("oculto")) renderConta();
   if (detalhe) renderAcesso();
