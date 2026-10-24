@@ -1757,7 +1757,12 @@ $("form-entrar").addEventListener("submit", async e => {
     $("e-senha").value = "";
     msg($("e-msg"), "");
     await carregarEstado();
-    if (!estado.logado) msg($("e-msg"), "Não foi possível entrar. Confira e-mail e senha, ou confirme seu e-mail se acabou de criar a conta.", "erro");
+    if (!estado.logado) {
+      // A senha foi aceita, mas o servidor ainda não enxerga a sessão: recarrega a página do site para a sessão valer.
+      msg($("e-msg"), "Senha aceita. Atualizando a página…", "ok");
+      try { await api("recarregar"); await new Promise(r => setTimeout(r, 4000)); } catch (e2) { /* tenta mostrar o motivo abaixo */ }
+      msg($("e-msg"), "Entrou, mas não consegui carregar sua conta" + (estado.erro ? " (" + estado.erro + ")" : "") + ". Atualize a página (Ctrl+F5) e entre de novo.", "erro");
+    }
   } catch (err) { msg($("e-msg"), err.message, "erro"); }
 });
 $("e-esqueci").onclick = async () => { try { await api("esqueci"); } catch (err) { msg($("e-msg"), err.message, "erro"); } };
