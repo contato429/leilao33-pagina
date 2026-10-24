@@ -426,6 +426,24 @@
   .chip-st.mau { background: #ff2d20; color: #fff; border-color: #ff2d20; }
   .chip-st.vivo { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
   #ad-csv-txt { width: 100%; min-height: 120px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font: 400 .72rem var(--mono); }
+
+  /* ===== NAVEGAÇÃO NO CELULAR: barra de abas fixa embaixo, estilo aplicativo ===== */
+  .abas-cel { display: none; }
+  @media (max-width: 700px) {
+    .topo { flex-wrap: nowrap; padding-top: 10px; padding-bottom: 10px; }
+    .topo .abas { display: none; }
+    .topo .usuario { gap: 8px; flex-wrap: nowrap; }
+    .abas-cel { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 6px max(6px, env(safe-area-inset-bottom, 0px)); }
+    .abas-cel button { appearance: none; border: 0; background: transparent; color: var(--muted); display: grid; justify-items: center; gap: 3px; padding: 7px 4px; border-radius: 14px; font: 600 .68rem var(--sans); letter-spacing: .02em; min-height: 52px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
+    .abas-cel button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .abas-cel button.ativa { color: var(--acc-fg); background: var(--acid); }
+    .abas-cel button .pt { position: absolute; top: 3px; right: calc(50% - 22px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #ff3b30; color: #fff; font: 700 .62rem var(--mono); display: grid; place-items: center; }
+    body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+    .barra-lance { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+    .lupa-faixa { top: var(--alt-topo, 56px); }
+    .marca b { font-size: 1.05rem; }
+    input, select, textarea { font-size: 16px; } /* evita o zoom automático do iPhone ao tocar num campo */
+  }
   @media (prefers-reduced-motion: reduce) {
     .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -709,6 +727,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
   <div class="legal" id="aviso"></div>
 </footer>
 
+<nav class="abas-cel" id="abas-cel" aria-label="Navegação"></nav>
 <div class="barra-lance" id="barra-lance"><div><small>Lance atual</small><span id="bl-valor">–</span></div><button id="bl-ir">Dar lance</button></div>
 <div class="avisos" id="avisos" aria-live="assertive"></div>
 
@@ -2264,6 +2283,45 @@ $("lim-ver").onclick = async () => {
     };
   } catch (e) { msg($("lim-msg"), e.message, "erro"); }
 };
+
+
+/* ===== NAVEGAÇÃO NO CELULAR: espelha as abas do topo na barra de baixo ===== */
+(function () {
+  const ICONES = {
+    "aba-lotes": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5"/></svg>',
+    "aba-lances": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4.5 19.5 10M12.5 6l5.5 5.5-8 8H4.5V14z"/><path d="M4 21h16"/></svg>',
+    "aba-conta": '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></svg>',
+    "aba-admin": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 4.5 6.5v5.2c0 4.3 3 7.6 7.5 8.8 4.5-1.2 7.5-4.5 7.5-8.8V6.5z"/><path d="m9 12 2.2 2.2L15.2 10"/></svg>',
+  };
+  const ROTULOS = { "aba-lotes": "Lotes", "aba-lances": "Lances", "aba-conta": "Conta", "aba-admin": "Equipe" };
+  const barra = document.getElementById("abas-cel");
+  if (!barra) return;
+  const ids = ["aba-lotes", "aba-lances", "aba-conta", "aba-admin"];
+  barra.innerHTML = ids.map(id => `<button type="button" data-ir="${id}" aria-label="${ROTULOS[id]}">${ICONES[id]}<span>${ROTULOS[id]}</span><i class="pt oculto"></i></button>`).join("");
+  const sincronizar = () => {
+    barra.querySelectorAll("button").forEach(b => {
+      const orig = document.getElementById(b.dataset.ir);
+      if (!orig) { b.classList.add("oculto"); return; }
+      b.classList.toggle("oculto", orig.classList.contains("oculto"));
+      const ativa = orig.classList.contains("ativa");
+      b.classList.toggle("ativa", ativa);
+      if (ativa) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+      const cont = orig.querySelector(".cont-mau"), pt = b.querySelector(".pt");
+      const tem = cont && !cont.classList.contains("oculto") && cont.textContent.trim();
+      pt.classList.toggle("oculto", !tem); pt.textContent = tem ? cont.textContent.trim() : "";
+    });
+    barra.style.gridAutoColumns = "1fr";
+  };
+  barra.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-ir]"); if (!b) return;
+    const orig = document.getElementById(b.dataset.ir); if (orig) orig.click();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(sincronizar, 60);
+  });
+  const mo = new MutationObserver(sincronizar);
+  document.querySelectorAll(".abas .aba, .abas .cont-mau").forEach(el => mo.observe(el, { attributes: true, childList: true, characterData: true, subtree: true }));
+  sincronizar();
+})();
 
 /* ===== INÍCIO ===== */
 iniciarTema();
