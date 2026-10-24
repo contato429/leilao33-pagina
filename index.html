@@ -995,7 +995,7 @@ async function carregarLotes() {
   } catch (e) {
     $("lista").innerHTML = "";
     $("carregando").classList.remove("oculto");
-    $("carregando").textContent = e.message.startsWith("Esta página") ? e.message : "Não foi possível carregar os lotes. Tente de novo em instantes.";
+    $("carregando").textContent = e.message.startsWith("Esta página") ? e.message : "Não foi possível carregar os lotes. Tente de novo em instantes. (" + e.message + ")";
   }
 }
 
