@@ -152,6 +152,12 @@
 
   /* ===== Lote ===== */
   .lote { padding: clamp(14px, 3vw, 32px) clamp(16px, 4vw, 48px) 24px; }
+
+  .lote-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .lote-nav { display: inline-flex; align-items: center; gap: 6px; font: 600 .78rem var(--mono); color: var(--muted); }
+  .lote-nav button { appearance: none; width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 700 1.3rem/1 var(--sans); cursor: pointer; display: grid; place-items: center; padding: 0 0 3px; }
+  .lote-nav button:disabled { opacity: .35; cursor: default; }
+  .lote-nav.oculto { display: none; }
   .voltar { appearance: none; background: none; border: 0; color: var(--muted); font: 500 .9rem var(--sans); cursor: pointer; padding: 8px 0; display: inline-flex; gap: 8px; align-items: center; transition: color .2s, gap .2s; }
   .voltar:hover { color: var(--ink); gap: 12px; }
   .lote-grade { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(20px, 4vw, 64px); align-items: start; margin-top: 8px; }
@@ -505,6 +511,13 @@
     .barra-lance small { font-size: .5rem; }
     .barra-lance button { padding: 8px 14px; font-size: .8rem; }
   }
+
+  @media (max-width: 700px) {
+    /* no lote: a barra "voltar / anterior / próximo" acompanha a rolagem, sempre ao alcance do polegar */
+    .lote-topo { position: sticky; top: calc(var(--alt-topo, 52px) + 44px); z-index: 38; background: var(--bg); margin: 0 -16px; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+    .voltar { font-weight: 700; color: var(--ink); padding: 6px 0; }
+    #d-img { touch-action: pan-y; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .lupa-faixa.mau { animation: none; }
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -588,7 +601,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
     <section class="galeria" id="lista" aria-live="polite"></section>
 
     <section class="lote oculto" id="detalhe" aria-label="Lote">
-      <button class="voltar" id="voltar">← Todos os lotes</button>
+      <div class="lote-topo"><button class="voltar" id="voltar">← Todos os lotes</button><div class="lote-nav" id="lote-nav"><button type="button" id="lote-ant" aria-label="Lote anterior">‹</button><span id="lote-pos"></span><button type="button" id="lote-prox" aria-label="Próximo lote">›</button></div></div>
       <div class="lote-grade">
         <div>
           <button class="midia" id="d-img" aria-label="Ampliar imagem da obra"></button>
@@ -1099,6 +1112,7 @@ async function abrir(id, card) {
   const img = card && card.querySelector(".foto img");
   if (img) img.style.viewTransitionName = "lote-foto";
   aberto = id; detalhe = dados; valorAnterior = null;
+  try { if (!(history.state && history.state.lote)) history.pushState({ lote: id }, ""); else history.replaceState({ lote: id }, ""); } catch (e) {}
   msg($("f-msg"), "");
   trocar(() => {
     mostrarVitrine(false);
@@ -1114,6 +1128,11 @@ async function atualizarDetalhe() {
   try { detalhe = await api("lote", { id: aberto }); renderDetalhe(); } catch (e) { /* tenta no próximo ciclo */ }
 }
 function voltar() {
+  try { if (history.state && history.state.lote) { history.back(); return; } } catch (e) {}
+  fecharLote();
+}
+addEventListener("popstate", () => { if (aberto) fecharLote(); });
+function fecharLote() {
   aberto = null; detalhe = null; valorAnterior = null;
   clearInterval(atualizacao);
   $("barra-lance").classList.remove("vis");
@@ -1122,6 +1141,7 @@ function voltar() {
 }
 function renderDetalhe() {
   const l = detalhe; if (!l) return;
+  atualizarNavLote();
   if (!$("d-img").querySelector("img") || $("d-img").dataset.lote !== l.id) {
     $("d-img").dataset.lote = l.id;
     $("d-img").innerHTML = l.imagem ? `<img src="${esc(l.imagem)}" alt="${esc((l.artista || "") + ", " + l.titulo)}">` : "";
@@ -2396,6 +2416,35 @@ $("lim-ver").onclick = async () => {
   const mo = new MutationObserver(sincronizar);
   document.querySelectorAll(".abas .aba, .abas .cont-mau").forEach(el => mo.observe(el, { attributes: true, childList: true, characterData: true, subtree: true }));
   sincronizar();
+})();
+
+
+/* ===== Anterior / próximo lote (e deslizar a foto no celular) ===== */
+function idsVisiveis() { return [...document.querySelectorAll("#lista .card")].map(c => c.dataset.id).filter(Boolean); }
+function atualizarNavLote() {
+  const nav = $("lote-nav"); if (!nav) return;
+  const ids = idsVisiveis(), i = ids.indexOf(aberto);
+  nav.classList.toggle("oculto", ids.length < 2 || i < 0);
+  if (ids.length < 2 || i < 0) return;
+  $("lote-pos").textContent = (i + 1) + " de " + ids.length;
+  $("lote-ant").disabled = i === 0;
+  $("lote-prox").disabled = i === ids.length - 1;
+}
+function irLote(delta) {
+  const ids = idsVisiveis(), i = ids.indexOf(aberto), j = i + delta;
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  abrir(ids[j], document.querySelector('#lista .card[data-id="' + ids[j] + '"]'));
+}
+$("lote-ant").onclick = () => irLote(-1);
+$("lote-prox").onclick = () => irLote(1);
+(function () {
+  const alvo = $("d-img"); let x0 = null, y0 = 0;
+  alvo.addEventListener("touchstart", (e) => { if (e.touches.length === 1) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; } else x0 = null; }, { passive: true });
+  alvo.addEventListener("touchend", (e) => {
+    if (x0 == null) return;
+    const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) irLote(dx < 0 ? 1 : -1);
+  }, { passive: true });
 })();
 
 /* ===== INÍCIO ===== */
