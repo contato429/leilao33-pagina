@@ -284,6 +284,14 @@
   .lei-rodape button.principal { background: var(--acid); color: #11140a; border-color: var(--acid); }
   .lei-rodape button.confirma, .lote-ed button.confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
   .lei-topo { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  .tab-rolar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab-precos { width: 100%; min-width: 560px; border-collapse: collapse; font-size: .84rem; }
+  .tab-precos th { text-align: left; font: 700 .68rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 6px; }
+  .tab-precos td { padding: 6px; border-top: 1px solid var(--line); vertical-align: middle; }
+  .tab-precos td.pl-o { display: flex; gap: 8px; align-items: center; min-width: 190px; }
+  .tab-precos td.pl-o small { color: var(--muted); }
+  .tab-precos input { width: 100%; min-width: 88px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); font: inherit; }
   .cat-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 10px 0; max-height: 70vh; overflow: auto; }
   .cat-card { appearance: none; text-align: left; border: 2px solid var(--line); border-radius: 12px; padding: 8px; background: var(--bg2); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 4px; font: inherit; }
   .cat-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
@@ -2231,6 +2239,7 @@ function renderLeilao() {
     ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e fica em divulgação por, no mínimo, 15 dias antes de abrir (leilões com TESTE no nome são dispensados). Escolha uma abertura a partir de ${esc(new Date(Date.now() + 15 * 864e5).toLocaleDateString("pt-BR"))}.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
     <h4 style="margin:18px 0 4px">Obras do leilão</h4>
     ${rasc ? `<div class="lei-rodape"><button type="button" id="lei-loja">Escolher da loja</button><button type="button" id="lei-nova-btn">Cadastrar obra nova</button></div><div id="lei-cat" class="oculto"></div><div id="lei-nova" class="oculto lei-nova"></div>` : ""}
+    ${rasc ? htmlPrecos() : ""}
     <div id="lei-lotes">${lotes}</div>
     <div class="lei-problemas" id="lei-problemas"></div>
     <div class="lei-rodape">${rodape.join("")}</div>`;
@@ -2249,6 +2258,7 @@ function textoDeAnuncio() {
 
 function ligarLeilao() {
   const L = leiAtual;
+  ligarPrecos();
   $("lei-voltar").onclick = () => { leiAtual = null; $("lei-edit").classList.add("oculto"); $("lei-lista").classList.remove("oculto"); leiMsg(""); carregarLeiloes(); };
   const dur = $("lf-dur"), durMin = $("lf-dur-min");
   if (dur) dur.onchange = () => { durMin.style.display = dur.value === "" ? "" : "none"; };
@@ -2312,7 +2322,7 @@ async function acaoLeilao(ac, el) {
 
 async function abrirCatalogo() {
   const box = $("lei-cat"); box.classList.remove("oculto"); $("lei-nova").classList.add("oculto");
-  box.innerHTML = `<div class="ad-bts" style="margin:8px 0"><select id="cat-art" aria-label="Filtrar por artista" style="padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:var(--bg2); color:var(--ink)"><option value="">Todos os artistas</option></select><input id="cat-q" type="search" placeholder="buscar por título ou artista" style="flex:1; min-width:160px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink)"><button type="button" id="cat-inc" disabled>Incluir selecionadas (0)</button></div><div id="cat-itens" class="cat-grade"><span class="meta">Carregando a loja…</span></div>`;
+  box.innerHTML = `<div class="ad-bts" style="margin:8px 0"><select id="cat-art" aria-label="Filtrar por artista" style="padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:var(--bg2); color:var(--ink)"><option value="">Todos os artistas</option></select><input id="cat-q" type="search" placeholder="buscar por título ou artista" style="flex:1; min-width:160px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink)"><button type="button" id="cat-todas">Marcar todas as visíveis</button><button type="button" id="cat-limpa">Limpar</button><button type="button" id="cat-inc" disabled>Incluir selecionadas (0)</button></div><div id="cat-itens" class="cat-grade"><span class="meta">Carregando a loja…</span></div>`;
   let dados = null; const marcadas = new Set();
   const contar = () => { const b = $("cat-inc"); b.textContent = `Incluir selecionadas (${marcadas.size})`; b.disabled = !marcadas.size; };
   const desenhar = () => {
@@ -2326,6 +2336,9 @@ async function abrirCatalogo() {
     if (dados.erro) { $("cat-itens").innerHTML = `<span class="meta" style="color:#ff6a4d">${esc(dados.erro)}</span>`; return; }
     $("cat-art").innerHTML += (dados.artistas || []).map(a => `<option value="${esc(a.nome)}">${esc(a.nome)} (${a.n})</option>`).join("");
     $("cat-art").onchange = desenhar; $("cat-q").oninput = desenhar; desenhar();
+    const visiveis = () => { const art = $("cat-art").value, q = $("cat-q").value.trim().toLowerCase(); return dados.itens.filter(p => !p.em_uso && !p.esgotado && (!art || p.artista === art) && (!q || `${p.nome} ${p.artista}`.toLowerCase().includes(q))); };
+    $("cat-todas").onclick = () => { visiveis().forEach(p => marcadas.add(p.id)); desenhar(); contar(); };
+    $("cat-limpa").onclick = () => { marcadas.clear(); desenhar(); contar(); };
   } catch (e) { $("cat-itens").innerHTML = `<span class="meta">${esc(e.message)}</span>`; return; }
   $("cat-inc").onclick = async () => {
     const b = $("cat-inc"); b.disabled = true; leiMsg(`Incluindo ${marcadas.size} obra(s)…`);
@@ -2333,16 +2346,101 @@ async function abrirCatalogo() {
     catch (e) { leiMsg(e.message, "erro"); contar(); }
   };
 }
+// Reduz a foto no próprio computador (no máximo 1.600 px, JPG) antes de enviar.
+async function reduzirImagem(arquivo, maximo = 1600) {
+  const url = URL.createObjectURL(arquivo);
+  try {
+    const img = await new Promise((ok, erro) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => erro(new Error("Não consegui abrir a imagem " + arquivo.name + ".")); i.src = url; });
+    const k = Math.min(1, maximo / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.84));
+    if (!blob) throw new Error("Não consegui preparar a imagem " + arquivo.name + ".");
+    const base64 = await new Promise((ok, erro) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(",")[1]); f.onerror = () => erro(new Error("Falha ao ler a imagem.")); f.readAsDataURL(blob); });
+    return { mime: "image/jpeg", base64, kb: Math.round(blob.size / 1024) };
+  } finally { URL.revokeObjectURL(url); }
+}
+const tituloDoArquivo = (nome) => String(nome || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+
 function abrirObraNova() {
   const box = $("lei-nova"); box.classList.remove("oculto"); $("lei-cat").classList.add("oculto");
-  box.innerHTML = `<div class="lote-ed"><div class="grade2"><label>Título<input id="nv-titulo"></label><label>Artista<input id="nv-artista"></label><label>Imagem (endereço https)<input id="nv-imagem" placeholder="https://..."></label></div><label>Descrição<textarea id="nv-desc"></textarea></label><div class="acoes"><button type="button" id="nv-ok">Incluir obra</button></div></div>`;
+  box.innerHTML = `<div class="lote-ed">
+    <h5 style="margin:0 0 6px">Fotos do computador</h5>
+    <p class="meta" style="margin:0 0 8px">Escolha uma ou várias fotos: cada uma vira uma obra do leilão (o nome do arquivo vira o título, e você ajusta depois). As fotos são reduzidas e guardadas na Biblioteca de mídia.</p>
+    <div class="grade2"><label>Artista (vale para todas as fotos desta remessa)<input id="nv-artista-pc" placeholder="Nome do artista"></label><label>Fotos<input id="nv-arquivos" type="file" accept="image/jpeg,image/png,image/webp" multiple></label></div>
+    <div class="lei-rodape"><button type="button" class="principal" id="nv-enviar-pc">Enviar e incluir as fotos</button></div>
+    <div id="nv-progresso" class="meta" role="status"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+    <h5 style="margin:0 0 6px">Ou cadastrar uma obra por endereço de imagem</h5>
+    <div class="grade2"><label>Título<input id="nv-titulo"></label><label>Artista<input id="nv-artista"></label><label>Imagem (endereço https)<input id="nv-imagem" placeholder="https://..."></label></div>
+    <label>Descrição<textarea id="nv-desc"></textarea></label>
+    <div class="lei-rodape"><button type="button" class="principal" id="nv-ok">Incluir obra</button></div></div>`;
+  $("nv-enviar-pc").onclick = async () => {
+    const arquivos = [...$("nv-arquivos").files];
+    if (!arquivos.length) { leiMsg("Escolha pelo menos uma foto.", "erro"); return; }
+    const artista = $("nv-artista-pc").value.trim(), prog = $("nv-progresso");
+    $("nv-enviar-pc").disabled = true; let feitos = 0; const falhas = [];
+    for (let n = 0; n < arquivos.length; n++) {
+      const a = arquivos[n];
+      prog.textContent = `Enviando ${n + 1} de ${arquivos.length}: ${a.name}…`;
+      try {
+        const img = await reduzirImagem(a);
+        const up = await api("admin_imagem_enviar", { nome: tituloDoArquivo(a.name), mime: img.mime, base64: img.base64 }, 90000);
+        await api("admin_obra_incluir", { leilaoId: leiAtual.id, nova: { titulo: tituloDoArquivo(a.name) || "Obra sem título", artista, imagem: up.url, descricao: "" } }, 60000);
+        feitos++;
+      } catch (e) { falhas.push(a.name + ": " + e.message); }
+    }
+    $("nv-enviar-pc").disabled = false;
+    prog.textContent = "";
+    if (feitos) { leiMsg(`${feitos} obra(s) incluída(s)${falhas.length ? "; " + falhas.length + " com problema: " + falhas.join(" · ") : ""}. Ajuste título e preços na tabela abaixo.`, falhas.length ? "erro" : "ok"); await abrirLeilao(leiAtual.id, true); }
+    else leiMsg("Nenhuma foto foi incluída. " + falhas.join(" · "), "erro");
+  };
   $("nv-ok").onclick = async () => {
     leiMsg("Incluindo a obra…");
-    try { await api("admin_obra_incluir", { leilaoId: leiAtual.id, nova: { titulo: $("nv-titulo").value, artista: $("nv-artista").value, imagem: $("nv-imagem").value, descricao: $("nv-desc").value } }); leiMsg("Obra incluída. Abra o lote abaixo para definir preços.", "ok"); await abrirLeilao(leiAtual.id, true); }
+    try { await api("admin_obra_incluir", { leilaoId: leiAtual.id, nova: { titulo: $("nv-titulo").value, artista: $("nv-artista").value, imagem: $("nv-imagem").value, descricao: $("nv-desc").value } }); leiMsg("Obra incluída. Ajuste os preços na tabela abaixo.", "ok"); await abrirLeilao(leiAtual.id, true); }
     catch (e) { leiMsg(e.message, "erro"); }
   };
 }
 
+// Tabela com os preços de todas as obras, para preencher tudo de uma vez.
+function htmlPrecos() {
+  const ativos = leiLotes.filter(l => l.status !== "removido" && l.status !== "cancelado");
+  if (!ativos.length) return "";
+  const linhas = ativos.map(l => `<tr data-pl="${esc(l.id)}"><td class="pl-o"><img class="mini" src="${esc(l.imagem)}" alt=""><span><b>${esc(l.artista || "—")}</b><br>${esc(l.titulo || "sem título")}${l.preco_loja != null ? `<br><small>loja: ${brl(l.preco_loja)}</small>` : ""}</span></td>
+      <td><input type="number" min="0" step="100" data-pf="lance_inicial" value="${esc(String(numOuVazio(l.lance_inicial)))}" aria-label="Lance inicial"></td>
+      <td><input type="number" min="0" step="100" data-pf="reserva" value="${esc(String(numOuVazio(l.reserva)))}" aria-label="Reserva"></td>
+      <td><input type="number" min="0" step="100" data-pf="estimativa_min" value="${esc(String(numOuVazio(l.estimativa_min)))}" aria-label="Estimativa mínima"></td>
+      <td><input type="number" min="0" step="100" data-pf="estimativa_max" value="${esc(String(numOuVazio(l.estimativa_max)))}" aria-label="Estimativa máxima"></td></tr>`).join("");
+  return `<details class="lote-cart" open id="lei-precos"><summary><div class="tt"><b>Preços de todas as obras</b><span class="meta">preencha tudo de uma vez</span></div></summary><div class="lote-ed">
+    <div class="ad-bts" style="margin:0 0 8px;align-items:end"><label>Lance inicial = <input id="ps-ini" type="number" min="1" max="100" value="50" style="width:64px"> % do preço da loja</label><label>Reserva = <input id="ps-res" type="number" min="1" max="200" value="80" style="width:64px"> %</label><button type="button" id="ps-aplicar">Sugerir preços (só onde está vazio)</button></div>
+    <p class="meta" style="margin:0 0 8px">Os valores sugeridos são arredondados para R$ 100. Obras sem preço de loja ficam em branco. A reserva nunca aparece para o público.</p>
+    <div class="tab-rolar"><table class="tab-precos"><thead><tr><th>Obra</th><th>Lance inicial</th><th>Reserva</th><th>Estimativa mín.</th><th>Estimativa máx.</th></tr></thead><tbody>${linhas}</tbody></table></div>
+    <div class="lei-rodape"><button type="button" class="principal" id="ps-salvar">Salvar todos os preços</button></div></div></details>`;
+}
+function ligarPrecos() {
+  const salvar = $("ps-salvar"); if (!salvar) return;
+  const arred = (v) => Math.max(100, Math.round(v / 100) * 100);
+  $("ps-aplicar").onclick = () => {
+    const pi = Number($("ps-ini").value) / 100, pr = Number($("ps-res").value) / 100; let n = 0;
+    document.querySelectorAll("#lei-precos tbody tr").forEach(tr => {
+      const l = leiLotes.find(x => x.id === tr.dataset.pl); if (!l || l.preco_loja == null) return;
+      const ini = tr.querySelector('[data-pf="lance_inicial"]'), res = tr.querySelector('[data-pf="reserva"]');
+      if (!ini.value) { ini.value = arred(l.preco_loja * pi); n++; }
+      if (!res.value) { res.value = Math.max(arred(l.preco_loja * pr), Number(ini.value) || 0); }
+    });
+    leiMsg(n ? `Sugeri preços para ${n} obra(s). Confira e clique em "Salvar todos os preços".` : "Nenhuma obra com campo vazio e preço de loja.", n ? "ok" : "erro");
+  };
+  salvar.onclick = async () => {
+    const itens = [...document.querySelectorAll("#lei-precos tbody tr")].map(tr => {
+      const o = { id: tr.dataset.pl };
+      tr.querySelectorAll("[data-pf]").forEach(i => { o[i.dataset.pf] = i.value; });
+      return o;
+    });
+    salvar.disabled = true; leiMsg("Salvando os preços…");
+    try { const r = await api("admin_precos", { leilaoId: leiAtual.id, itens }, 90000); leiMsg(`Preços salvos em ${r.n} obra(s).`, "ok"); await abrirLeilao(leiAtual.id, true); }
+    catch (e) { leiMsg(e.message, "erro"); salvar.disabled = false; }
+  };
+}
 
 /* ===== LIMPEZA DE DADOS DE TESTE (administrador) ===== */
 let limFrase = "APAGAR TESTES";
