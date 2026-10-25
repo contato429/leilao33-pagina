@@ -2426,7 +2426,7 @@ function htmlPrecos() {
       <td><input type="number" min="0" step="100" data-pf="estimativa_min" value="${esc(String(numOuVazio(l.estimativa_min)))}" aria-label="Estimativa mínima"></td>
       <td><input type="number" min="0" step="100" data-pf="estimativa_max" value="${esc(String(numOuVazio(l.estimativa_max)))}" aria-label="Estimativa máxima"></td></tr>`).join("");
   return `<details class="lote-cart" open id="lei-precos"><summary><div class="tt"><b>Preços de todas as obras</b><span class="meta">preencha tudo de uma vez</span></div></summary><div class="lote-ed">
-    <div class="ad-bts" style="margin:0 0 8px;align-items:end"><label>Lance inicial = <input id="ps-ini" type="number" min="1" max="100" value="60" style="width:64px"> % do preço da loja</label><label>Reserva = <input id="ps-res" type="number" min="1" max="200" value="85" style="width:64px"> %</label><button type="button" id="ps-aplicar">Sugerir preços (só onde está vazio)</button></div>
+    <div class="ad-bts" style="margin:0 0 8px;align-items:end"><label>Lance inicial = <input id="ps-ini" type="number" min="1" max="100" value="60" style="width:64px"> % do preço da loja</label><label>Reserva = <input id="ps-res" type="number" min="1" max="200" value="85" style="width:64px"> %</label><button type="button" id="ps-aplicar">Sugerir preços (só onde está vazio)</button><button type="button" id="ps-todas">Refazer todas com esses %</button></div>
     <p class="meta" style="margin:0 0 8px">Os valores sugeridos são arredondados para R$ 100. Obras sem preço de loja ficam em branco. A reserva nunca aparece para o público.</p>
     <div class="tab-rolar"><table class="tab-precos"><thead><tr><th>Obra</th><th>Lance inicial</th><th>Reserva</th><th>Estimativa mín.</th><th>Estimativa máx.</th></tr></thead><tbody>${linhas}</tbody></table></div>
     <div class="lei-rodape"><button type="button" class="principal" id="ps-salvar">Salvar todos os preços</button></div></div></details>`;
@@ -2434,16 +2434,18 @@ function htmlPrecos() {
 function ligarPrecos() {
   const salvar = $("ps-salvar"); if (!salvar) return;
   const arred = (v) => Math.max(100, Math.round(v / 100) * 100);
-  $("ps-aplicar").onclick = () => {
+  const sugerir = (todas) => {
     const pi = Number($("ps-ini").value) / 100, pr = Number($("ps-res").value) / 100; let n = 0;
     document.querySelectorAll("#lei-precos tbody tr").forEach(tr => {
       const l = leiLotes.find(x => x.id === tr.dataset.pl); if (!l || l.preco_loja == null) return;
       const ini = tr.querySelector('[data-pf="lance_inicial"]'), res = tr.querySelector('[data-pf="reserva"]');
-      if (!ini.value) { ini.value = arred(l.preco_loja * pi); n++; }
-      if (!res.value) { res.value = Math.max(arred(l.preco_loja * pr), Number(ini.value) || 0); }
+      if (todas || !ini.value) { ini.value = arred(l.preco_loja * pi); n++; }
+      if (todas || !res.value) { res.value = Math.max(arred(l.preco_loja * pr), Number(ini.value) || 0); }
     });
-    leiMsg(n ? `Sugeri preços para ${n} obra(s). Confira e clique em "Salvar todos os preços".` : "Nenhuma obra com campo vazio e preço de loja.", n ? "ok" : "erro");
+    leiMsg(n ? `Sugeri preços para ${n} obra(s). Confira, mude o que quiser e clique em "Salvar todos os preços".` : "Nenhuma obra com preço de loja para sugerir.", n ? "ok" : "erro");
   };
+  $("ps-aplicar").onclick = () => sugerir(false);
+  $("ps-todas").onclick = () => sugerir(true);
   salvar.onclick = async () => {
     const itens = [...document.querySelectorAll("#lei-precos tbody tr")].map(tr => {
       const o = { id: tr.dataset.pl };
