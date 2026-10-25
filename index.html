@@ -2209,7 +2209,7 @@ function renderLeilao() {
     const ed = rasc && !ret && !can, d = ed ? "" : " disabled";
     const f = (id, rot, v, tipo = "text", ph = "") => `<label>${rot}<input data-f="${id}" type="${tipo}" value="${esc(String(numOuVazio(v)))}" placeholder="${esc(ph)}"${d}></label>`;
     const fi = l.ficha || {};
-    const chip = ret ? ["Retirada", ""] : can ? ["Cancelada", "mau"] : rasc ? ["Rascunho", ""] : ["Ativa", "ok"];
+    const chip = ret ? ["Retirada", ""] : can ? ["Cancelada", "mau"] : rasc ? ["No leilão", "ok"] : ["Ativa", "ok"];
     const bt = [];
     const b = (ac, t, perigo) => bt.push(`<button type="button" data-lac="${ac}" data-lid="${esc(l.id)}" class="${perigo ? "perigo" : ""}">${t}</button>`);
     if (ed) b("salvar", "Salvar obra");
@@ -2248,6 +2248,7 @@ function renderLeilao() {
     </div>
     ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e fica em divulgação por, no mínimo, 15 dias antes de abrir (leilões com TESTE no nome são dispensados). Escolha uma abertura a partir de ${esc(new Date(Date.now() + 15 * 864e5).toLocaleDateString("pt-BR"))}.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
     <h4 style="margin:18px 0 4px">Obras do leilão</h4>
+    ${(() => { const n = leiLotes.filter(l => l.status !== "removido" && l.status !== "cancelado").length; return rasc ? `<p class="meta" style="margin:0 0 8px">${n} obra(s) já incluída(s) neste leilão. Elas entram em disputa quando você clicar em <b>Lançar leilão</b>, no fim da lista. Clique numa obra para editar lance inicial, reserva e percentuais só dela.</p>` : ""; })()}
     ${rasc ? `<div class="lei-rodape"><button type="button" id="lei-loja">Escolher da loja</button><button type="button" id="lei-nova-btn">Cadastrar obra nova</button></div><div id="lei-cat" class="oculto"></div><div id="lei-nova" class="oculto lei-nova"></div>` : ""}
     ${rasc ? htmlPrecos() : ""}
     <div id="lei-lotes">${lotes}</div>
