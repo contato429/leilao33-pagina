@@ -888,7 +888,8 @@ window.addEventListener("message", (e) => {
   if (!m || m.id === undefined || !pendentes.has(m.id)) return;
   const p = pendentes.get(m.id);
   pendentes.delete(m.id);
-  if (m.ok) p.resolve(m.dados);
+  if (m.ok && m.dados && m.dados.validacao && m.dados.ok === false) p.reject(new Error(m.dados.erro || "Não foi possível concluir."));
+  else if (m.ok) p.resolve(m.dados);
   else p.reject(new Error(m.erro || "Falha no servidor."));
 });
 function api(acao, dados, espera = 20000) {
