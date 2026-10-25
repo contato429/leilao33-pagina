@@ -2524,6 +2524,7 @@ $("lim-ver").onclick = async () => {
       try {
         const x = await api("admin_limpeza", dados, 120000);
         if (x && x.ok === false) { msg($("lim-msg"), `Parou em "${x.etapa || "início"}": ${x.erro}. Já apagado: ${(x.feito && x.feito.lances) || 0} lance(s), ${(x.feito && x.feito.lotes) || 0} lote(s).`, "erro"); return; }
+        if (x && x.parcial) { msg($("lim-msg"), `${x.mensagem} Até agora: ${x.feito.lotes} lote(s) e ${x.feito.lances} lance(s) apagados.`, "ok"); carregarLeiloes(); return; }
         msg($("lim-msg"), `Apagado: ${x.feito.lances} lance(s), ${x.feito.lotes} lote(s), ${x.feito.participantes} participante(s), ${x.feito.habilitacoes} habilitação(ões), ${x.feito.leiloes || 0} leilão(ões).`, "ok");
         corpo.classList.add("oculto"); carregarArremates(true); carregarLeiloes();
       } catch (e) { msg($("lim-msg"), e.message, "erro"); }
