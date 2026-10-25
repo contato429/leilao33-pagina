@@ -2196,12 +2196,14 @@ async function abrirLeilao(id, manterMsg) {
   } catch (e) { leiMsg(e.message, "erro"); }
 }
 
+const leiCorpos = new Map(); // corpo do editor de cada obra, montado só quando a linha é aberta (leilões grandes ficam leves)
 function renderLeilao() {
   const L = leiAtual, rasc = L.situacao === "rascunho", [rs, cls] = ROT_LEILAO[L.situacao] || [L.situacao, ""], P = leiPadroes;
   const dis = rasc ? "" : " disabled";
   const campo = (id, rot, valor, tipo = "number", extra = "") => `<label>${rot}<input id="${id}" type="${tipo}" value="${esc(String(numOuVazio(valor)))}" ${extra}${dis}></label>`;
   const duracoes = [[33, "33 minutos"], [60, "1 hora"], [180, "3 horas"], [1440, "1 dia"], [4320, "3 dias"], [10080, "7 dias"], [20160, "14 dias"]];
   const durOpts = duracoes.map(([v, t]) => `<option value="${v}"${Number(L.duracao_min) === v ? " selected" : ""}>${t}</option>`).join("") + (L.duracao_min && !duracoes.some(d => d[0] === Number(L.duracao_min)) ? `<option value="${L.duracao_min}" selected>${L.duracao_min} minutos</option>` : "") + `<option value="">outra (em minutos)…</option>`;
+  leiCorpos.clear();
   const lotes = leiLotes.map(l => {
     const ret = l.status === "removido", can = l.status === "cancelado";
     const ed = rasc && !ret && !can, d = ed ? "" : " disabled";
@@ -2214,8 +2216,9 @@ function renderLeilao() {
     if (rasc && !ret && !can) b("remover", "Retirar do leilão");
     if (rasc && ret) b("recolocar", "Recolocar no leilão");
     if (!can && l.n_lances === 0) b("cancelar", "Cancelar lote", true);
-    return `<details class="lote-cart" data-lote="${esc(l.id)}"><summary><img class="mini" src="${esc(l.imagem)}" alt=""><div class="tt"><b>${esc(l.artista || l.titulo || "Sem título")}</b><span class="meta">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)} · inicial ${l.lance_inicial ? brl(l.lance_inicial) : "—"}${l.reserva ? " · reserva " + brl(l.reserva) : ""}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</span></div><span class="chip-st ${chip[1]}">${chip[0]}</span></summary>
-      <div class="lote-ed">
+    const html = `<details class="lote-cart" data-lote="${esc(l.id)}"><summary><img class="mini" src="${esc(l.imagem)}" alt=""><div class="tt"><b>${esc(l.artista || l.titulo || "Sem título")}</b><span class="meta">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)} · inicial ${l.lance_inicial ? brl(l.lance_inicial) : "—"}${l.reserva ? " · reserva " + brl(l.reserva) : ""}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</span></div><span class="chip-st ${chip[1]}">${chip[0]}</span>${ed ? '<span class="meta" style="margin-left:8px">editar ›</span>' : ""}</summary>
+      <div class="lote-ed" data-lazy="${esc(l.id)}"></div></details>`;
+    leiCorpos.set(l.id, `
         <div class="grade2">${f("titulo", "Título", l.titulo)}${f("artista", "Artista", l.artista)}${f("imagem", "Imagem (endereço https)", l.imagem)}</div>
         <label>Descrição da obra<textarea data-f="descricao"${d}>${esc(l.descricao)}</textarea></label>
         <label>Sobre o artista (resumo mostrado no lote)<textarea data-f="artista_bio"${d}>${esc(l.artista_bio)}</textarea></label>
@@ -2224,7 +2227,8 @@ function renderLeilao() {
         <div class="grade2">${["ano", "assinatura", "tecnica", "medidas", "moldura", "proveniencia", "estado", "certificado"].map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k])).join("")}</div>
         <div class="meta">Exceções só para esta obra (em branco = usa o padrão do leilão):</div>
         <div class="grade2">${f("comissao_pct", "Comissão %", l.comissao_pct, "number", "padrão " + L.comissao_pct)}${f("multa_pct", "Multa %", l.multa_pct, "number", "padrão " + L.multa_pct)}${f("prazo_pagamento_dias", "Pagamento (dias)", l.prazo_pagamento_dias, "number", "padrão " + L.prazo_pagamento_dias)}${f("prazo_aceite_horas", "Aceite da reserva (h)", l.prazo_aceite_horas, "number", "padrão " + L.prazo_aceite_horas)}</div>
-        <div class="acoes">${bt.join("")}</div></div></details>`;
+        <div class="acoes">${bt.join("")}</div>`);
+    return html;
   }).join("") || "<p class='meta'>Nenhuma obra ainda. Escolha da loja ou cadastre uma nova.</p>";
   const rodape = [];
   if (rasc) rodape.push(`<button type="button" class="principal" data-lrod="lancar">Lançar leilão</button><button type="button" data-lrod="cancelar_leilao">Cancelar leilão</button>`);
@@ -2283,7 +2287,12 @@ function ligarLeilao() {
       leiMsg("Dados do leilão salvos.", "ok"); await abrirLeilao(L.id, true);
     } catch (e) { leiMsg(e.message, "erro"); }
   };
-  document.querySelectorAll("#lei-lotes [data-lac]").forEach(bt => bt.onclick = () => acaoLote(bt.dataset.lid, bt.dataset.lac, bt));
+  document.querySelectorAll("#lei-lotes details[data-lote]").forEach(det => det.addEventListener("toggle", () => {
+    if (!det.open) return;
+    const box = det.querySelector("[data-lazy]"); if (!box || box.dataset.pronto) return;
+    box.innerHTML = leiCorpos.get(det.dataset.lote) || ""; box.dataset.pronto = "1";
+    box.querySelectorAll("[data-lac]").forEach(bt => bt.onclick = () => acaoLote(bt.dataset.lid, bt.dataset.lac, bt));
+  }));
   document.querySelectorAll("#lei-edit [data-lrod]").forEach(bt => bt.onclick = () => acaoLeilao(bt.dataset.lrod, bt));
   if ($("lei-loja")) $("lei-loja").onclick = abrirCatalogo;
   if ($("lei-nova-btn")) $("lei-nova-btn").onclick = abrirObraNova;
