@@ -265,6 +265,9 @@
   .pf section h5 { margin: 0 0 2px; font: 400 .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
   .lei-lista .lei { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 8px 0; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--bg2); }
+  .lei button[data-pub] { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 10px 16px; font: 700 .85rem var(--sans); cursor: pointer; }
+  .lei button[data-pub]:hover { border-color: var(--acid); }
+  .lei button[data-pub].confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
   .lei h4 { margin: 0; font: italic 400 1.3rem/1 var(--serif); }
   .lei .sub { font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .lei-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 14px; margin: 10px 0; }
@@ -2175,10 +2178,27 @@ async function carregarLeiloes() {
     $("lei-lista").innerHTML = r.leiloes.map(l => {
       const [rs, cls] = ROT_LEILAO[l.situacao] || [l.situacao, ""];
       return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}${l.situacao === "agendado" && l.abre_em ? " · em divulgação: faltam " + Math.max(0, Math.ceil((new Date(l.abre_em) - Date.now()) / 864e5)) + " dia(s) para abrir" : ""}</div></div>
-        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> <button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
+        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}">Publicar</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
     }).join("") || "<p class='meta'>Nenhum leilão.</p>";
     $("lei-lista").querySelectorAll("[data-lei]").forEach(b => b.onclick = () => abrirLeilao(b.dataset.lei));
+    $("lei-lista").querySelectorAll("[data-pub]").forEach(b => b.onclick = () => publicarDaLista(b));
   } catch (e) { leiMsg(e.message, "erro"); }
+}
+// Publicar direto da lista: pede confirmação (publicar esconde as obras da loja) e usa o mesmo lançamento do botão "Lançar leilão".
+async function publicarDaLista(b) {
+  const id = b.dataset.pub, chave = "pub:" + id;
+  if (leiConfirma !== chave) {
+    leiConfirma = chave; clearTimeout(leiTimer);
+    leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "Publicar"; b.classList.remove("confirma"); } }, 7000);
+    b.textContent = `Confirmar: publicar ${b.dataset.n} obra(s) e tirar da loja`; b.classList.add("confirma"); return;
+  }
+  leiConfirma = null; b.disabled = true; leiMsg("Publicando… (as obras saem da loja)");
+  try {
+    const r = await api("admin_leilao_lancar", { id }, 60000);
+    leiMsg(r.mensagem || "Leilão publicado.", "ok"); await carregarLeiloes(); carregarArremates();
+  } catch (e) {
+    const t = String(e.message || e); leiMsg(t.length > 700 ? t.slice(0, 700) + "… Abra o leilão para ver tudo." : t, "erro"); b.disabled = false; b.textContent = "Publicar"; b.classList.remove("confirma");
+  }
 }
 $("lei-novo").onclick = async () => {
   leiMsg("Criando…");
