@@ -2266,6 +2266,14 @@ function textoDeAnuncio() {
   return ["LEILÃO 33 · " + L.nome, "Abertura dos lances: " + fmt(abre) + (ini ? " (primeiro lote encerra " + fmt(ini) + ")" : ""), "", "Obras:"].concat(linhas, ["", "Cadastre-se e habilite-se desde já: https://www.galeria33.com/leilao-33?leilao=" + encodeURIComponent(L.id)]).join("\n");
 }
 
+// Grava os dados do formulário do leilão (nome, abertura, duração, percentuais). Os outros botões de salvar chamam isto antes,
+// porque eles recarregam a tela e descartariam o que foi digitado no formulário.
+async function salvarFormLeilao() {
+  const L = leiAtual, dur = $("lf-dur"), durMin = $("lf-dur-min");
+  if (!L || !$("lf-salvar") || !dur) return;
+  const dm = dur.value === "" ? durMin.value : dur.value;
+  await api("admin_leilao_salvar", { id: L.id, nome: $("lf-nome").value, abre_em: deLocal($("lf-abre").value), duracao_min: dm, intervalo_min: $("lf-inter").value, comissao_pct: $("lf-com").value, multa_pct: $("lf-multa").value, prazo_pagamento_dias: $("lf-pag").value, prazo_aceite_horas: $("lf-aceite").value });
+}
 function ligarLeilao() {
   const L = leiAtual;
   ligarPrecos();
@@ -2280,12 +2288,9 @@ function ligarLeilao() {
   };
   const salvar = $("lf-salvar");
   if (salvar) salvar.onclick = async () => {
-    const dm = dur.value === "" ? durMin.value : dur.value;
     leiMsg("Salvando…");
-    try {
-      await api("admin_leilao_salvar", { id: L.id, nome: $("lf-nome").value, abre_em: deLocal($("lf-abre").value), duracao_min: dm, intervalo_min: $("lf-inter").value, comissao_pct: $("lf-com").value, multa_pct: $("lf-multa").value, prazo_pagamento_dias: $("lf-pag").value, prazo_aceite_horas: $("lf-aceite").value });
-      leiMsg("Dados do leilão salvos.", "ok"); await abrirLeilao(L.id, true);
-    } catch (e) { leiMsg(e.message, "erro"); }
+    try { await salvarFormLeilao(); leiMsg("Dados do leilão salvos.", "ok"); await abrirLeilao(L.id, true); }
+    catch (e) { leiMsg(e.message, "erro"); }
   };
   document.querySelectorAll("#lei-lotes details[data-lote]").forEach(det => det.addEventListener("toggle", () => {
     if (!det.open) return;
@@ -2314,7 +2319,7 @@ async function acaoLote(id, ac, el) {
   }
   leiConfirma = null; leiMsg("Executando…");
   try {
-    if (ac === "salvar") { await api("admin_lote_editar", { id, campos: lerCamposLote(id) }); leiMsg("Obra salva.", "ok"); }
+    if (ac === "salvar") { await salvarFormLeilao(); await api("admin_lote_editar", { id, campos: lerCamposLote(id) }); leiMsg("Obra salva.", "ok"); }
     else { const r = await api("admin_lote_status", { id, acao: ac }); leiMsg(r.mensagem || "Feito.", "ok"); }
     await abrirLeilao(leiAtual.id, true);
   } catch (e) { leiMsg(e.message, "erro"); }
@@ -2330,6 +2335,7 @@ async function acaoLeilao(ac, el) {
   leiConfirma = null; $("lei-problemas").textContent = ""; leiMsg("Executando…");
   try {
     const rota = { lancar: "admin_leilao_lancar", desfazer: "admin_leilao_desfazer", cancelar_leilao: "admin_leilao_cancelar" }[ac];
+    if (ac === "lancar") await salvarFormLeilao();
     const r = await api(rota, { id: leiAtual.id }, 60000);
     leiMsg(r.mensagem || "Feito.", "ok"); await abrirLeilao(leiAtual.id, true); carregarArremates();
   } catch (e) { $("lei-problemas").textContent = e.message; leiMsg("Não foi possível concluir.", "erro"); }
@@ -2462,7 +2468,7 @@ function ligarPrecos() {
       return o;
     });
     salvar.disabled = true; leiMsg("Salvando os preços…");
-    try { const r = await api("admin_precos", { leilaoId: leiAtual.id, itens }, 90000); leiMsg(`Preços salvos em ${r.n} obra(s).`, "ok"); await abrirLeilao(leiAtual.id, true); }
+    try { await salvarFormLeilao(); const r = await api("admin_precos", { leilaoId: leiAtual.id, itens }, 90000); leiMsg(`Dados do leilão e preços salvos (${r.n} obra(s)).`, "ok"); await abrirLeilao(leiAtual.id, true); }
     catch (e) { leiMsg(e.message, "erro"); salvar.disabled = false; }
   };
   salvar.onclick = salvarTudo; $("ps-salvar-topo").onclick = salvarTudo;
