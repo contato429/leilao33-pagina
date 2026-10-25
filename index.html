@@ -2426,7 +2426,7 @@ function htmlPrecos() {
       <td><input type="number" min="0" step="100" data-pf="estimativa_min" value="${esc(String(numOuVazio(l.estimativa_min)))}" aria-label="Estimativa mínima"></td>
       <td><input type="number" min="0" step="100" data-pf="estimativa_max" value="${esc(String(numOuVazio(l.estimativa_max)))}" aria-label="Estimativa máxima"></td></tr>`).join("");
   return `<details class="lote-cart" open id="lei-precos"><summary><div class="tt"><b>Preços de todas as obras</b><span class="meta">preencha tudo de uma vez</span></div></summary><div class="lote-ed">
-    <div class="ad-bts" style="margin:0 0 8px;align-items:end"><label>Lance inicial = <input id="ps-ini" type="number" min="1" max="100" value="60" style="width:64px"> % do preço da loja</label><label>Reserva = <input id="ps-res" type="number" min="1" max="200" value="85" style="width:64px"> %</label><button type="button" id="ps-aplicar">Sugerir preços (só onde está vazio)</button><button type="button" id="ps-todas">Refazer todas com esses %</button></div>
+    <div class="ad-bts" style="margin:0 0 8px;align-items:end"><label>Lance inicial = <input id="ps-ini" type="number" min="1" max="100" value="60" style="width:64px"> % do preço da loja</label><label>Reserva = <input id="ps-res" type="number" min="1" max="200" value="85" style="width:64px"> %</label><button type="button" id="ps-aplicar">Sugerir preços (só onde está vazio)</button><button type="button" id="ps-todas">Refazer todas com esses %</button><button type="button" class="principal" id="ps-salvar-topo">Salvar todos os preços</button></div>
     <p class="meta" style="margin:0 0 8px">Os valores sugeridos são arredondados para R$ 100. Obras sem preço de loja ficam em branco. A reserva nunca aparece para o público.</p>
     <div class="tab-rolar"><table class="tab-precos"><thead><tr><th>Obra</th><th>Lance inicial</th><th>Reserva</th><th>Estimativa mín.</th><th>Estimativa máx.</th></tr></thead><tbody>${linhas}</tbody></table></div>
     <div class="lei-rodape"><button type="button" class="principal" id="ps-salvar">Salvar todos os preços</button></div></div></details>`;
@@ -2446,7 +2446,7 @@ function ligarPrecos() {
   };
   $("ps-aplicar").onclick = () => sugerir(false);
   $("ps-todas").onclick = () => sugerir(true);
-  salvar.onclick = async () => {
+  const salvarTudo = async () => {
     const itens = [...document.querySelectorAll("#lei-precos tbody tr")].map(tr => {
       const o = { id: tr.dataset.pl };
       tr.querySelectorAll("[data-pf]").forEach(i => { o[i.dataset.pf] = i.value; });
@@ -2456,6 +2456,7 @@ function ligarPrecos() {
     try { const r = await api("admin_precos", { leilaoId: leiAtual.id, itens }, 90000); leiMsg(`Preços salvos em ${r.n} obra(s).`, "ok"); await abrirLeilao(leiAtual.id, true); }
     catch (e) { leiMsg(e.message, "erro"); salvar.disabled = false; }
   };
+  salvar.onclick = salvarTudo; $("ps-salvar-topo").onclick = salvarTudo;
 }
 
 /* ===== LIMPEZA DE DADOS DE TESTE (administrador) ===== */
