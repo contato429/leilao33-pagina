@@ -2348,8 +2348,16 @@ async function abrirCatalogo() {
   } catch (e) { $("cat-itens").innerHTML = `<span class="meta">${esc(e.message)}</span>`; return; }
   $("cat-inc").onclick = async () => {
     const b = $("cat-inc"); b.disabled = true; leiMsg(`Incluindo ${marcadas.size} obra(s)…`);
-    try { const r = await api("admin_obra_incluir", { leilaoId: leiAtual.id, produtoIds: [...marcadas] }, 120000); leiMsg(`${r.n} obra(s) incluída(s). Abra cada lote abaixo para definir preços.`, "ok"); marcadas.clear(); await abrirLeilao(leiAtual.id, true); box.classList.add("oculto"); }
-    catch (e) { leiMsg(e.message, "erro"); contar(); }
+    const ids = [...marcadas]; let feitas = 0;
+    try {
+      for (let i = 0; i < ids.length; i += 40) {
+        leiMsg(`Incluindo obras… ${feitas} de ${ids.length}`);
+        try { const r = await api("admin_obra_incluir", { leilaoId: leiAtual.id, produtoIds: ids.slice(i, i + 40) }, 120000); feitas += r.n; }
+        catch (e) { if (!/Nenhuma obra nova/.test(e.message)) throw e; }
+        ids.slice(i, i + 40).forEach(x => marcadas.delete(x));
+      }
+      leiMsg(`${feitas} obra(s) incluída(s). Use a tabela de preços para definir lance inicial e reserva.`, "ok"); await abrirLeilao(leiAtual.id, true); box.classList.add("oculto");
+    } catch (e) { leiMsg(`Incluí ${feitas} obra(s) e parei: ${e.message} Pode clicar de novo para continuar (as já incluídas são puladas).`, "erro"); await abrirLeilao(leiAtual.id, true); contar(); }
   };
 }
 // Reduz a foto no próprio computador (no máximo 1.600 px, JPG) antes de enviar.
