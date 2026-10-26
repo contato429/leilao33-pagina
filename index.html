@@ -788,9 +788,10 @@ Cadastre-se, habilite-se e dispute.</span></div>
   <!-- ===== PAINEL DA EQUIPE ===== -->
   <div id="view-admin" class="oculto admin-pag"><h2>Painel da equipe</h2>
     <div class="painel" id="saude-painel">
-      <div class="ad-topo"><h3>Verificar e corrigir</h3><div class="ad-bts"><button type="button" id="saude-btn">Verificar e corrigir</button></div></div>
+      <div class="ad-topo"><h3>Verificar e corrigir</h3><div class="ad-bts"><button type="button" id="saude-btn">Verificar e corrigir</button><button type="button" id="copia-btn">Gerar cópia de segurança</button></div></div>
       <p class="lei-aviso">Confere o leilão e a loja, conserta sozinho só o que é seguro (obra escondida sem motivo, endereço de imagem, código repetido sem lances, rotina da loja) e explica o que precisa de você. Não mexe em lances, pagamentos nem arremates.</p>
       <div class="msg" id="saude-msg" role="status"></div>
+      <p class="meta" id="saude-auto">Rotinas automáticas: verificação todo dia às 8h e cópia de segurança todo dia à 0h30 (horário de Brasília). Falha ou problema chega por e-mail em contato@galeria33.com. Os arquivos da cópia ficam privados em Mídia &gt; Privado &gt; leilao33-copias, no painel do Wix.</p>
       <div id="saude-lista"></div>
     </div>
     <div class="painel" id="lim-painel">
@@ -2547,6 +2548,14 @@ function ligarPrecos() {
 }
 
 /* ===== VERIFICAR E CORRIGIR (administrador) ===== */
+$("copia-btn").onclick = async () => {
+  const b = $("copia-btn"); b.disabled = true; msg($("saude-msg"), "Gerando a cópia… (pode levar até 20 segundos)");
+  try {
+    const r = await api("admin_copia", {}, 60000), c = r.contagens || {};
+    msg($("saude-msg"), `Cópia gerada: ${r.arquivo} (${Math.round(r.bytes / 1024)} KB; ${c.Leiloes || 0} leilões, ${c.Lotes || 0} lotes, ${c.Lances || 0} lances, ${c.Participantes || 0} cadastros). Fica em Mídia > Privado > leilao33-copias, no painel do Wix.`, "ok");
+  } catch (e) { msg($("saude-msg"), "Não consegui gerar a cópia: " + e.message, "erro"); }
+  b.disabled = false;
+};
 $("saude-btn").onclick = async () => {
   const b = $("saude-btn"); b.disabled = true; msg($("saude-msg"), "Verificando… (pode levar até 20 segundos)"); $("saude-lista").innerHTML = "";
   try {
