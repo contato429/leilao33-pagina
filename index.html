@@ -808,7 +808,6 @@ Cadastre-se, habilite-se e dispute.</span></div>
     <div class="painel" id="ad-arr-painel">
       <div class="ad-topo"><h3>Arremates e cobranças</h3>
         <div class="ad-bts"><button type="button" id="ad-arr-atualizar">Atualizar</button><button type="button" id="ad-rotina" title="Roda agora o que normalmente roda de hora em hora">Rodar a rotina agora</button><button type="button" id="ad-csv">Copiar planilha</button></div></div>
-      <div class="ad-bts" style="margin:8px 0"><input id="ad-teste-para" type="email" placeholder="e-mail para o teste" autocomplete="off" style="flex:1; min-width:200px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink); font:400 .85rem var(--sans)"><button type="button" id="ad-teste">Enviar 4 e-mails de teste</button></div>
       <div class="meta" id="ad-arr-resumo"></div>
       <div class="msg" id="ad-arr-msg" role="status"></div>
       <div id="ad-arr" class="carregando">Carregando…</div>
@@ -2049,8 +2048,6 @@ function renderArremates() {
     const fato = (k, v) => v === "" || v == null ? "" : `<div><b>${k}</b>${v}</div>`;
     const bt = [];
     const b = (ac, txt, perigo) => bt.push(`<button type="button" data-arr="${esc(l.id)}" data-ac="${ac}" class="${perigo ? "perigo" : ""}">${txt}</button>`);
-    if (l.teste) b(l.oculto ? "mostrar_teste" : "ocultar_teste", l.oculto ? "Mostrar de novo na página" : "Ocultar da página (lote de teste)");
-    if (l.teste && l.lancado && l.situacao === "aberto" && !l.n_lances) b("simular_arremate", "Simular arremate (só teste)");
     if (l.tem_produto && !l.lancado && l.situacao === "aberto") b("lancar", "Lançar lote (liga a rotina da loja)");
     if (l.lancado && l.situacao === "aberto") b("desfazer_lancar", "Desfazer lançamento");
     if (l.situacao === "vendido") bt.push(`<button type="button" data-pf="${esc(l.id)}">Ver pro forma</button>`);
@@ -2096,18 +2093,6 @@ async function acaoArremate(id, ac, el) {
   await carregarArremates(true);
 }
 $("ad-arr-atualizar").onclick = () => carregarArremates();
-$("ad-teste").onclick = async () => {
-  const para = $("ad-teste-para").value.trim();
-  if (!para) { msg($("ad-arr-msg"), "Digite o e-mail que vai receber o teste.", "erro"); return; }
-  $("ad-teste").disabled = true; msg($("ad-arr-msg"), "Enviando os e-mails de teste…");
-  try {
-    const r = await api("admin_email_teste", { para, id: "L99" }, 60000);
-    if (r.ok) msg($("ad-arr-msg"), "Enviados para " + r.para + " (" + r.feito.length + " de " + r.total + "): " + r.feito.join("; ") + ". Confira a caixa de entrada e o spam.", "ok");
-    else msg($("ad-arr-msg"), "Falhou na etapa \"" + r.etapa + "\": " + (r.erro || (r.falhas || []).join(" | ") || "nenhum e-mail foi enviado") + (r.feito && r.feito.length ? " (enviados: " + r.feito.join("; ") + ")" : "") + " [resposta: " + JSON.stringify(r).slice(0, 300) + "]", "erro");
-  }
-  catch (e) { msg($("ad-arr-msg"), e.message, "erro"); }
-  $("ad-teste").disabled = false;
-};
 $("ad-rotina").onclick = async () => {
   msg($("ad-arr-msg"), "Rodando a rotina…");
   try { const r = await api("admin_rotina"); msg($("ad-arr-msg"), r.feito && r.feito.length ? "Rotina feita: " + r.feito.join("; ") : "Rotina feita: nada a mudar.", "ok"); }
@@ -2208,7 +2193,7 @@ async function carregarLeiloes() {
     $("lei-lista").innerHTML = r.leiloes.map(l => {
       const [rs, cls] = ROT_LEILAO[l.situacao] || [l.situacao, ""];
       return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}${l.situacao === "agendado" && l.abre_em ? " · em divulgação: faltam " + Math.max(0, Math.ceil((new Date(l.abre_em) - Date.now()) / 864e5)) + " dia(s) para abrir" : ""}</div></div>
-        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" data-previa="${esc(l.id)}">Pré-visualizar</button> <button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}" data-teste="${/teste/i.test(l.nome || "") ? 1 : 0}">POSTAR</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
+        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" data-previa="${esc(l.id)}">Pré-visualizar</button> <button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}">POSTAR</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
     }).join("") || "<p class='meta'>Nenhum leilão.</p>";
     $("lei-lista").querySelectorAll("[data-lei]").forEach(b => b.onclick = () => abrirLeilao(b.dataset.lei));
     $("lei-lista").querySelectorAll("[data-pub]").forEach(b => b.onclick = () => publicarDaLista(b));
@@ -2224,7 +2209,6 @@ async function entrarNaPrevia(L) {
     const nome = (L.nome && $("lf-nome") && $("lf-nome").value) || L.nome || L.id;
     $("previa-nome").textContent = nome; $("previa-faixa").classList.remove("oculto");
     $("previa-postar").dataset.n = String((leiLotes || []).filter(l => l.status !== "removido" && l.status !== "cancelado").length || "");
-    $("previa-postar").dataset.teste = /teste/i.test(nome) ? "1" : "0";
     mostrar("lotes"); mostrarVitrine(true); renderEsqueleto(); await carregarLotes();
     leiMsg("");
   } catch (e) { previaId = null; leiMsg(e.message, "erro"); }
@@ -2240,7 +2224,7 @@ $("previa-postar").onclick = async () => {
   if (leiConfirma !== chave) {
     leiConfirma = chave; clearTimeout(leiTimer);
     leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "POSTAR"; b.classList.remove("confirma"); } }, 7000);
-    b.textContent = `Confirmar: POSTAR${b.dataset.n ? " " + b.dataset.n + " obra(s)" : ""} e tirar da loja${b.dataset.teste === "1" ? " (o nome tem TESTE!)" : ""}`; b.classList.add("confirma"); return;
+    b.textContent = `Confirmar: POSTAR${b.dataset.n ? " " + b.dataset.n + " obra(s)" : ""} e tirar da loja`; b.classList.add("confirma"); return;
   }
   leiConfirma = null; b.disabled = true; b.textContent = "Postando…";
   try {
@@ -2257,7 +2241,7 @@ async function publicarDaLista(b) {
   if (leiConfirma !== chave) {
     leiConfirma = chave; clearTimeout(leiTimer);
     leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "POSTAR"; b.classList.remove("confirma"); } }, 7000);
-    b.textContent = `Confirmar: POSTAR ${b.dataset.n} obra(s) e tirar da loja${b.dataset.teste === "1" ? " (o nome tem TESTE!)" : ""}`; b.classList.add("confirma"); return;
+    b.textContent = `Confirmar: POSTAR ${b.dataset.n} obra(s) e tirar da loja`; b.classList.add("confirma"); return;
   }
   leiConfirma = null; b.disabled = true; leiMsg("Postando… (as obras saem da loja)");
   try {
@@ -2333,7 +2317,7 @@ function renderLeilao() {
       ${campo("lf-pag", "Prazo de pagamento (dias)", L.prazo_pagamento_dias, "number", 'min="1" max="60"')}
       ${campo("lf-aceite", "Aceite da reserva (horas)", L.prazo_aceite_horas, "number", 'min="1" max="168"')}
     </div>
-    ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e fica em divulgação por, no mínimo, 15 dias antes de abrir (leilões com TESTE no nome são dispensados). Escolha uma abertura a partir de ${esc(new Date(Date.now() + 15 * 864e5).toLocaleDateString("pt-BR"))}.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
+    ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e fica em divulgação por, no mínimo, 15 dias antes de abrir. Escolha uma abertura a partir de ${esc(new Date(Date.now() + 15 * 864e5).toLocaleDateString("pt-BR"))}.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
     <h4 style="margin:18px 0 4px">Obras do leilão</h4>
     ${(() => { const n = leiLotes.filter(l => l.status !== "removido" && l.status !== "cancelado").length; return rasc ? `<p class="meta" style="margin:0 0 8px">${n} obra(s) já incluída(s) neste leilão. Elas entram em disputa quando você clicar em <b>Lançar leilão</b>, no fim da lista. Clique numa obra para editar lance inicial, reserva e percentuais só dela.</p>` : ""; })()}
     ${rasc ? `<div class="lei-rodape"><button type="button" id="lei-loja">Escolher da loja</button><button type="button" id="lei-nova-btn">Cadastrar obra nova</button></div><div id="lei-cat" class="oculto"></div><div id="lei-nova" class="oculto lei-nova"></div>` : ""}
