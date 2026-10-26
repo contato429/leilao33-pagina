@@ -778,6 +778,12 @@ Cadastre-se, habilite-se e dispute.</span></div>
 
   <!-- ===== PAINEL DA EQUIPE ===== -->
   <div id="view-admin" class="oculto admin-pag"><h2>Painel da equipe</h2>
+    <div class="painel" id="saude-painel">
+      <div class="ad-topo"><h3>Verificar e corrigir</h3><div class="ad-bts"><button type="button" id="saude-btn">Verificar e corrigir</button></div></div>
+      <p class="lei-aviso">Confere o leilão e a loja, conserta sozinho só o que é seguro (obra escondida sem motivo, endereço de imagem, código repetido sem lances, rotina da loja) e explica o que precisa de você. Não mexe em lances, pagamentos nem arremates.</p>
+      <div class="msg" id="saude-msg" role="status"></div>
+      <div id="saude-lista"></div>
+    </div>
     <div class="painel" id="lim-painel">
       <div class="ad-topo"><h3>Limpar dados de teste</h3><div class="ad-bts"><button type="button" id="lim-ver">Ver o que existe</button></div></div>
       <p class="lei-aviso">Aqui quem apaga é você, e não tem volta. Nada é apagado sem você marcar e digitar a frase de confirmação.</p>
@@ -2495,6 +2501,22 @@ function ligarPrecos() {
   };
   salvar.onclick = salvarTudo; $("ps-salvar-topo").onclick = salvarTudo;
 }
+
+/* ===== VERIFICAR E CORRIGIR (administrador) ===== */
+$("saude-btn").onclick = async () => {
+  const b = $("saude-btn"); b.disabled = true; msg($("saude-msg"), "Verificando… (pode levar até 20 segundos)"); $("saude-lista").innerHTML = "";
+  try {
+    const r = await api("admin_verificar", {}, 60000);
+    const cor = { ok: "#1fc77a", aviso: "#f0b400", erro: "#ff6a4d" }, rot = { ok: "Tudo certo", aviso: "Atenção", erro: "Precisa de você" };
+    const ordem = { erro: 0, aviso: 1, ok: 2 };
+    const itens = r.itens.slice().sort((a, c) => ordem[a.nivel] - ordem[c.nivel]);
+    $("saude-lista").innerHTML = itens.map(i => `<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span style="width:10px;height:10px;border-radius:50%;background:${cor[i.nivel]};margin-top:6px" title="${rot[i.nivel]}"></span><div><b>${esc(i.titulo)}</b>${i.corrigido ? ' <span class="chip-st ok">corrigido</span>' : ""}${i.detalhe ? `<div class="meta" style="margin-top:2px">${esc(i.detalhe)}</div>` : ""}</div></div>`).join("");
+    const s = r.resumo;
+    msg($("saude-msg"), `${s.erros ? s.erros + " problema(s) que precisam de você. " : "Nenhum problema grave. "}${s.avisos ? s.avisos + " aviso(s). " : ""}${s.corrigidos ? s.corrigidos + " item(ns) corrigido(s) sozinho. " : ""}(${s.lotes} lotes, ${s.leiloes} leilões)`, s.erros ? "erro" : "ok");
+    carregarLeiloes();
+  } catch (e) { msg($("saude-msg"), e.message, "erro"); }
+  b.disabled = false;
+};
 
 /* ===== LIMPEZA DE DADOS DE TESTE (administrador) ===== */
 let limFrase = "APAGAR TESTES";
