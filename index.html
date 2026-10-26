@@ -268,6 +268,11 @@
   .lei button[data-pub] { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 10px 16px; font: 700 .85rem var(--sans); cursor: pointer; }
   .lei button[data-pub]:hover { border-color: var(--acid); }
   .lei button[data-pub].confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
+  #previa-faixa { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; padding: 10px clamp(16px, 3vw, 32px); background: #f0b400; color: #1b1500; font: 500 .85rem/1.35 var(--sans); }
+  #previa-faixa .previa-bts { display: flex; gap: 8px; flex-wrap: wrap; }
+  #previa-faixa button { appearance: none; border: 1px solid #1b1500; background: transparent; color: #1b1500; border-radius: 999px; padding: 8px 14px; font: 700 .8rem var(--sans); cursor: pointer; }
+  #previa-faixa button.postar { background: #1b1500; color: #f0b400; }
+  #previa-faixa button.confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
   .lei h4 { margin: 0; font: italic 400 1.3rem/1 var(--serif); }
   .lei .sub { font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .lei-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 14px; margin: 10px 0; }
@@ -567,6 +572,10 @@
 
   <!-- ===== LOTES ===== -->
   <div id="view-lotes">
+    <div id="previa-faixa" class="oculto" role="status">
+      <span><b>PRÉ-VISUALIZAÇÃO</b> · só a equipe vê isto. É assim que o público verá o leilão <b id="previa-nome"></b> depois de POSTAR. Lances ficam desativados.</span>
+      <span class="previa-bts"><button type="button" id="previa-sair">Voltar ao painel</button><button type="button" class="postar" id="previa-postar">POSTAR</button></span>
+    </div>
     <section class="heroi" id="heroi">
       <div>
         <div class="kicker"><span class="ao-vivo" aria-hidden="true"></span><span id="subtitulo" style="white-space:pre-line">Arte Contemporânea Brasileira
@@ -898,7 +907,13 @@ window.addEventListener("message", (e) => {
   else if (m.ok) p.resolve(m.dados);
   else p.reject(new Error(m.erro || "Falha no servidor."));
 });
+let previaId = null; // leilão em pré-visualização (só equipe); nada é gravado
 function api(acao, dados, espera = 20000) {
+  if (previaId) {
+    if (acao === "lotes") { acao = "previa_lotes"; dados = { id: previaId }; }
+    else if (acao === "lote") { acao = "previa_lote"; dados = { id: dados && dados.id, leilaoId: previaId }; }
+    else if (acao === "lance" || acao === "responder_reserva") return Promise.reject(new Error("Pré-visualização: os lances ficam desativados até o leilão ser postado."));
+  }
   return new Promise((resolve, reject) => {
     const alvo = origemDoSite();
     if (!alvo) { reject(new Error("Esta página só funciona dentro do site galeria33.com.")); return; }
@@ -2185,26 +2200,63 @@ async function carregarLeiloes() {
     $("lei-lista").innerHTML = r.leiloes.map(l => {
       const [rs, cls] = ROT_LEILAO[l.situacao] || [l.situacao, ""];
       return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}${l.situacao === "agendado" && l.abre_em ? " · em divulgação: faltam " + Math.max(0, Math.ceil((new Date(l.abre_em) - Date.now()) / 864e5)) + " dia(s) para abrir" : ""}</div></div>
-        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}">Publicar</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
+        <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" data-previa="${esc(l.id)}">Pré-visualizar</button> <button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}" data-teste="${/teste/i.test(l.nome || "") ? 1 : 0}">POSTAR</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
     }).join("") || "<p class='meta'>Nenhum leilão.</p>";
     $("lei-lista").querySelectorAll("[data-lei]").forEach(b => b.onclick = () => abrirLeilao(b.dataset.lei));
     $("lei-lista").querySelectorAll("[data-pub]").forEach(b => b.onclick = () => publicarDaLista(b));
+    $("lei-lista").querySelectorAll("[data-previa]").forEach(b => b.onclick = () => entrarNaPrevia({ id: b.dataset.previa, nome: "" }));
   } catch (e) { leiMsg(e.message, "erro"); }
 }
+// ===== Pré-visualização: o painel vira a vitrine pública do leilão em rascunho, só para a equipe =====
+async function entrarNaPrevia(L) {
+  leiMsg("Abrindo a pré-visualização…");
+  try {
+    if (L && L.nome !== "" && $("lf-salvar")) await salvarFormLeilao(); // usa os horários e o nome que estão na tela
+    previaId = L.id; aberto = null; detalhe = null;
+    const nome = (L.nome && $("lf-nome") && $("lf-nome").value) || L.nome || L.id;
+    $("previa-nome").textContent = nome; $("previa-faixa").classList.remove("oculto");
+    $("previa-postar").dataset.n = String((leiLotes || []).filter(l => l.status !== "removido" && l.status !== "cancelado").length || "");
+    $("previa-postar").dataset.teste = /teste/i.test(nome) ? "1" : "0";
+    mostrar("lotes"); mostrarVitrine(true); renderEsqueleto(); await carregarLotes();
+    leiMsg("");
+  } catch (e) { previaId = null; leiMsg(e.message, "erro"); }
+}
+function sairDaPrevia() {
+  previaId = null; aberto = null; detalhe = null; leiConfirma = null;
+  $("previa-faixa").classList.add("oculto"); $("previa-postar").textContent = "POSTAR"; $("previa-postar").classList.remove("confirma");
+  mostrarVitrine(true); mostrar("admin"); carregarLotes(); carregarLeiloes();
+}
+$("previa-sair").onclick = sairDaPrevia;
+$("previa-postar").onclick = async () => {
+  const b = $("previa-postar"), id = previaId, chave = "previa-postar:" + id;
+  if (leiConfirma !== chave) {
+    leiConfirma = chave; clearTimeout(leiTimer);
+    leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "POSTAR"; b.classList.remove("confirma"); } }, 7000);
+    b.textContent = `Confirmar: POSTAR${b.dataset.n ? " " + b.dataset.n + " obra(s)" : ""} e tirar da loja${b.dataset.teste === "1" ? " (o nome tem TESTE!)" : ""}`; b.classList.add("confirma"); return;
+  }
+  leiConfirma = null; b.disabled = true; b.textContent = "Postando…";
+  try {
+    const r = await api("admin_leilao_lancar", { id }, 60000);
+    previaId = null; $("previa-faixa").classList.add("oculto"); b.disabled = false; b.textContent = "POSTAR"; b.classList.remove("confirma");
+    avisar(r.mensagem || "Leilão postado.", "ok");
+    aberto = null; mostrarVitrine(true); carregarLotes(); carregarLeiloes();
+  } catch (e) { b.disabled = false; b.textContent = "POSTAR"; b.classList.remove("confirma"); avisar(String(e.message || e).slice(0, 400), "erro"); }
+};
+
 // Publicar direto da lista: pede confirmação (publicar esconde as obras da loja) e usa o mesmo lançamento do botão "Lançar leilão".
 async function publicarDaLista(b) {
   const id = b.dataset.pub, chave = "pub:" + id;
   if (leiConfirma !== chave) {
     leiConfirma = chave; clearTimeout(leiTimer);
-    leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "Publicar"; b.classList.remove("confirma"); } }, 7000);
-    b.textContent = `Confirmar: publicar ${b.dataset.n} obra(s) e tirar da loja`; b.classList.add("confirma"); return;
+    leiTimer = setTimeout(() => { leiConfirma = null; if (b.isConnected) { b.textContent = "POSTAR"; b.classList.remove("confirma"); } }, 7000);
+    b.textContent = `Confirmar: POSTAR ${b.dataset.n} obra(s) e tirar da loja${b.dataset.teste === "1" ? " (o nome tem TESTE!)" : ""}`; b.classList.add("confirma"); return;
   }
-  leiConfirma = null; b.disabled = true; leiMsg("Publicando… (as obras saem da loja)");
+  leiConfirma = null; b.disabled = true; leiMsg("Postando… (as obras saem da loja)");
   try {
     const r = await api("admin_leilao_lancar", { id }, 60000);
-    leiMsg(r.mensagem || "Leilão publicado.", "ok"); await carregarLeiloes(); carregarArremates();
+    leiMsg(r.mensagem || "Leilão postado.", "ok"); await carregarLeiloes(); carregarArremates();
   } catch (e) {
-    const t = String(e.message || e); leiMsg(t.length > 700 ? t.slice(0, 700) + "… Abra o leilão para ver tudo." : t, "erro"); b.disabled = false; b.textContent = "Publicar"; b.classList.remove("confirma");
+    const t = String(e.message || e); leiMsg(t.length > 700 ? t.slice(0, 700) + "… Abra o leilão para ver tudo." : t, "erro"); b.disabled = false; b.textContent = "POSTAR"; b.classList.remove("confirma");
   }
 }
 $("lei-novo").onclick = async () => {
@@ -2258,7 +2310,7 @@ function renderLeilao() {
     return html;
   }).join("") || "<p class='meta'>Nenhuma obra ainda. Escolha da loja ou cadastre uma nova.</p>";
   const rodape = [];
-  if (rasc) rodape.push(`<button type="button" class="principal" data-lrod="lancar">Lançar leilão</button><button type="button" data-lrod="cancelar_leilao">Cancelar leilão</button>`);
+  if (rasc) rodape.push(`<button type="button" data-lrod="previa">Pré-visualizar como público</button><button type="button" class="principal" data-lrod="lancar">POSTAR leilão</button><button type="button" data-lrod="cancelar_leilao">Cancelar leilão</button>`);
   else if (L.situacao === "agendado" || L.situacao === "aberto") rodape.push(`<button type="button" data-lrod="desfazer">Desfazer lançamento (só sem lances)</button>`);
   $("lei-edit").innerHTML = `<div class="lei-topo"><button type="button" id="lei-voltar">← Todos os leilões</button><span class="chip-st ${cls}">${rs}</span></div>
     <h4 style="font:italic 400 1.6rem/1.1 var(--serif); margin:10px 0 0">${esc(L.nome)}</h4><div class="sub meta">${esc(L.id)}${rasc ? "" : " · lançado: para editar, desfaça o lançamento (só sem lances)"}</div>
@@ -2326,7 +2378,7 @@ function ligarLeilao() {
     box.innerHTML = leiCorpos.get(det.dataset.lote) || ""; box.dataset.pronto = "1";
     box.querySelectorAll("[data-lac]").forEach(bt => bt.onclick = () => acaoLote(bt.dataset.lid, bt.dataset.lac, bt));
   }));
-  document.querySelectorAll("#lei-edit [data-lrod]").forEach(bt => bt.onclick = () => acaoLeilao(bt.dataset.lrod, bt));
+  document.querySelectorAll("#lei-edit [data-lrod]").forEach(bt => bt.onclick = () => bt.dataset.lrod === "previa" ? entrarNaPrevia(leiAtual) : acaoLeilao(bt.dataset.lrod, bt));
   if ($("lei-loja")) $("lei-loja").onclick = abrirCatalogo;
   if ($("lei-nova-btn")) $("lei-nova-btn").onclick = abrirObraNova;
 }
