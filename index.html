@@ -119,10 +119,26 @@
   .barra input[type=search] { flex: 1 1 220px; max-width: 360px; }
   .card .fav { position: absolute; bottom: 10px; right: 10px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.45); color: #fff; font: 400 1.1rem/1 var(--sans); cursor: pointer; display: grid; place-items: center; backdrop-filter: blur(4px); }
   .card .fav[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  .auto-tag { font: 700 .62rem var(--mono); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--acc-txt); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; margin-left: 6px; }
   .acoes-lote { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
   .acoes-lote .chip[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
   #d-link-caixa { margin: 0 0 10px; }
   #d-link-caixa input { width: 100%; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font: 500 .85rem var(--mono); }
+  .links-leilao { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+  .links-leilao a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); text-decoration: none; font: 600 .82rem var(--sans); transition: border-color .2s, background .2s; }
+  .links-leilao a:hover, .links-leilao a:focus-visible { border-color: var(--acid); background: color-mix(in srgb, var(--acid) 14%, transparent); }
+  .populares, .veja { display: grid; gap: 4px; padding: clamp(18px, 3vw, 32px) 0 0; }
+  .populares > h2, .veja > h2 { margin: 0; padding: 0 clamp(16px, 4vw, 48px); font: 700 clamp(1.4rem, 3vw, 2.2rem)/1 var(--sans); letter-spacing: -.04em; text-transform: uppercase; }
+  .populares > h2 em, .veja > h2 em { font: italic 400 1.1em var(--serif); text-transform: none; letter-spacing: -.01em; color: var(--acc-txt); }
+  .veja { margin-top: 28px; border-top: 1px solid var(--line); }
+  .veja .galeria, .populares .galeria { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+  .captacao { margin: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 48px) 0; padding: clamp(18px, 3vw, 30px); border: 1px solid var(--line); border-radius: var(--raio); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--card); }
+  .captacao h3 { margin: 0 0 4px; font: italic 400 clamp(1.5rem, 3vw, 2.2rem)/1.05 var(--serif); }
+  .captacao p { margin: 0; max-width: 56ch; color: var(--muted); font: 400 .95rem/1.5 var(--sans); }
+  .objetivos { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; display: flex; gap: 6px 18px; flex-wrap: wrap; }
+  .objetivos legend { font: 400 .8rem var(--mono); color: var(--muted); }
+  .iscas { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .print-cab { display: none; }
   .fuso { margin: 2px 0 10px; font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
   .chip { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 14px; font: 500 .82rem var(--sans); cursor: pointer; transition: all .2s; }
@@ -549,6 +565,20 @@
     .letreiro .trilho { animation: none; }
   }
   ::view-transition-old(lote-foto), ::view-transition-new(lote-foto) { animation-duration: .5s; animation-timing-function: var(--ease); }
+  @media print {
+    @page { margin: 14mm; }
+    body { background: #fff !important; color: #000 !important; }
+    .grao, .topo, .abas-cel, .lupa-faixa, #view-lances, #view-conta, #view-admin, .barra-lance, .avisos, .rodape .grande-t, #aviso, #previa-faixa,
+    .lote-topo, .acoes-lote, #d-link-caixa, #form-lance, #d-acesso, .midia-dica, .miniaturas, .historico, .veja, #d-oferta, .letreiro, .modal, dialog { display: none !important; }
+    .lote-grade { display: grid !important; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .painel-lote { position: static !important; }
+    .midia img { max-width: 100%; max-height: 120mm; object-fit: contain; }
+    .print-cab { display: block !important; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #000; font: 700 12pt var(--sans); }
+    .print-cab small { display: block; font: 400 9pt var(--mono); color: #333; }
+    .rodape { padding: 8px 0 0 !important; border-top: 1px solid #999; margin-top: 12px !important; }
+    .rodape .legal { font-size: 7.5pt !important; color: #333 !important; }
+    details.bio { display: block; } details.bio > * { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -609,6 +639,11 @@ Cadastre-se, habilite-se e dispute.</span></div>
       <div><i>04</i><b>Dê seus lances</b><span>Até o último segundo. Lances no fim prorrogam o lote.</span></div>
     </section>
 
+    <section class="populares oculto" id="populares" aria-label="Lotes mais disputados">
+      <h2>Mais <em>disputados</em></h2>
+      <div class="galeria" id="populares-lista"></div>
+    </section>
+
     <section class="filtros" id="filtros" aria-label="Filtrar lotes">
       <h2>Os lotes <em>em jogo</em></h2>
       <div class="barra">
@@ -630,6 +665,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
         <button type="button" class="chip" id="f-fav" aria-pressed="false">♥ Só favoritos</button>
       </div>
       <p class="fuso">Todos os horários estão no fuso de Brasília (BRT).</p>
+      <div class="links-leilao oculto" id="links-leilao"></div>
       <div class="abas-estado" id="f-estados" role="group" aria-label="Situação dos lotes"></div>
       <div class="chips" id="chips" role="group" aria-label="Artistas"></div>
     </section>
@@ -637,7 +673,13 @@ Cadastre-se, habilite-se e dispute.</span></div>
     <p class="carregando" id="carregando">Carregando lotes…</p>
     <section class="galeria" id="lista" aria-live="polite"></section>
 
+    <section class="captacao" id="captacao" aria-label="Avaliação de obras">
+      <div><h3>Tem obras para avaliar ou vender?</h3><p>A Galeria 33 faz a avaliação sem compromisso. Conte sobre a obra e nossa equipe responde por e-mail ou WhatsApp.</p></div>
+      <button type="button" id="aval-abrir">Pedir avaliação de obra</button>
+    </section>
+
     <section class="lote oculto" id="detalhe" aria-label="Lote">
+      <div class="print-cab" id="print-cab"></div>
       <div class="lote-topo"><button class="voltar" id="voltar">← Todos os lotes</button><div class="lote-nav" id="lote-nav"><button type="button" id="lote-ant" aria-label="Lote anterior">‹</button><span id="lote-pos"></span><button type="button" id="lote-prox" aria-label="Próximo lote">›</button></div></div>
       <div class="lote-grade">
         <div>
@@ -647,7 +689,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
         </div>
         <div class="painel-lote">
           <div class="etiqueta"><span id="d-tag"></span><span class="ao-vivo" id="d-vivo" aria-hidden="true"></span></div>
-          <div class="acoes-lote"><button type="button" class="chip" id="d-fav" aria-pressed="false">♥ Favoritar</button><button type="button" class="chip" id="d-share">Compartilhar</button></div>
+          <div class="acoes-lote"><button type="button" class="chip" id="d-fav" aria-pressed="false">♥ Favoritar</button><button type="button" class="chip" id="d-share">Compartilhar</button><button type="button" class="chip" id="d-print">Imprimir ficha</button></div>
           <div class="oculto" id="d-link-caixa"><input id="d-link" readonly aria-label="Link deste lote"></div>
           <h2 id="d-artista"></h2>
           <div class="obra" id="d-titulo"></div>
@@ -667,13 +709,15 @@ Cadastre-se, habilite-se e dispute.</span></div>
 
             <div id="d-acesso" class="aviso-caixa oculto"></div>
             <form id="form-lance" class="oculto" autocomplete="off">
-              <div class="rot">Escolha seu lance</div>
+              <div class="rot" id="f-rot">Escolha seu lance</div>
               <div class="passo">
                 <button type="button" id="f-menos" aria-label="Lance anterior">&minus;</button>
                 <output id="f-sel" aria-live="polite">&ndash;</output>
                 <button type="button" id="f-mais" aria-label="Próximo lance">+</button>
               </div>
               <div class="rapidos" id="f-rapidos" role="group" aria-label="Valores definidos"></div>
+              <label class="check oculto" id="f-auto-caixa" style="text-transform:none; letter-spacing:0; font-family:var(--sans); align-items:flex-start;"><input type="checkbox" id="f-auto" style="margin-top:3px;"> <span>Lance automático: dar lances por mim, no incremento mínimo, até o meu limite.</span></label>
+              <div class="meta oculto" id="f-auto-info"></div>
               <div class="total-com" id="f-total"></div>
               <input type="hidden" id="f-valor">
               <label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);">
@@ -694,6 +738,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
           <div class="historico" id="d-historico"></div>
         </div>
       </div>
+      <div class="veja oculto" id="d-veja"><h2>Veja <em>também</em></h2><div class="galeria" id="d-veja-lista"></div></div>
     </section>
   </div>
 
@@ -756,6 +801,11 @@ Cadastre-se, habilite-se e dispute.</span></div>
           <label class="campo">Telefone / WhatsApp com DDD<input id="d-tel" type="tel" autocomplete="tel" placeholder="(47) 99999-9999" required></label>
         </div>
         <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="d-wpp" style="margin-top:3px;"> <span>Aceito receber avisos por WhatsApp neste número: abertura do leilão, lance superado, encerramento e arremate. São avisos só dos leilões em que participo, e posso pedir para parar a qualquer momento.</span></label>
+        <fieldset class="objetivos" id="d-obj"><legend>O que você pretende? (opcional)</legend>
+          <label class="check"><input type="checkbox" data-obj="comprar"> Comprar obras</label>
+          <label class="check"><input type="checkbox" data-obj="vender"> Vender obras</label>
+          <label class="check"><input type="checkbox" data-obj="avaliar"> Avaliar obras</label>
+        </fieldset>
         <div class="duas">
           <label class="campo">CEP<input id="d-cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required></label>
           <label class="campo">Cidade/UF<input id="d-cidade" autocomplete="address-level2" placeholder="Joinville/SC" required></label>
@@ -799,6 +849,11 @@ Cadastre-se, habilite-se e dispute.</span></div>
         <h3>Preferências de avisos</h3>
         <p class="meta" id="pf-tel"></p>
         <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="pf-wpp" style="margin-top:3px;"> <span>Aceito receber avisos por WhatsApp neste número: abertura do leilão, lance superado, encerramento e arremate. São avisos só dos leilões em que participo, e posso desligar quando quiser.</span></label>
+        <fieldset class="objetivos" id="pf-obj"><legend>O que você pretende? (opcional)</legend>
+          <label class="check"><input type="checkbox" data-obj="comprar"> Comprar obras</label>
+          <label class="check"><input type="checkbox" data-obj="vender"> Vender obras</label>
+          <label class="check"><input type="checkbox" data-obj="avaliar"> Avaliar obras</label>
+        </fieldset>
         <button type="button" id="pf-salvar">Salvar preferências</button>
         <div class="msg" id="pf-msg" role="status"></div>
         <p class="meta">Os e-mails essenciais (confirmação de habilitação e de lances, arremate e pagamento) continuam sendo enviados. Para trocar o número, fale com a Galeria 33.</p>
@@ -875,6 +930,37 @@ Cadastre-se, habilite-se e dispute.</span></div>
       <button type="button" id="pf-copiar">Copiar texto</button>
       <button type="button" class="sec" id="pf-fechar">Fechar</button>
     </div>
+  </div>
+</div>
+
+<!-- modal de pedido de avaliação de obra -->
+<div class="modal oculto" id="modal-aval" role="dialog" aria-modal="true" aria-labelledby="aval-tit">
+  <div class="caixa">
+    <h3 id="aval-tit" style="margin-top:0">Pedir avaliação de obra</h3>
+    <form id="form-aval" autocomplete="on" novalidate>
+      <div id="aval-campos" style="display:grid; gap:10px;">
+        <p class="meta" style="margin:0">Conte sobre a obra. Quanto mais detalhes e fotos, mais rápida a resposta. A avaliação é sem compromisso.</p>
+        <label class="campo">Seu nome<input id="av-nome" autocomplete="name" required maxlength="120"></label>
+        <div class="duas">
+          <label class="campo">E-mail<input id="av-email" type="email" autocomplete="email" required maxlength="160"></label>
+          <label class="campo">Telefone / WhatsApp (opcional)<input id="av-tel" type="tel" autocomplete="tel" placeholder="(47) 99999-9999"></label>
+        </div>
+        <div class="duas">
+          <label class="campo">Artista (se souber)<input id="av-artista" maxlength="120"></label>
+          <label class="campo">Medidas (opcional)<input id="av-medidas" maxlength="100" placeholder="ex.: 60 x 80 cm"></label>
+        </div>
+        <label class="campo">Obra (título, técnica, ano)<input id="av-obra" required maxlength="200" placeholder="ex.: Paisagem, óleo sobre tela, 1985"></label>
+        <label class="campo">Link com fotos (opcional)<input id="av-fotos" type="url" maxlength="300" placeholder="https://..."></label>
+        <label class="campo">Mensagem (opcional)<textarea id="av-msg" rows="3" maxlength="1000"></textarea></label>
+        <div class="iscas" aria-hidden="true"><label>Não preencha este campo<input id="av-site" tabindex="-1" autocomplete="off"></label></div>
+        <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="av-ok" style="margin-top:3px;"> <span>Autorizo a Galeria 33 a usar estes dados para responder ao meu pedido de avaliação.</span></label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="submit" id="av-enviar">Enviar pedido</button>
+          <button type="button" class="sec" id="av-cancelar">Cancelar</button>
+        </div>
+      </div>
+      <div class="msg" id="av-aviso" role="status"></div>
+    </form>
   </div>
 </div>
 
@@ -1041,7 +1127,7 @@ async function carregarConfig() {
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
     `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
-    `A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e tem 24 horas para aceitar ou recusar. Se recusar ou não responder, o lote encerra sem venda e a obra volta ao acervo. Quem arremata tem 7 dias para pagar; sem pagamento, paga multa de 20% e a obra volta ao acervo.`;
+    `Quando o leilão permitir, o lance automático dá os lances por você, no incremento mínimo, até o limite que você definir; o limite não aparece para ninguém e, em empate de limites, vale o registrado primeiro. A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e tem 24 horas para aceitar ou recusar. Se recusar ou não responder, o lote encerra sem venda e a obra volta ao acervo. Quem arremata tem 7 dias para pagar; sem pagamento, paga multa de 20% e a obra volta ao acervo.`;
 }
 function renderEsqueleto() {
   $("lista").innerHTML = Array.from({ length: 6 }, () =>
@@ -1052,7 +1138,7 @@ async function carregarLotes() {
     const { lotes: lista, leiloes: ls } = await api("lotes");
     lotes = lista; leiloesPub = ls || [];
     $("carregando").classList.add("oculto");
-    renderSeletorLeilao(); renderEstados(); renderHeroi(); renderLetreiro(); renderChips();
+    renderSeletorLeilao(); renderLinksLeilao(); renderEstados(); renderHeroi(); renderLetreiro(); renderChips();
     if (!aberto) renderLista();
   } catch (e) {
     $("lista").innerHTML = "";
@@ -1116,7 +1202,7 @@ function renderSeletorLeilao() {
   s.innerHTML = `<option value="">Todos os leilões</option>` + leiloesPub.map(x => `<option value="${esc(x.id)}">${esc(x.nome)}</option>`).join("");
   s.value = filtro.leilao;
 }
-$("f-leilao").addEventListener("change", e => { filtro.leilao = e.target.value; renderEstados(); renderLista(); });
+$("f-leilao").addEventListener("change", e => { filtro.leilao = e.target.value; renderLinksLeilao(); renderEstados(); renderLista(); });
 
 /* ===== FAVORITOS, FAIXA DE PREÇO E LINK DO LOTE ===== */
 const FAIXAS_PRECO = { "1": [0, 2000], "2": [2000, 5000], "3": [5000, 20000], "4": [20000, Infinity] };
@@ -1177,10 +1263,7 @@ function revelar() {
 }
 
 /* ===== LISTA ===== */
-function renderLista() {
-  const el = $("lista");
-  const r = listaFiltrada();
-  el.innerHTML = r.length ? r.map((l, i) => {
+function cardHtml(l, i) {
     const enc = l.encerrado;
     return `<article class="card ${enc ? "encerrado" : ""}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
       <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span><button type="button" class="fav" data-fav="${esc(l.id)}" aria-pressed="${FAV.has(l.id)}" aria-label="Favoritar este lote">♥</button>
@@ -1189,7 +1272,8 @@ function renderLista() {
       <h3>${esc(l.artista || l.titulo)}</h3>
       <div class="obra">${esc(l.titulo)}</div>
       <div class="preco"><span>${enc ? "lance final" : l.em_breve ? "lance inicial" : "lance atual"}</span><b>${brl(l.valor_atual)}</b></div></article>`;
-  }).join("") : `<p class="vazio">${filtro.fav ? "Você ainda não favoritou nenhum lote. Toque no ♥ de uma obra." : "Nenhum lote encontrado."}</p>`;
+}
+function ligarCards(el) {
   el.querySelectorAll(".card .fav").forEach(b => {
     b.onclick = ev => { ev.stopPropagation(); toggleFav(b.dataset.fav); };
     b.onkeydown = ev => ev.stopPropagation();
@@ -1198,14 +1282,72 @@ function renderLista() {
     c.onclick = () => abrir(c.dataset.id, c);
     c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(c.dataset.id, c); } };
   });
+}
+function renderLista() {
+  const el = $("lista");
+  const r = listaFiltrada();
+  el.innerHTML = r.length ? r.map(cardHtml).join("") : `<p class="vazio">${filtro.fav ? "Você ainda não favoritou nenhum lote. Toque no ♥ de uma obra." : "Nenhum lote encontrado."}</p>`;
+  ligarCards(el);
+  renderPopulares();
   revelar();
   tick();
 }
 
+/* ===== LOTES POPULARES, LINKS DO LEILÃO E "VEJA TAMBÉM" ===== */
+// Os mais disputados: lotes em lances (não encerrados) com mais lances; só aparecem se já houve lance.
+function popularesDe(base) {
+  return base.filter(l => !l.encerrado && !l.em_breve && Number(l.n_lances) >= 1)
+    .sort((a, b) => (b.n_lances - a.n_lances) || (b.valor_atual - a.valor_atual)).slice(0, 4);
+}
+function renderPopulares() {
+  const base = lotes.filter(l => !filtro.leilao || l.leilao_id === filtro.leilao);
+  const p = popularesDe(base);
+  const box = $("populares");
+  box.dataset.tem = p.length ? "1" : "";
+  box.classList.toggle("oculto", !p.length || !!aberto);
+  $("populares-lista").innerHTML = p.map((l, i) => cardHtml(l, i)).join("");
+  ligarCards($("populares-lista"));
+  $("populares-lista").querySelectorAll(".card").forEach(c => c.classList.add("in"));
+}
+function linkSeguro(u) { return /^https:\/\/[^\s<>"']+$/i.test(String(u || "")); }
+function renderLinksLeilao() {
+  const alvo = filtro.leilao ? leiloesPub.filter(x => x.id === filtro.leilao) : leiloesPub;
+  const varios = alvo.length > 1;
+  const itens = [];
+  for (const x of alvo) {
+    const pre = varios ? esc(x.nome) + " · " : "";
+    if (linkSeguro(x.catalogo_url)) itens.push(`<a href="${esc(x.catalogo_url)}" target="_blank" rel="noopener noreferrer">${pre}Catálogo em PDF</a>`);
+    if (linkSeguro(x.fotos_url)) itens.push(`<a href="${esc(x.fotos_url)}" target="_blank" rel="noopener noreferrer">${pre}Fotos da exposição</a>`);
+  }
+  $("links-leilao").innerHTML = itens.join("");
+  $("links-leilao").classList.toggle("oculto", !itens.length);
+}
+// "Veja também": mesmo artista primeiro, depois os de valor mais próximo; lotes em aberto antes dos encerrados.
+function parecidosCom(l, max = 4) {
+  const v = Number(l.valor_atual) || 0;
+  return lotes.filter(x => x.id !== l.id).map(x => ({ x, nota: (x.artista && x.artista === l.artista ? 0 : 1e12) + (x.encerrado ? 5e11 : 0) + Math.abs((Number(x.valor_atual) || 0) - v) }))
+    .sort((a, b) => a.nota - b.nota).slice(0, max).map(o => o.x);
+}
+function renderVeja(l) {
+  const box = $("d-veja");
+  if (box.dataset.lote === l.id) return;
+  box.dataset.lote = l.id;
+  const lista = parecidosCom(l);
+  box.classList.toggle("oculto", !lista.length);
+  $("d-veja-lista").innerHTML = lista.map((x, i) => cardHtml(x, i)).join("");
+  $("d-veja-lista").querySelectorAll(".card").forEach(c => c.classList.add("in"));
+  $("d-veja-lista").querySelectorAll(".card .fav").forEach(b => { b.onclick = ev => { ev.stopPropagation(); toggleFav(b.dataset.fav); }; b.onkeydown = ev => ev.stopPropagation(); });
+  $("d-veja-lista").querySelectorAll(".card").forEach(c => {
+    c.onclick = () => abrir(c.dataset.id);
+    c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(c.dataset.id); } };
+  });
+}
+
 /* ===== LOTE ===== */
 function mostrarVitrine(sim) {
-  for (const id of ["heroi", "ticker", "filtros", "lista"]) { const e = $(id); const alvo = id === "ticker" ? e.parentElement : e; alvo.classList.toggle("oculto", !sim); }
+  for (const id of ["heroi", "ticker", "filtros", "lista", "captacao"]) { const e = $(id); const alvo = id === "ticker" ? e.parentElement : e; alvo.classList.toggle("oculto", !sim); }
   document.querySelector(".passos").classList.toggle("oculto", !sim);
+  $("populares").classList.toggle("oculto", !sim || !$("populares").dataset.tem);
   $("detalhe").classList.toggle("oculto", sim);
   if (sim) $("carregando").classList.toggle("oculto", lotes.length > 0);
   else $("carregando").classList.add("oculto");
@@ -1277,6 +1419,9 @@ function renderDetalhe() {
   $("bl-valor").textContent = brl(l.valor_atual);
   renderEstimativa(l);
   renderFichaEFotos(l);
+  renderVeja(l);
+  $("print-cab").innerHTML = `LEILÃO 33 · Galeria 33 · Joinville/SC<small>Lote ${esc(numeroLote(l.id))} · ${esc(LINK_BASE + "?lote=" + l.id)} · impresso em ${esc(dataHora(new Date().toISOString()))} (horário de Brasília)</small>`;
+  renderAutoUI();
   renderRapidos();
   renderStatusLote();
   $("f-enviar").disabled = !!l.encerrado;
@@ -1292,7 +1437,7 @@ function renderDetalhe() {
   }
   const h = l.historico.slice().reverse();
   $("d-historico").innerHTML = h.length
-    ? `<h4>Lances</h4>` + h.slice(0, 12).map((x, i) => `<div class="h ${i === 0 ? "topo" : ""}"><span>${esc(x.nome)} · ${esc(relativo(x.criado_em))}</span><b>${brl(x.valor)}</b></div>`).join("")
+    ? `<h4>Lances</h4>` + h.slice(0, 12).map((x, i) => `<div class="h ${i === 0 ? "topo" : ""}"><span>${esc(x.nome)}${x.auto ? ' <i class="auto-tag">automático</i>' : ""} · ${esc(relativo(x.criado_em))}</span><b>${brl(x.valor)}</b></div>`).join("")
     : `<h4>Lances</h4><div class="h"><span>Nenhum lance ainda. Seja o primeiro.</span></div>`;
   renderAcesso();
   atualizarContagem();
@@ -1338,7 +1483,9 @@ function renderEstimativa(l) {
   e.innerHTML = l.estimativa_min && l.estimativa_max ? `estimativa <b>${brl(l.estimativa_min)} a ${brl(l.estimativa_max)}</b>` : "";
   $("d-estim-bloco").classList.toggle("oculto", !e.innerHTML);
 }
-const ROTULOS_FICHA = { ano: "Ano", assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", proveniencia: "Proveniência", estado: "Estado de conservação", certificado: "Certificado" };
+const ROTULOS_FICHA = { ano: "Ano", assinatura: "Assinatura", tecnica: "Técnica", medidas: "Medidas", moldura: "Moldura", tiragem: "Tiragem", dedicatoria: "Dedicatória", etiquetas: "Etiquetas e inscrições", proveniencia: "Proveniência", exposicoes: "Exposições", bibliografia: "Bibliografia", estado: "Estado de conservação", certificado: "Certificado" };
+// Exemplos mostrados na tela da equipe, para orientar o preenchimento (campo em branco não aparece para o público).
+const DICAS_FICHA = { ano: "ex.: 1985", assinatura: "ex.: assinada e datada inf. dir.", tecnica: "ex.: óleo sobre tela", medidas: "ex.: 60 x 80 cm (com moldura: 75 x 95 cm)", moldura: "ex.: moldura de madeira, original", tiragem: "ex.: Exemplar nº 196/200, P.A., E.A.", dedicatoria: "ex.: dedicada pelo artista a ...", etiquetas: "ex.: etiqueta da Galeria X no verso", proveniencia: "ex.: acervo da família do artista", exposicoes: "ex.: Bienal de ..., 2018", bibliografia: "ex.: reproduzido no livro ..., p. 45", estado: "ex.: ótimo estado, sem restauros", certificado: "ex.: certificado de autenticidade do artista" };
 function renderFichaEFotos(l) {
   const f = $("d-ficha"), itens = Object.keys(ROTULOS_FICHA).filter(k => l.ficha && l.ficha[k]);
   f.classList.toggle("oculto", !itens.length);
@@ -1357,15 +1504,38 @@ function renderFichaEFotos(l) {
 function comissaoPct(l) { const x = l || detalhe; const c = x && x.condicoes; if (c && c.comissao_pct != null) return Number(c.comissao_pct) || 0; return Number(CONFIG && CONFIG.leiloeiro && CONFIG.leiloeiro.comissao_percentual) || 0; }
 // Os valores possíveis são definidos: o mínimo e, a partir dele, cada degrau da escala de incremento.
 const DEGRAUS = 40;
-function escadaDeLances(minimo) {
+function escadaDeLances(minimo, n = DEGRAUS) {
   const e = [minimo];
-  while (e.length < DEGRAUS) e.push(e[e.length - 1] + incrementoPara(e[e.length - 1]));
+  while (e.length < n) e.push(e[e.length - 1] + incrementoPara(e[e.length - 1]));
   return e;
+}
+// Lance automático: valem só os leilões em que a equipe ligou a opção. Quem está na frente só pode aumentar o limite.
+function modoAutomatico() { return !!(detalhe && detalhe.lance_automatico && !detalhe.encerrado && (detalhe.lider || $("f-auto").checked)); }
+function renderAutoUI() {
+  const l = detalhe, ativo = !!(l && l.lance_automatico && !l.encerrado);
+  $("f-auto-caixa").classList.toggle("oculto", !ativo);
+  if (!ativo) { $("f-auto-info").classList.add("oculto"); $("f-rot").textContent = "Escolha seu lance"; $("f-enviar").textContent = "Dar lance"; return; }
+  if (l.lider) $("f-auto").checked = true;
+  $("f-auto").disabled = !!l.lider;
+  const auto = modoAutomatico();
+  $("f-rot").textContent = auto ? (l.lider ? "Aumentar meu limite" : "Escolha seu limite máximo") : "Escolha seu lance";
+  $("f-enviar").textContent = auto ? (l.lider ? "Aumentar limite" : "Dar lance automático") : "Dar lance";
+  const info = $("f-auto-info");
+  info.classList.toggle("oculto", !auto);
+  info.textContent = !auto ? "" : l.lider
+    ? "Você está na frente com " + brl(l.valor_atual) + (l.meu_limite ? "; seu limite é " + brl(l.meu_limite) + "." : ". Defina um limite para continuar na frente.") + " O limite não aparece para ninguém."
+    : "Você entra agora com o lance mínimo (" + brl(l.minimo_proximo) + "). Se alguém cobrir, o sistema dá os próximos lances por você, no incremento mínimo, até o limite escolhido. O limite não aparece para ninguém.";
 }
 function renderRapidos() {
   const l = detalhe, cx = $("f-rapidos");
   if (!l || l.encerrado) { cx.innerHTML = ""; return; }
-  const escada = escadaDeLances(l.minimo_proximo);
+  const auto = modoAutomatico();
+  let escada = escadaDeLances(l.minimo_proximo);
+  if (auto && l.lider) {
+    const piso = Number(l.meu_limite || l.valor_atual || 0);
+    escada = escadaDeLances(l.minimo_proximo, 400).filter(x => x > piso).slice(0, DEGRAUS);
+  }
+  if (!escada.length) { cx.innerHTML = ""; return; }
   const campo = $("f-valor");
   let idx = Math.max(0, escada.indexOf(Number(campo.value)));
   const atalhos = [0, 1, 2, 5];
@@ -1444,6 +1614,7 @@ function tick() {
   });
   if (detalhe) atualizarContagem();
 }
+$("f-auto").addEventListener("change", () => { $("f-valor").value = ""; renderAutoUI(); renderRapidos(); });
 $("form-lance").addEventListener("submit", async e => {
   e.preventDefault();
   const botao = $("f-enviar");
@@ -1451,9 +1622,16 @@ $("form-lance").addEventListener("submit", async e => {
   if (!valor) { msg($("f-msg"), "Escolha o valor do lance.", "erro"); return; }
   botao.disabled = true;
   try {
-    const r = await api("lance", { id: aberto, corpo: { valor, aceite: $("f-aceite").checked } });
-    msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
-    avisar("Lance de " + brl(r.valor) + " registrado. Você está na frente.");
+    const auto = modoAutomatico();
+    const corpo = auto ? { valor: detalhe.lider ? null : detalhe.minimo_proximo, maximo: valor, aceite: $("f-aceite").checked } : { valor, aceite: $("f-aceite").checked };
+    const r = await api("lance", { id: aberto, corpo });
+    if (r.automatico) {
+      if (r.lider) { msg($("f-msg"), "Você está na frente com " + brl(r.preco_atual) + ". Seu limite: " + brl(r.limite) + ".", "ok"); avisar("Você está na frente com " + brl(r.preco_atual) + " (limite " + brl(r.limite) + ")."); }
+      else { msg($("f-msg"), "Seu limite foi alcançado: outro participante tem um limite maior. Lance atual " + brl(r.preco_atual) + ".", "erro"); avisar("Outro participante tem um limite maior. Lance atual " + brl(r.preco_atual) + ".", "erro"); }
+    } else {
+      msg($("f-msg"), "Lance registrado: " + brl(r.valor) + ".", "ok");
+      avisar("Lance de " + brl(r.valor) + " registrado. Você está na frente.");
+    }
     $("f-valor").value = "";
     await carregarLupa();
     await atualizarDetalhe();
@@ -1928,23 +2106,29 @@ function renderPrefs(p, editavel) {
   const salvo = !!(p.dados && p.dados.whatsapp_optin);
   // Só sobrescreve a caixa quando o valor salvo mudou (não apaga uma escolha ainda não salva).
   if ($("pf-wpp").dataset.salvo !== String(salvo)) { $("pf-wpp").checked = salvo; $("pf-wpp").dataset.salvo = String(salvo); }
+  const objs = JSON.stringify((p.dados && p.dados.objetivos) || []);
+  if ($("pf-obj").dataset.salvo !== objs) { marcarObjetivos($("pf-obj"), p.dados && p.dados.objetivos); $("pf-obj").dataset.salvo = objs; }
 }
 $("pf-salvar").addEventListener("click", async () => {
   const b = $("pf-salvar"); b.disabled = true; msg($("pf-msg"), "Salvando…");
   try {
-    const r = await api("salvar_preferencias", { whatsapp_optin: $("pf-wpp").checked });
+    const r = await api("salvar_preferencias", { whatsapp_optin: $("pf-wpp").checked, objetivos: lerObjetivos($("pf-obj")) });
     $("pf-wpp").dataset.salvo = String(!!r.whatsapp_optin);
-    msg($("pf-msg"), r.whatsapp_optin ? "Pronto: você vai receber avisos por WhatsApp." : "Pronto: avisos por WhatsApp desligados.", "ok");
+    $("pf-obj").dataset.salvo = JSON.stringify(r.objetivos || []);
+    msg($("pf-msg"), r.whatsapp_optin ? "Pronto: preferências salvas. Você vai receber avisos por WhatsApp." : "Pronto: preferências salvas. Avisos por WhatsApp desligados.", "ok");
     carregarEstado();
   } catch (e) { msg($("pf-msg"), e.message, "erro"); }
   b.disabled = false;
 });
 
+function marcarObjetivos(caixa, lista) { const l = Array.isArray(lista) ? lista : []; caixa.querySelectorAll("[data-obj]").forEach(i => { i.checked = l.includes(i.dataset.obj); }); }
+function lerObjetivos(caixa) { return [...caixa.querySelectorAll("[data-obj]:checked")].map(i => i.dataset.obj); }
 function preencherDados(p) {
   if (!p || $("form-dados").dataset.pronto === (p.documento_mascarado || "")) return;
   $("form-dados").dataset.pronto = p.documento_mascarado || "";
   const d = p.dados;
   $("d-doc").value = d.documento || ""; $("d-nome").value = d.nome || ""; $("d-nasc").value = d.nascimento || "";
+  marcarObjetivos($("d-obj"), d.objetivos);
   $("d-tel").value = d.telefone || ""; $("d-wpp").checked = !!d.whatsapp_optin; $("d-cep").value = d.cep || ""; $("d-cidade").value = d.cidade_uf || ""; $("d-end").value = d.endereco || "";
   $("d-rep-nome").value = d.representante_nome || ""; $("d-rep-cpf").value = d.representante_cpf || "";
   document.querySelector(`input[name=pep][value=${d.pep ? "sim" : "nao"}]`).checked = true;
@@ -1993,7 +2177,7 @@ $("form-dados").addEventListener("submit", async e => {
   msg($("d-msg"), "Salvando…");
   try {
     await api("salvar_dados", {
-      documento: $("d-doc").value, nome: $("d-nome").value, nascimento: $("d-nasc").value, telefone: $("d-tel").value, whatsapp_optin: $("d-wpp").checked,
+      documento: $("d-doc").value, nome: $("d-nome").value, nascimento: $("d-nasc").value, telefone: $("d-tel").value, whatsapp_optin: $("d-wpp").checked, objetivos: lerObjetivos($("d-obj")),
       cep: $("d-cep").value, cidade_uf: $("d-cidade").value, endereco: $("d-end").value,
       representante_nome: $("d-rep-nome").value, representante_cpf: $("d-rep-cpf").value,
       pep: document.querySelector("input[name=pep]:checked").value === "sim"
@@ -2114,6 +2298,50 @@ $("form-hab").addEventListener("submit", async e => {
   finally { botao.disabled = false; }
 });
 
+/* ===== PEDIDO DE AVALIAÇÃO DE OBRAS ===== */
+function abrirAvaliacao() {
+  $("aval-campos").classList.remove("oculto");
+  msg($("av-aviso"), "");
+  if (!$("av-nome").value && estado && estado.logado) {
+    $("av-nome").value = (estado.participante && estado.participante.nome) || "";
+    $("av-email").value = estado.email || "";
+    $("av-tel").value = (estado.participante && estado.participante.dados && estado.participante.dados.telefone) || "";
+  }
+  $("modal-aval").classList.remove("oculto");
+  $("av-nome").focus();
+}
+function fecharAvaliacao() { $("modal-aval").classList.add("oculto"); }
+$("aval-abrir").addEventListener("click", abrirAvaliacao);
+$("av-cancelar").addEventListener("click", fecharAvaliacao);
+$("modal-aval").addEventListener("keydown", e => { if (e.key === "Escape") fecharAvaliacao(); });
+$("form-aval").addEventListener("submit", async e => {
+  e.preventDefault();
+  const b = $("av-enviar"); b.disabled = true; msg($("av-aviso"), "Enviando…");
+  try {
+    await api("avaliacao", {
+      nome: $("av-nome").value, email: $("av-email").value, telefone: $("av-tel").value, artista: $("av-artista").value,
+      obra: $("av-obra").value, medidas: $("av-medidas").value, link_fotos: $("av-fotos").value, mensagem: $("av-msg").value,
+      site: $("av-site").value, consentimento: $("av-ok").checked
+    });
+    $("aval-campos").classList.add("oculto");
+    ["av-obra", "av-artista", "av-medidas", "av-fotos", "av-msg"].forEach(id => { $(id).value = ""; });
+    $("av-ok").checked = false;
+    msg($("av-aviso"), "Pedido enviado. A Galeria 33 entra em contato em breve. Você pode fechar esta janela.", "ok");
+    setTimeout(() => { if ($("aval-campos").classList.contains("oculto")) fecharAvaliacao(); }, 6000);
+  } catch (err) { msg($("av-aviso"), err.message, "erro"); }
+  finally { b.disabled = false; }
+});
+
+/* ===== IMPRIMIR A FICHA DO LOTE ===== */
+let impressaoAberta = false;
+addEventListener("beforeprint", () => { impressaoAberta = true; });
+$("d-print").addEventListener("click", () => {
+  if (!detalhe) return;
+  impressaoAberta = false;
+  try { window.print(); } catch (e) { avisar("Não foi possível abrir a impressão aqui. Use Ctrl+P (ou Cmd+P).", "erro"); return; }
+  setTimeout(() => { if (!impressaoAberta) avisar("Se a impressão não abriu, use Ctrl+P (ou Cmd+P) com este lote aberto.", "ok"); }, 900);
+});
+
 /* ===== PAINEL DA EQUIPE ===== */
 
 /* ===== ARREMATES E COBRANÇAS (equipe) ===== */
@@ -2232,7 +2460,7 @@ async function verCadastro(id) {
     el.classList.remove("oculto");
     el.innerHTML = `<h3>${esc(c.nome)}</h3>
       ${campo("Tipo", c.tipo_pessoa === "PJ" ? "Empresa" : "Pessoa física")}${campo("CPF/CNPJ", c.documento)}${campo("Representante", c.representante_nome)}${campo("CPF do representante", c.representante_cpf)}
-      ${campo("Nascimento", c.nascimento)}${campo("Telefone", c.telefone)}${campo("Avisos por WhatsApp", c.whatsapp_optin ? "aceitou" + (c.whatsapp_optin_em ? " em " + dataHora(c.whatsapp_optin_em) : "") : "não")}${campo("E-mail", c.email)}${campo("Endereço", `${c.endereco}, ${c.cidade_uf}, CEP ${c.cep}`)}
+      ${campo("Nascimento", c.nascimento)}${campo("Telefone", c.telefone)}${campo("Objetivos", (c.objetivos || []).join(", "))}${campo("Avisos por WhatsApp", c.whatsapp_optin ? "aceitou" + (c.whatsapp_optin_em ? " em " + dataHora(c.whatsapp_optin_em) : "") : "não")}${campo("E-mail", c.email)}${campo("Endereço", `${c.endereco}, ${c.cidade_uf}, CEP ${c.cep}`)}
       ${campo("Pessoa politicamente exposta", c.pep ? "SIM" : "não")}
       ${campo("Termo assinado", `${c.termo_nome} em ${c.termo_em ? dataHora(c.termo_em) : ""} (versão ${c.termo_versao})`)}
       ${campo("Hash do termo", c.termo_hash)}
@@ -2384,7 +2612,8 @@ function renderLeilao() {
         <label>Sobre o artista (resumo mostrado no lote)<textarea data-f="artista_bio"${d}>${esc(l.artista_bio)}</textarea></label>
         <label>Currículo resumido (uma linha por item; em branco usa o texto padrão do artista, se houver)<textarea data-f="artista_curriculo"${d}>${esc(l.artista_curriculo)}</textarea></label>
         <div class="grade2">${f("lance_inicial", "Lance inicial (R$)", l.lance_inicial, "number")}${f("reserva", "Reserva (R$, só equipe)", l.reserva, "number")}${f("estimativa_min", "Estimativa mínima", l.estimativa_min, "number")}${f("estimativa_max", "Estimativa máxima", l.estimativa_max, "number")}</div>
-        <div class="grade2">${["ano", "assinatura", "tecnica", "medidas", "moldura", "proveniencia", "estado", "certificado"].map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k])).join("")}</div>
+        <div class="meta">Ficha da obra: quanto mais completa, mais confiança no catálogo. Preencha só o que for verdade e puder ser comprovado; campo em branco não aparece para o público.</div>
+        <div class="grade2">${Object.keys(ROTULOS_FICHA).map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k], "text", DICAS_FICHA[k] || "")).join("")}</div>
         <div class="meta">Exceções só para esta obra (em branco = usa o padrão do leilão):</div>
         <div class="grade2">${f("comissao_pct", "Comissão %", l.comissao_pct, "number", "padrão " + L.comissao_pct)}${f("multa_pct", "Multa %", l.multa_pct, "number", "padrão " + L.multa_pct)}${f("prazo_pagamento_dias", "Pagamento (dias)", l.prazo_pagamento_dias, "number", "padrão " + L.prazo_pagamento_dias)}${f("prazo_aceite_horas", "Aceite da reserva (h)", l.prazo_aceite_horas, "number", "padrão " + L.prazo_aceite_horas)}</div>
         <div class="acoes">${bt.join("")}</div>`);
@@ -2405,7 +2634,14 @@ function renderLeilao() {
       ${campo("lf-multa", "Multa por não pagar %", L.multa_pct, "number", 'step="1" min="0" max="100"')}
       ${campo("lf-pag", "Prazo de pagamento (dias)", L.prazo_pagamento_dias, "number", 'min="1" max="60"')}
       ${campo("lf-aceite", "Aceite da reserva (horas)", L.prazo_aceite_horas, "number", 'min="1" max="168"')}
+      <label class="check" style="grid-column:1 / -1; align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="lf-auto"${L.lance_automatico ? " checked" : ""}${dis} style="margin-top:3px;"> <span>Permitir lance automático: o participante define um limite máximo e o sistema dá os lances por ele, no incremento mínimo.</span></label>
     </div>
+    <div class="lei-form" style="margin-top:12px">
+      <label>Catálogo em PDF (link https, opcional)<input id="lf-cat" type="url" value="${esc(L.catalogo_url || "")}" maxlength="300" placeholder="https://..."></label>
+      <label>Fotos da exposição (link https, opcional)<input id="lf-fotos" type="url" value="${esc(L.fotos_url || "")}" maxlength="300" placeholder="https://..."></label>
+    </div>
+    <div class="lei-rodape"><button type="button" id="lf-links-salvar">Salvar links</button></div>
+    <p class="meta" style="margin:4px 0 0">Os links aparecem para o público como botões. Podem ser trocados a qualquer momento, mesmo com o leilão aberto. Dica: suba o PDF em Mídia &gt; Documentos no Wix e cole o endereço aqui.</p>
     ${rasc ? `<p class="lei-aviso">Todo leilão lançado entra primeiro em <b>Em breve</b> e aparece para o público até abrir. A divulgação mínima é de 15 dias: escolha uma abertura com pelo menos 15 dias de antecedência.</p><div class="lei-rodape"><button type="button" id="lf-salvar">Salvar dados do leilão</button><button type="button" id="lf-anuncio">Copiar texto de anúncio</button></div><textarea id="lf-anuncio-txt" class="oculto" readonly style="width:100%;min-height:140px;margin:8px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)"></textarea>` : ""}
     <h4 style="margin:18px 0 4px">Obras do leilão</h4>
     ${(() => { const n = leiLotes.filter(l => l.status !== "removido" && l.status !== "cancelado").length; return rasc ? `<p class="meta" style="margin:0 0 8px">${n} obra(s) já incluída(s) neste leilão. Elas entram em disputa quando você clicar em <b>Lançar leilão</b>, no fim da lista. Clique numa obra para editar lance inicial, reserva e percentuais só dela.</p>` : ""; })()}
@@ -2433,7 +2669,7 @@ async function salvarFormLeilao() {
   const L = leiAtual, dur = $("lf-dur"), durMin = $("lf-dur-min");
   if (!L || !$("lf-salvar") || !dur) return;
   const dm = dur.value === "" ? durMin.value : dur.value;
-  await api("admin_leilao_salvar", { id: L.id, nome: $("lf-nome").value, abre_em: deLocal($("lf-abre").value), duracao_min: dm, intervalo_min: $("lf-inter").value, comissao_pct: $("lf-com").value, multa_pct: $("lf-multa").value, prazo_pagamento_dias: $("lf-pag").value, prazo_aceite_horas: $("lf-aceite").value });
+  await api("admin_leilao_salvar", { id: L.id, nome: $("lf-nome").value, abre_em: deLocal($("lf-abre").value), duracao_min: dm, intervalo_min: $("lf-inter").value, comissao_pct: $("lf-com").value, multa_pct: $("lf-multa").value, prazo_pagamento_dias: $("lf-pag").value, prazo_aceite_horas: $("lf-aceite").value, lance_automatico: $("lf-auto").checked });
 }
 function ligarLeilao() {
   const L = leiAtual;
@@ -2441,6 +2677,15 @@ function ligarLeilao() {
   $("lei-voltar").onclick = () => { leiAtual = null; $("lei-edit").classList.add("oculto"); $("lei-lista").classList.remove("oculto"); leiMsg(""); carregarLeiloes(); };
   const dur = $("lf-dur"), durMin = $("lf-dur-min");
   if (dur) dur.onchange = () => { durMin.style.display = dur.value === "" ? "" : "none"; };
+  $("lf-links-salvar").onclick = async () => {
+    const b = $("lf-links-salvar"); b.disabled = true; leiMsg("Salvando links…");
+    try {
+      const r = await api("admin_leilao_links", { id: L.id, catalogo_url: $("lf-cat").value, fotos_url: $("lf-fotos").value });
+      L.catalogo_url = r.catalogo_url; L.fotos_url = r.fotos_url;
+      leiMsg("Links salvos. Já aparecem para o público.", "ok");
+    } catch (e) { leiMsg(e.message, "erro"); }
+    b.disabled = false;
+  };
   const anu = $("lf-anuncio");
   if (anu) anu.onclick = async () => {
     const t = textoDeAnuncio(), ta = $("lf-anuncio-txt"); ta.value = t; ta.classList.remove("oculto"); ta.focus(); ta.select();
