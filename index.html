@@ -794,6 +794,16 @@ Cadastre-se, habilite-se e dispute.</span></div>
         <div class="msg" id="t-msg"></div>
       </form>
 
+      <!-- preferências de aviso (para quem já enviou o cadastro) -->
+      <div id="p-prefs" class="painel oculto">
+        <h3>Preferências de avisos</h3>
+        <p class="meta" id="pf-tel"></p>
+        <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="pf-wpp" style="margin-top:3px;"> <span>Aceito receber avisos por WhatsApp neste número: abertura do leilão, lance superado, encerramento e arremate. São avisos só dos leilões em que participo, e posso desligar quando quiser.</span></label>
+        <button type="button" id="pf-salvar">Salvar preferências</button>
+        <div class="msg" id="pf-msg" role="status"></div>
+        <p class="meta">Os e-mails essenciais (confirmação de habilitação e de lances, arremate e pagamento) continuam sendo enviados. Para trocar o número, fale com a Galeria 33.</p>
+      </div>
+
       <!-- leilões -->
       <div id="p-leiloes" class="painel oculto">
         <h3>Habilitação nos leilões</h3>
@@ -1901,11 +1911,34 @@ function renderConta() {
   $("p-docs").classList.toggle("oculto", !(editavel && p));
   $("form-termo").classList.toggle("oculto", !(editavel && p));
   $("p-leiloes").classList.toggle("oculto", status !== "aprovado");
+  renderPrefs(p, editavel);
 
   if (editavel) preencherDados(p);
   if (editavel && p) { renderDocs(p); renderTermo(p); }
   if (status === "aprovado") renderLeiloes();
 }
+
+/* ===== PREFERÊNCIAS DE AVISO (cadastro já enviado ou aprovado) ===== */
+function renderPrefs(p, editavel) {
+  const mostrar = !!p && !editavel;
+  $("p-prefs").classList.toggle("oculto", !mostrar);
+  if (!mostrar) return;
+  const tel = String((p.dados && p.dados.telefone) || "").replace(/\D/g, "");
+  $("pf-tel").textContent = tel ? "Número cadastrado: final " + tel.slice(-4) : "Sem número cadastrado.";
+  const salvo = !!(p.dados && p.dados.whatsapp_optin);
+  // Só sobrescreve a caixa quando o valor salvo mudou (não apaga uma escolha ainda não salva).
+  if ($("pf-wpp").dataset.salvo !== String(salvo)) { $("pf-wpp").checked = salvo; $("pf-wpp").dataset.salvo = String(salvo); }
+}
+$("pf-salvar").addEventListener("click", async () => {
+  const b = $("pf-salvar"); b.disabled = true; msg($("pf-msg"), "Salvando…");
+  try {
+    const r = await api("salvar_preferencias", { whatsapp_optin: $("pf-wpp").checked });
+    $("pf-wpp").dataset.salvo = String(!!r.whatsapp_optin);
+    msg($("pf-msg"), r.whatsapp_optin ? "Pronto: você vai receber avisos por WhatsApp." : "Pronto: avisos por WhatsApp desligados.", "ok");
+    carregarEstado();
+  } catch (e) { msg($("pf-msg"), e.message, "erro"); }
+  b.disabled = false;
+});
 
 function preencherDados(p) {
   if (!p || $("form-dados").dataset.pronto === (p.documento_mascarado || "")) return;
