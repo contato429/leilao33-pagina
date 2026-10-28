@@ -117,6 +117,13 @@
   .barra { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .barra input[type=search], .barra select { appearance: none; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; font: 500 .9rem var(--sans); min-width: 0; }
   .barra input[type=search] { flex: 1 1 220px; max-width: 360px; }
+  .card .fav { position: absolute; top: 10px; right: 10px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.45); color: #fff; font: 400 1.1rem/1 var(--sans); cursor: pointer; display: grid; place-items: center; backdrop-filter: blur(4px); }
+  .card .fav[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  .acoes-lote { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+  .acoes-lote .chip[aria-pressed="true"] { background: var(--acid); color: #0a0a0a; border-color: var(--acid); }
+  #d-link-caixa { margin: 0 0 10px; }
+  #d-link-caixa input { width: 100%; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font: 500 .85rem var(--mono); }
+  .fuso { margin: 2px 0 10px; font: 400 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
   .chip { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 14px; font: 500 .82rem var(--sans); cursor: pointer; transition: all .2s; }
   .chip:hover { color: var(--ink); border-color: var(--muted); }
@@ -613,7 +620,16 @@ Cadastre-se, habilite-se e dispute.</span></div>
           <option value="menor">Menor lance</option>
           <option value="az">Artista A–Z</option>
         </select>
+        <select id="f-preco" aria-label="Filtrar por preço">
+          <option value="">Qualquer preço</option>
+          <option value="1">Até R$ 2.000</option>
+          <option value="2">R$ 2.000 a R$ 5.000</option>
+          <option value="3">R$ 5.000 a R$ 20.000</option>
+          <option value="4">Acima de R$ 20.000</option>
+        </select>
+        <button type="button" class="chip" id="f-fav" aria-pressed="false">♥ Só favoritos</button>
       </div>
+      <p class="fuso">Todos os horários estão no fuso de Brasília (BRT).</p>
       <div class="abas-estado" id="f-estados" role="group" aria-label="Situação dos lotes"></div>
       <div class="chips" id="chips" role="group" aria-label="Artistas"></div>
     </section>
@@ -631,6 +647,8 @@ Cadastre-se, habilite-se e dispute.</span></div>
         </div>
         <div class="painel-lote">
           <div class="etiqueta"><span id="d-tag"></span><span class="ao-vivo" id="d-vivo" aria-hidden="true"></span></div>
+          <div class="acoes-lote"><button type="button" class="chip" id="d-fav" aria-pressed="false">♥ Favoritar</button><button type="button" class="chip" id="d-share">Compartilhar</button></div>
+          <div class="oculto" id="d-link-caixa"><input id="d-link" readonly aria-label="Link deste lote"></div>
           <h2 id="d-artista"></h2>
           <div class="obra" id="d-titulo"></div>
           <h4 class="sub">Sobre a obra</h4>
@@ -645,7 +663,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
             <div class="cont" id="d-tempo" role="timer" aria-label="Tempo restante"></div>
             <div class="status-lote oculto" id="d-status" role="status"></div>
             <div class="oferta oculto" id="d-oferta" role="alertdialog" aria-labelledby="of-tit"></div>
-            <div class="meta" id="d-fimtxt">encerra em <span id="d-fim"></span></div>
+            <div class="meta" id="d-fimtxt">encerra em <span id="d-fim"></span> <small>(horário de Brasília)</small></div>
 
             <div id="d-acesso" class="aviso-caixa oculto"></div>
             <form id="form-lance" class="oculto" autocomplete="off">
@@ -735,8 +753,9 @@ Cadastre-se, habilite-se e dispute.</span></div>
         </div>
         <div class="duas">
           <label class="campo" id="l-nasc">Data de nascimento<input id="d-nasc" type="date" required></label>
-          <label class="campo">Telefone com DDD<input id="d-tel" type="tel" autocomplete="tel" required></label>
+          <label class="campo">Telefone / WhatsApp com DDD<input id="d-tel" type="tel" autocomplete="tel" placeholder="(47) 99999-9999" required></label>
         </div>
+        <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="d-wpp" style="margin-top:3px;"> <span>Aceito receber avisos por WhatsApp neste número: abertura do leilão, lance superado, encerramento e arremate. São avisos só dos leilões em que participo, e posso pedir para parar a qualquer momento.</span></label>
         <div class="duas">
           <label class="campo">CEP<input id="d-cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required></label>
           <label class="campo">Cidade/UF<input id="d-cidade" autocomplete="address-level2" placeholder="Joinville/SC" required></label>
@@ -879,7 +898,7 @@ let relogio = null;
 let atualizacao = null;
 let leilaoAlvo = null;
 let valorAnterior = null; // para o brilho quando o lance muda
-const filtro = { q: "", artista: "", ordem: "fim", estado: "", leilao: "" };
+const filtro = { q: "", artista: "", ordem: "fim", estado: "", leilao: "", preco: "", fav: false };
 let leiloesPub = [], estadoAuto = true;
 const $ = id => document.getElementById(id);
 const reduz = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -928,7 +947,7 @@ function api(acao, dados, espera = 20000) {
 
 /* ===== FORMATAÇÃO ===== */
 const brl = v => v == null ? "—" : "R$ " + Number(v).toLocaleString("pt-BR");
-const dataHora = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+const dataHora = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 // Miniatura da imagem (o Wix redimensiona no servidor). Se não for imagem do Wix, usa a original.
 // Se a miniatura falhar, um ouvinte global volta para a original (data-orig).
 function miniatura(u, w, h) {
@@ -1089,6 +1108,34 @@ function renderSeletorLeilao() {
 }
 $("f-leilao").addEventListener("change", e => { filtro.leilao = e.target.value; renderEstados(); renderLista(); });
 
+/* ===== FAVORITOS, FAIXA DE PREÇO E LINK DO LOTE ===== */
+const FAIXAS_PRECO = { "1": [0, 2000], "2": [2000, 5000], "3": [5000, 20000], "4": [20000, Infinity] };
+const FAV = (() => { try { return new Set(JSON.parse(localStorage.getItem("l33_fav") || "[]")); } catch (e) { return new Set(); } })();
+function salvarFav() { try { localStorage.setItem("l33_fav", JSON.stringify([...FAV])); } catch (e) { /* sem armazenamento: vale só nesta visita */ } }
+function toggleFav(id) {
+  if (!id) return;
+  if (FAV.has(id)) FAV.delete(id); else FAV.add(id);
+  salvarFav();
+  document.querySelectorAll('[data-fav]').forEach(b => { if (b.dataset.fav === id) b.setAttribute("aria-pressed", FAV.has(id) ? "true" : "false"); });
+  if (filtro.fav) renderLista();
+}
+$("f-preco").addEventListener("change", e => { filtro.preco = e.target.value; renderLista(); });
+$("f-fav").addEventListener("click", () => { filtro.fav = !filtro.fav; $("f-fav").setAttribute("aria-pressed", filtro.fav ? "true" : "false"); renderLista(); });
+$("d-fav").addEventListener("click", () => { if (aberto) toggleFav(aberto); });
+const LINK_BASE = "https://www.galeria33.com/leilao-33";
+async function compartilhar() {
+  const l = detalhe; if (!l) return;
+  const url = LINK_BASE + "?lote=" + encodeURIComponent(l.id);
+  const titulo = (l.artista ? l.artista + " · " : "") + l.titulo + " · LEILÃO 33";
+  try { if (navigator.share) { await navigator.share({ title: titulo, text: titulo, url }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(url); avisar("Link do lote copiado."); return; } catch (e) { /* tenta o plano B */ }
+  const caixa = $("d-link-caixa"); caixa.classList.remove("oculto");
+  $("d-link").value = url; $("d-link").focus(); $("d-link").select();
+  try { if (document.execCommand("copy")) { avisar("Link do lote copiado."); return; } } catch (e) { /* mostra o link para copiar à mão */ }
+  avisar("Copie o link do lote que apareceu abaixo.");
+}
+$("d-share").addEventListener("click", compartilhar);
+
 function listaFiltrada() {
   let r = lotes.slice();
   const q = norm(filtro.q);
@@ -1096,6 +1143,8 @@ function listaFiltrada() {
   if (filtro.artista) r = r.filter(l => l.artista === filtro.artista);
   if (filtro.leilao) r = r.filter(l => l.leilao_id === filtro.leilao);
   if (filtro.estado) r = r.filter(l => estadoDoLote(l) === filtro.estado);
+  if (filtro.preco && FAIXAS_PRECO[filtro.preco]) { const [de, ate] = FAIXAS_PRECO[filtro.preco]; r = r.filter(l => Number(l.valor_atual) >= de && Number(l.valor_atual) < ate); }
+  if (filtro.fav) r = r.filter(l => FAV.has(l.id));
   const por = {
     fim: (a, b) => (a.encerrado - b.encerrado) || ((a.em_breve ? new Date(a.abre_em) : 0) - (b.em_breve ? new Date(b.abre_em) : 0)) || (new Date(a.encerra_em) - new Date(b.encerra_em)),
     maior: (a, b) => b.valor_atual - a.valor_atual,
@@ -1124,13 +1173,17 @@ function renderLista() {
   el.innerHTML = r.length ? r.map((l, i) => {
     const enc = l.encerrado;
     return `<article class="card ${enc ? "encerrado" : ""}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
-      <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span>
+      <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span><button type="button" class="fav" data-fav="${esc(l.id)}" aria-pressed="${FAV.has(l.id)}" aria-label="Favoritar este lote">♥</button>
         ${l.em_breve ? `<span class="tempo">Abre ${esc(dataHora(l.abre_em))}</span>` : `<span class="tempo" data-fim="${enc ? "" : esc(l.encerra_em)}">${enc ? "Encerrado" : tempoRestante(l.encerra_em)}</span>`}
         ${l.imagem ? `<img ${atribImg(l.imagem, 640, 800)} alt="" loading="lazy" decoding="async">` : ""}</div>
       <h3>${esc(l.artista || l.titulo)}</h3>
       <div class="obra">${esc(l.titulo)}</div>
       <div class="preco"><span>${enc ? "lance final" : l.em_breve ? "lance inicial" : "lance atual"}</span><b>${brl(l.valor_atual)}</b></div></article>`;
-  }).join("") : `<p class="vazio">Nenhum lote encontrado.</p>`;
+  }).join("") : `<p class="vazio">${filtro.fav ? "Você ainda não favoritou nenhum lote. Toque no ♥ de uma obra." : "Nenhum lote encontrado."}</p>`;
+  el.querySelectorAll(".card .fav").forEach(b => {
+    b.onclick = ev => { ev.stopPropagation(); toggleFav(b.dataset.fav); };
+    b.onkeydown = ev => ev.stopPropagation();
+  });
   el.querySelectorAll(".card").forEach(c => {
     c.onclick = () => abrir(c.dataset.id, c);
     c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(c.dataset.id, c); } };
@@ -1186,9 +1239,11 @@ function renderDetalhe() {
   atualizarNavLote();
   if (!$("d-img").querySelector("img") || $("d-img").dataset.lote !== l.id) {
     $("d-img").dataset.lote = l.id;
+    $("d-link-caixa").classList.add("oculto");
     $("d-img").innerHTML = l.imagem ? `<img ${atribImg(l.imagem, 1600, 2000)} alt="${esc((l.artista || "") + ", " + l.titulo)}" decoding="async">` : "";
   }
   $("d-tag").textContent = "Lote " + numeroLote(l.id);
+  $("d-fav").dataset.fav = l.id; $("d-fav").setAttribute("aria-pressed", FAV.has(l.id) ? "true" : "false");
   $("d-vivo").classList.toggle("oculto", !!l.encerrado);
   $("d-artista").textContent = l.artista || l.titulo;
   $("d-titulo").textContent = l.titulo;
@@ -1857,7 +1912,7 @@ function preencherDados(p) {
   $("form-dados").dataset.pronto = p.documento_mascarado || "";
   const d = p.dados;
   $("d-doc").value = d.documento || ""; $("d-nome").value = d.nome || ""; $("d-nasc").value = d.nascimento || "";
-  $("d-tel").value = d.telefone || ""; $("d-cep").value = d.cep || ""; $("d-cidade").value = d.cidade_uf || ""; $("d-end").value = d.endereco || "";
+  $("d-tel").value = d.telefone || ""; $("d-wpp").checked = !!d.whatsapp_optin; $("d-cep").value = d.cep || ""; $("d-cidade").value = d.cidade_uf || ""; $("d-end").value = d.endereco || "";
   $("d-rep-nome").value = d.representante_nome || ""; $("d-rep-cpf").value = d.representante_cpf || "";
   document.querySelector(`input[name=pep][value=${d.pep ? "sim" : "nao"}]`).checked = true;
   ajustarTipo();
@@ -1905,7 +1960,7 @@ $("form-dados").addEventListener("submit", async e => {
   msg($("d-msg"), "Salvando…");
   try {
     await api("salvar_dados", {
-      documento: $("d-doc").value, nome: $("d-nome").value, nascimento: $("d-nasc").value, telefone: $("d-tel").value,
+      documento: $("d-doc").value, nome: $("d-nome").value, nascimento: $("d-nasc").value, telefone: $("d-tel").value, whatsapp_optin: $("d-wpp").checked,
       cep: $("d-cep").value, cidade_uf: $("d-cidade").value, endereco: $("d-end").value,
       representante_nome: $("d-rep-nome").value, representante_cpf: $("d-rep-cpf").value,
       pep: document.querySelector("input[name=pep]:checked").value === "sim"
@@ -2144,7 +2199,7 @@ async function verCadastro(id) {
     el.classList.remove("oculto");
     el.innerHTML = `<h3>${esc(c.nome)}</h3>
       ${campo("Tipo", c.tipo_pessoa === "PJ" ? "Empresa" : "Pessoa física")}${campo("CPF/CNPJ", c.documento)}${campo("Representante", c.representante_nome)}${campo("CPF do representante", c.representante_cpf)}
-      ${campo("Nascimento", c.nascimento)}${campo("Telefone", c.telefone)}${campo("E-mail", c.email)}${campo("Endereço", `${c.endereco}, ${c.cidade_uf}, CEP ${c.cep}`)}
+      ${campo("Nascimento", c.nascimento)}${campo("Telefone", c.telefone)}${campo("Avisos por WhatsApp", c.whatsapp_optin ? "aceitou" + (c.whatsapp_optin_em ? " em " + dataHora(c.whatsapp_optin_em) : "") : "não")}${campo("E-mail", c.email)}${campo("Endereço", `${c.endereco}, ${c.cidade_uf}, CEP ${c.cep}`)}
       ${campo("Pessoa politicamente exposta", c.pep ? "SIM" : "não")}
       ${campo("Termo assinado", `${c.termo_nome} em ${c.termo_em ? dataHora(c.termo_em) : ""} (versão ${c.termo_versao})`)}
       ${campo("Hash do termo", c.termo_hash)}
@@ -2677,11 +2732,13 @@ $("lote-prox").onclick = () => irLote(1);
 })();
 
 /* ===== INÍCIO ===== */
+let linkLote = null;
 iniciarTema();
 renderEsqueleto();
 carregarConfig()
-  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; linkProforma = c && c.proforma ? String(c.proforma).slice(0, 40) : null; if (c && c.leilao) { filtro.leilao = String(c.leilao).slice(0, 40); filtro.estado = ""; estadoAuto = false; } }, () => {}))
+  .then(() => api("contexto").then(c => { linkOferta = c && c.oferta ? String(c.oferta).slice(0, 40) : null; linkProforma = c && c.proforma ? String(c.proforma).slice(0, 40) : null; linkLote = c && c.lote ? String(c.lote).slice(0, 40) : null; if (c && c.leilao) { filtro.leilao = String(c.leilao).slice(0, 40); filtro.estado = ""; estadoAuto = false; } }, () => {}))
   .then(() => Promise.all([carregarLotes(), carregarEstado()]))
+  .then(() => { if (linkLote && lotes.some(l => l.id === linkLote)) { const id = linkLote; linkLote = null; abrir(id); } })
   .catch((e) => {
     $("lista").innerHTML = "";
     $("carregando").classList.remove("oculto");
