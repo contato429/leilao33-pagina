@@ -878,12 +878,6 @@ Cadastre-se, habilite-se e dispute.</span></div>
       <p class="meta" id="saude-auto">Rotinas automáticas: verificação todo dia às 8h e cópia de segurança todo dia à 0h30 (horário de Brasília). Falha ou problema chega por e-mail em contato@galeria33.com. Os arquivos da cópia ficam privados em Mídia &gt; Privado &gt; leilao33-copias, no painel do Wix.</p>
       <div id="saude-lista"></div>
     </div>
-    <div class="painel" id="lim-painel">
-      <div class="ad-topo"><h3>Limpar dados de teste</h3><div class="ad-bts"><button type="button" id="lim-ver">Ver o que existe</button></div></div>
-      <p class="lei-aviso">Aqui quem apaga é você, e não tem volta. Nada é apagado sem você marcar e digitar a frase de confirmação.</p>
-      <div class="msg" id="lim-msg" role="status"></div>
-      <div id="lim-corpo" class="oculto"></div>
-    </div>
     <div class="painel" id="lei-painel">
       <div class="ad-topo"><h3>Leilões</h3><div class="ad-bts"><button type="button" id="lei-novo">Novo leilão</button></div></div>
       <div class="msg" id="lei-msg" role="status"></div>
@@ -2903,44 +2897,6 @@ $("saude-btn").onclick = async () => {
   } catch (e) { msg($("saude-msg"), e.message, "erro"); }
   b.disabled = false;
 };
-
-/* ===== LIMPEZA DE DADOS DE TESTE (administrador) ===== */
-let limFrase = "APAGAR TESTES";
-$("lim-ver").onclick = async () => {
-  msg($("lim-msg"), "Conferindo…");
-  try {
-    const r = await api("admin_limpeza_resumo"); limFrase = r.frase;
-    const corpo = $("lim-corpo"); corpo.classList.remove("oculto"); msg($("lim-msg"), "");
-    corpo.innerHTML = `
-      <label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" id="lim-lances"> Apagar <b>todos os ${r.lances} lance(s)</b> (somente se nenhum leilão real começou)</label>
-      <h5 style="margin:12px 0 4px">Leilões inteiros (apaga o leilão, os lotes, os lances e as habilitações dele; as obras escondidas voltam à loja)</h5>
-      ${(r.leiloes || []).length ? r.leiloes.map(l => `<label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" data-lim-leilao="${esc(l.id)}"> ${esc(l.id)} · ${esc(l.nome)} · ${l.n_lotes} lote(s), ${l.n_lances} lance(s)</label>`).join("") : "<p class='meta'>Nenhum leilão cadastrado (o leilão original não aparece aqui; para apagá-lo marque os lances e o lote de teste).</p>"}
-      <h5 style="margin:12px 0 4px">Lotes de teste (com TESTE no nome)</h5>
-      ${r.lotes_teste.length ? r.lotes_teste.map(l => `<label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" data-lim-lote="${esc(l.id)}"> ${esc(l.id)} · ${esc(l.titulo)}</label>`).join("") : "<p class='meta'>Nenhum.</p>"}
-      <h5 style="margin:12px 0 4px">Participantes (marque só os de teste)</h5>
-      ${r.participantes.length ? r.participantes.map(p => `<label class="check" style="text-transform:none;letter-spacing:0;font-family:var(--sans)"><input type="checkbox" data-lim-part="${esc(p.id)}"> ${esc(p.nome || "(sem nome)")} · ${esc(p.status)} · ${p.habilitacoes} habilitação(ões)</label>`).join("") : "<p class='meta'>Nenhum.</p>"}
-      <p class="meta">Arquivos enviados pelos participantes na Biblioteca de mídia e contatos do CRM não são apagados por aqui.</p>
-      <label class="campo">Para confirmar, digite <b>${esc(limFrase)}</b><input id="lim-conf" autocomplete="off"></label>
-      <div class="lei-rodape"><button type="button" class="principal" id="lim-apagar" style="background:#ff6a4d;color:#fff;border-color:#ff6a4d">Apagar o que marquei</button></div>`;
-    $("lim-apagar").onclick = async () => {
-      const dados = {
-        confirmacao: $("lim-conf").value, apagar_lances: $("lim-lances").checked,
-        leiloes: [...corpo.querySelectorAll("[data-lim-leilao]:checked")].map(x => x.dataset.limLeilao),
-        lotes: [...corpo.querySelectorAll("[data-lim-lote]:checked")].map(x => x.dataset.limLote),
-        participantes: [...corpo.querySelectorAll("[data-lim-part]:checked")].map(x => x.dataset.limPart)
-      };
-      msg($("lim-msg"), "Apagando…");
-      try {
-        const x = await api("admin_limpeza", dados, 120000);
-        if (x && x.ok === false) { msg($("lim-msg"), `Parou em "${x.etapa || "início"}": ${x.erro}. Já apagado: ${(x.feito && x.feito.lances) || 0} lance(s), ${(x.feito && x.feito.lotes) || 0} lote(s).`, "erro"); return; }
-        if (x && x.parcial) { msg($("lim-msg"), `${x.mensagem} Até agora: ${x.feito.lotes} lote(s) e ${x.feito.lances} lance(s) apagados.`, "ok"); carregarLeiloes(); return; }
-        msg($("lim-msg"), `Apagado: ${x.feito.lances} lance(s), ${x.feito.lotes} lote(s), ${x.feito.participantes} participante(s), ${x.feito.habilitacoes} habilitação(ões), ${x.feito.leiloes || 0} leilão(ões).`, "ok");
-        corpo.classList.add("oculto"); carregarArremates(true); carregarLeiloes();
-      } catch (e) { msg($("lim-msg"), e.message, "erro"); }
-    };
-  } catch (e) { msg($("lim-msg"), e.message, "erro"); }
-};
-
 
 /* ===== NAVEGAÇÃO NO CELULAR: espelha as abas do topo na barra de baixo ===== */
 (function () {
