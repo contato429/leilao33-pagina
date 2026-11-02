@@ -63,6 +63,10 @@
   .aba:hover { color: var(--ink); border-color: var(--line); }
   .aba.ativa { color: var(--acc-fg); background: var(--acid); }
   .usuario { display: flex; gap: 10px; align-items: center; font: 400 .82rem var(--mono); color: var(--muted); }
+  .usuario .entrar-destaque { background: var(--acc); color: var(--acc-fg); border: 0; border-radius: 999px; padding: 9px 20px; font: 700 .9rem var(--sans); letter-spacing: .02em; text-decoration: none; cursor: pointer; box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 60%, transparent); animation: pulsa-entrar 2.4s ease-out infinite; }
+  .usuario .entrar-destaque:hover, .usuario .entrar-destaque:focus-visible { filter: brightness(1.08); outline: 2px solid var(--ink); outline-offset: 2px; }
+  @keyframes pulsa-entrar { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 12px transparent; } }
+  @media (prefers-reduced-motion: reduce) { .usuario .entrar-destaque { animation: none; } }
   .link { background: none; border: 0; color: var(--ink); padding: 0; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   .tema { appearance: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; font-size: 1rem; line-height: 1; display: grid; place-items: center; transition: transform .3s var(--ease), background .2s; }
   .tema:hover { transform: rotate(180deg); background: var(--bg2); }
@@ -1945,7 +1949,7 @@ function renderUsuario() {
     u.innerHTML = `<span>${esc(nome)}</span> <button class="link" id="u-sair">sair</button>`;
     $("u-sair").onclick = sair;
   } else {
-    u.innerHTML = `<button class="link" id="u-entrar">entrar</button>`;
+    u.innerHTML = `<button class="entrar-destaque" id="u-entrar">Entrar ou cadastrar</button>`;
     $("u-entrar").onclick = () => mostrar("conta");
   }
 }
