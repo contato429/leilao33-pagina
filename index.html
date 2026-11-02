@@ -463,6 +463,15 @@
   .oferta .meta { font: 400 .76rem var(--mono); color: var(--muted); }
   .lupa-faixa.oferta-f { background: #ffb400; color: #2a1c00; border-color: #b27d00; }
   .lupa-faixa.oferta-f button.cobrir { background: #2a1c00; color: #ffe9b0; }
+  /* Leilão suspenso pela equipe (pausa de emergência) */
+  .faixa-susp { background: #ffb400; color: #2a1c00; border-bottom: 2px solid #b27d00; padding: 12px clamp(16px, 4vw, 48px); font: 600 .95rem/1.4 var(--sans); text-align: center; }
+  .faixa-susp b { font-weight: 800; letter-spacing: .02em; }
+  .tempo.susp { background: #ffb400; color: #2a1c00; }
+  .susp-painel { border: 2px solid #ffb400; border-radius: 14px; padding: 14px; display: grid; gap: 10px; margin: 12px 0; background: color-mix(in srgb, #ffb400 12%, var(--card)); }
+  .susp-painel h5 { margin: 0; font: 700 1.05rem/1.2 var(--sans); }
+  .susp-painel p { margin: 0; }
+  .susp-motivo { display: grid; gap: 4px; flex: 1 1 280px; font-size: .85rem; }
+  .susp-motivo input { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); font: inherit; }
 
   /* ===== PAINEL: ARREMATES E COBRANÇAS ===== */
   .ad-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -603,6 +612,7 @@
 <nav class="abas-cel" id="abas-cel" aria-label="Navegação"></nav>
 
 <div class="lupa-faixa neutro oculto" id="lupa-faixa" role="status" aria-live="assertive"></div>
+<div class="faixa-susp oculto" id="faixa-susp" role="status" aria-live="polite"></div>
 
 <main>
   <!-- ===== MEUS LANCES ===== -->
@@ -948,7 +958,7 @@ Cadastre-se, habilite-se e dispute.</span></div>
           <label class="campo">Medidas (opcional)<input id="av-medidas" maxlength="100" placeholder="ex.: 60 x 80 cm"></label>
         </div>
         <label class="campo">Obra (título, técnica, ano)<input id="av-obra" required maxlength="200" placeholder="ex.: Paisagem, óleo sobre tela, 1985"></label>
-        <label class="campo">Link com fotos (opcional)<input id="av-fotos" type="url" maxlength="300" placeholder="https://..."></label>
+        <label class="campo">Link com fotos (opcional)<input id="av-fotos" type="text" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="300" placeholder="www.site.com/fotos ou link do Google Drive"></label>
         <label class="campo">Mensagem (opcional)<textarea id="av-msg" rows="3" maxlength="1000"></textarea></label>
         <div class="iscas" aria-hidden="true"><label>Não preencha este campo<input id="av-site" tabindex="-1" autocomplete="off"></label></div>
         <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="av-ok" style="margin-top:3px;"> <span>Autorizo a Galeria 33 a usar estes dados para responder ao meu pedido de avaliação.</span></label>
@@ -963,6 +973,19 @@ Cadastre-se, habilite-se e dispute.</span></div>
 </div>
 
 <!-- modal de habilitação -->
+<div class="modal oculto" id="modal-cobrir" role="dialog" aria-modal="true" aria-labelledby="dc-tit">
+  <div class="caixa">
+    <h3 id="dc-tit" style="margin-top:0">Confirmar lance</h3>
+    <div id="dc-corpo"></div>
+    <label class="check" style="align-items:flex-start; text-transform:none; letter-spacing:0;"><input type="checkbox" id="dc-aceite" style="margin-top:3px;"> <span>Li e aceito as condições do leilão e a comissão do leiloeiro. Sei que o lance é firme e irrevogável.</span></label>
+    <div class="msg" id="dc-msg" role="status"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button type="button" class="principal" id="dc-ok" disabled>Dar lance</button>
+      <button type="button" class="sec" id="dc-x">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal oculto" id="modal-hab">
   <div class="caixa">
     <h3 id="m-titulo" style="margin-top:0"></h3>
@@ -1265,7 +1288,7 @@ function cardHtml(l, i) {
     const enc = l.encerrado;
     return `<article class="card ${enc ? "encerrado" : ""}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
       <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span><button type="button" class="fav" data-fav="${esc(l.id)}" aria-pressed="${FAV.has(l.id)}" aria-label="Favoritar este lote">♥</button>
-        ${l.em_breve ? `<span class="tempo">Abre ${esc(dataHora(l.abre_em))}</span>` : `<span class="tempo" data-fim="${enc ? "" : esc(l.encerra_em)}">${enc ? "Encerrado" : tempoRestante(l.encerra_em)}</span>`}
+        ${l.suspenso ? `<span class="tempo susp">Suspenso</span>` : l.em_breve ? `<span class="tempo">Abre ${esc(dataHora(l.abre_em))}</span>` : `<span class="tempo" data-fim="${enc ? "" : esc(l.encerra_em)}">${enc ? "Encerrado" : tempoRestante(l.encerra_em)}</span>`}
         ${l.imagem ? `<img ${atribImg(l.imagem, 640, 800)} alt="" loading="lazy" decoding="async">` : ""}</div>
       <h3>${esc(l.artista || l.titulo)}</h3>
       <div class="obra">${esc(l.titulo)}</div>
@@ -1289,6 +1312,16 @@ function renderLista() {
   renderPopulares();
   revelar();
   tick();
+  atualizarFaixaSusp();
+}
+// Motivo digitado pela equipe, com ponto final (sem duplicar se já houver).
+function motivoSusp(s) { const m = String((s && s.motivo) || "").trim().replace(/[.\s]+$/, ""); return (m || "Correção em andamento") + "."; }
+// Faixa no topo enquanto a equipe mantém o leilão suspenso (pausa de emergência para corrigir erros).
+function atualizarFaixaSusp() {
+  const f = $("faixa-susp"); if (!f) return;
+  const l = lotes.find(x => x.suspenso) || (detalhe && detalhe.suspenso ? detalhe : null);
+  f.classList.toggle("oculto", !l);
+  if (l) f.innerHTML = `<b>LEILÃO SUSPENSO PELA EQUIPE.</b> ${esc(motivoSusp(l.suspenso))} Seus lances estão salvos e o cronômetro está parado. Voltamos em instantes.`;
 }
 
 /* ===== LOTES POPULARES, LINKS DO LEILÃO E "VEJA TAMBÉM" ===== */
@@ -1306,6 +1339,14 @@ function renderPopulares() {
   $("populares-lista").innerHTML = p.map((l, i) => cardHtml(l, i)).join("");
   ligarCards($("populares-lista"));
   $("populares-lista").querySelectorAll(".card").forEach(c => c.classList.add("in"));
+}
+// Quem digita só "www.site.com" ou "site.com/fotos" não precisa escrever https://: a tela completa antes de enviar (o servidor confere de novo).
+function linkComHttps(v) {
+  const t = String(v || "").trim();
+  if (!t || /\s/.test(t)) return t;
+  if (/^http:\/\//i.test(t)) return "https://" + t.slice(7);
+  if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?([\/?#].*)?$/i.test(t)) return "https://" + t;
+  return t;
 }
 function linkSeguro(u) { return /^https:\/\/[^\s<>"']+$/i.test(String(u || "")); }
 function renderLinksLeilao() {
@@ -1560,6 +1601,11 @@ function renderAcesso() {
   const irConta = `<button type="button" class="link" id="a-conta">Ir para Minha conta</button>`;
   let html = "", pode = false;
   if (l.encerrado) { caixa.classList.add("oculto"); form.classList.add("oculto"); $("barra-lance").classList.remove("vis"); return; }
+  // Leilão suspenso pela equipe: sem formulário de lance até a retomada (o servidor também recusa lances).
+  if (l.suspenso) {
+    caixa.classList.remove("oculto"); caixa.innerHTML = `<b>Leilão suspenso pela equipe.</b> ${esc(motivoSusp(l.suspenso))} Seus lances estão salvos e o cronômetro está parado. Volte em instantes.`;
+    form.classList.add("oculto"); $("barra-lance").classList.remove("vis"); atualizarFaixaSusp(); return;
+  }
   const p = estado.participante;
   const leilao = (estado.leiloes || []).find(x => x.id === l.leilao_id);
   if (!estado.logado) html = `Para dar lances você precisa de uma conta com cadastro aprovado. ${irConta}`;
@@ -1591,6 +1637,7 @@ function atualizarContagem() {
     c.innerHTML = [["abre em", " "], [ta.d, ta.d === 1 ? "dia" : "dias"], [pad(ta.h), "horas"], [pad(ta.m), "min"], [pad(ta.s), "seg"]].map(x => `<div><b>${x[0]}</b><small>${x[1]}</small></div>`).join("");
     return;
   }
+  if (l.suspenso) { c.className = "cont fim"; c.textContent = "Leilão suspenso: cronômetro parado"; return; }
   const ms = new Date(l.encerra_em).getTime() - Date.now();
   if (ms <= 0) {
     c.className = "cont fim"; c.textContent = "Lote encerrado";
@@ -1750,20 +1797,46 @@ function medirTopo() {
 }
 addEventListener("resize", medirTopo);
 
+// "Cobrir" nunca dá lance com um toque só: abre uma confirmação com o valor ATUAL, a comissão e o aceite das condições.
+// A tela de confirmação é uma janela própria (não é recriada pelas atualizações automáticas da lista e da Lupa).
+function fecharCobrir() { $("modal-cobrir").classList.add("oculto"); $("dc-aceite").checked = false; $("dc-ok").disabled = true; msg($("dc-msg"), ""); }
 async function cobrir(id, botao) {
-  const l = meus.find(x => x.id === id) || (detalhe && detalhe.id === id ? detalhe : null);
-  if (!l) return;
   if (botao) botao.disabled = true;
   try {
-    const r = await api("lance", { id, corpo: { valor: l.minimo_proximo, aceite: true } });
-    avisar("Lance de " + brl(r.valor) + " registrado. Você voltou à frente.", "ok"); tom("ok"); vibrar(80);
+    // Valor e situação lidos agora (o que a tela mostrava pode estar velho).
+    const l = await api("lote", { id });
+    if (l.suspenso) { avisar("Leilão suspenso pela equipe. Volte em instantes.", "erro"); return; }
+    if (l.encerrado) { avisar("Este lote já encerrou.", "erro"); return; }
+    if (l.lider) { avisar("Você já está na frente neste lote.", "ok"); return; }
+    const valor = l.minimo_proximo, pc = comissaoPct(l);
+    const total = pc ? Math.round(valor * (1 + pc / 100) * 100) / 100 : valor;
+    $("dc-corpo").innerHTML = `<p style="margin:0"><b>${esc(l.artista || "")}</b>${l.artista ? " · " : ""}${esc(l.titulo)}</p>
+      <p style="margin:6px 0 0">Seu lance: <b style="font-size:1.25em">${brl(valor)}</b></p>
+      ${pc ? `<p class="meta" style="margin:2px 0 0">Com a comissão do leiloeiro (${pc}%): <b>${brl(total)}</b></p>` : ""}`;
+    $("dc-aceite").checked = false; $("dc-ok").disabled = true; msg($("dc-msg"), "");
+    $("dc-aceite").onchange = () => { $("dc-ok").disabled = !$("dc-aceite").checked; };
+    $("dc-x").onclick = fecharCobrir;
+    $("dc-ok").onclick = async () => {
+      if (!$("dc-aceite").checked) return;
+      $("dc-ok").disabled = true; msg($("dc-msg"), "Enviando…");
+      try {
+        const r = await api("lance", { id, corpo: { valor, aceite: true } });
+        fecharCobrir();
+        avisar("Lance de " + brl(r.valor) + " registrado. Você voltou à frente.", "ok"); tom("ok"); vibrar(80);
+        await carregarLupa();
+        if (aberto === id) await atualizarDetalhe();
+      } catch (e) {
+        // Normalmente outro lance entrou antes: mostra o erro aqui e deixa a pessoa reabrir com o valor novo.
+        msg($("dc-msg"), e.message, "erro"); $("dc-ok").disabled = !$("dc-aceite").checked;
+        carregarLupa(); if (aberto === id) atualizarDetalhe();
+      }
+    };
+    $("modal-cobrir").classList.remove("oculto");
+    $("dc-aceite").focus();
   } catch (e) { avisar(e.message, "erro"); }
-  finally {
-    await carregarLupa();
-    if (aberto === id) await atualizarDetalhe();
-    if (botao) botao.disabled = false;
-  }
+  finally { if (botao) botao.disabled = false; }
 }
+addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("modal-cobrir").classList.contains("oculto")) fecharCobrir(); });
 
 function atualizarSom() {
   const b = $("som"); if (!b) return;
@@ -2318,7 +2391,7 @@ $("form-aval").addEventListener("submit", async e => {
   try {
     await api("avaliacao", {
       nome: $("av-nome").value, email: $("av-email").value, telefone: $("av-tel").value, artista: $("av-artista").value,
-      obra: $("av-obra").value, medidas: $("av-medidas").value, link_fotos: $("av-fotos").value, mensagem: $("av-msg").value,
+      obra: $("av-obra").value, medidas: $("av-medidas").value, link_fotos: linkComHttps($("av-fotos").value), mensagem: $("av-msg").value,
       site: $("av-site").value, consentimento: $("av-ok").checked
     });
     $("aval-campos").classList.add("oculto");
@@ -2494,7 +2567,7 @@ async function decidirHab(id, decisao) {
 
 
 /* ===== MONTAGEM DE LEILÕES (equipe) ===== */
-const ROT_LEILAO = { rascunho: ["Rascunho", ""], agendado: ["Em breve", "ok"], aberto: ["Aberto", "ok"], encerrado: ["Encerrado", ""], cancelado: ["Cancelado", "mau"] };
+const ROT_LEILAO = { rascunho: ["Rascunho", ""], agendado: ["Em breve", "ok"], aberto: ["Aberto", "ok"], encerrado: ["Encerrado", ""], cancelado: ["Cancelado", "mau"], suspenso: ["SUSPENSO", "mau"] };
 let leiPadroes = null, leiAtual = null, leiLotes = [], leiConfirma = null, leiTimer = null, leiCatalogo = null;
 const numOuVazio = v => (v === null || v === undefined ? "" : v);
 const paraLocal = iso => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; const p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()); };
@@ -2506,7 +2579,7 @@ async function carregarLeiloes() {
     const r = await api("admin_leiloes"); leiPadroes = r.padroes;
     $("lei-lista").className = "lei-lista";
     $("lei-lista").innerHTML = r.leiloes.map(l => {
-      const [rs, cls] = ROT_LEILAO[l.situacao] || [l.situacao, ""];
+      const [rs, cls] = (l.suspenso ? ROT_LEILAO.suspenso : ROT_LEILAO[l.situacao]) || [l.situacao, ""];
       return `<div class="lei"><div><h4>${esc(l.nome)}</h4><div class="sub">${esc(l.id)} · ${l.n_lotes} obra(s)${l.n_removidos ? " (+" + l.n_removidos + " retirada(s))" : ""} · ${l.abre_em ? "abre " + dataHora(l.abre_em) : "sem data"}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}${l.situacao === "agendado" && l.abre_em ? " · em divulgação: " + ((ms) => ms <= 0 ? "abre agora" : ms < 36e5 ? "faltam " + Math.max(1, Math.ceil(ms / 6e4)) + " min para abrir" : ms < 864e5 ? "faltam " + Math.ceil(ms / 36e5) + " h para abrir" : "faltam " + Math.ceil(ms / 864e5) + " dia(s) para abrir")(new Date(l.abre_em) - Date.now()) : ""}</div></div>
         <div><span class="chip-st ${cls}">${rs === "Agendado" ? "Em breve" : rs}</span> ${l.situacao === "rascunho" && l.n_lotes ? `<button type="button" data-previa="${esc(l.id)}">Pré-visualizar</button> <button type="button" class="principal" data-pub="${esc(l.id)}" data-n="${l.n_lotes}">POSTAR</button> ` : ""}<button type="button" data-lei="${esc(l.id)}">Abrir</button></div></div>`;
     }).join("") || "<p class='meta'>Nenhum leilão.</p>";
@@ -2584,7 +2657,7 @@ async function abrirLeilao(id, manterMsg) {
 
 const leiCorpos = new Map(); // corpo do editor de cada obra, montado só quando a linha é aberta (leilões grandes ficam leves)
 function renderLeilao() {
-  const L = leiAtual, rasc = L.situacao === "rascunho", [rs, cls] = ROT_LEILAO[L.situacao] || [L.situacao, ""], P = leiPadroes;
+  const L = leiAtual, rasc = L.situacao === "rascunho", [rs, cls] = (L.suspenso ? ROT_LEILAO.suspenso : ROT_LEILAO[L.situacao]) || [L.situacao, ""], P = leiPadroes;
   const dis = rasc ? "" : " disabled";
   const campo = (id, rot, valor, tipo = "number", extra = "") => `<label>${rot}<input id="${id}" type="${tipo}" value="${esc(String(numOuVazio(valor)))}" ${extra}${dis}></label>`;
   const duracoes = [[33, "33 minutos"], [60, "1 hora"], [180, "3 horas"], [1440, "1 dia"], [4320, "3 dias"], [10080, "7 dias"], [20160, "14 dias"]];
@@ -2592,8 +2665,9 @@ function renderLeilao() {
   leiCorpos.clear();
   const lotes = leiLotes.map(l => {
     const ret = l.status === "removido", can = l.status === "cancelado";
-    const ed = rasc && !ret && !can, d = ed ? "" : " disabled";
-    const f = (id, rot, v, tipo = "text", ph = "") => `<label>${rot}<input data-f="${id}" type="${tipo}" value="${esc(String(numOuVazio(v)))}" placeholder="${esc(ph)}"${d}></label>`;
+    // Com o leilão suspenso dá para corrigir textos e imagem; preço, reserva e condições (campos "fixos") ficam travados.
+    const ed = (rasc || L.suspenso) && !ret && !can, d = ed ? "" : " disabled";
+    const f = (id, rot, v, tipo = "text", ph = "", fixo = false) => `<label>${rot}<input data-f="${id}" type="${tipo}" value="${esc(String(numOuVazio(v)))}" placeholder="${esc(ph)}"${fixo && !rasc ? " disabled" : d}></label>`;
     const fi = l.ficha || {};
     const chip = ret ? ["Retirada", ""] : can ? ["Cancelada", "mau"] : rasc ? ["No leilão", "ok"] : ["Ativa", "ok"];
     const bt = [];
@@ -2601,7 +2675,7 @@ function renderLeilao() {
     if (ed) b("salvar", "Salvar obra");
     if (rasc && !ret && !can) b("remover", "Retirar do leilão");
     if (rasc && ret) b("recolocar", "Recolocar no leilão");
-    if (!can && l.n_lances === 0) b("cancelar", "Cancelar lote", true);
+    if (!can && l.n_lances === 0 && !L.suspenso) b("cancelar", "Cancelar lote", true);
     const html = `<details class="lote-cart" data-lote="${esc(l.id)}"><summary><img class="mini" ${atribImg(l.imagem, 160, 160)} alt="" loading="lazy" decoding="async"><div class="tt"><b>${esc(l.artista || l.titulo || "Sem título")}</b><span class="meta">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)} · inicial ${l.lance_inicial ? brl(l.lance_inicial) : "—"}${l.reserva ? " · reserva " + brl(l.reserva) : ""}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</span></div><span class="chip-st ${chip[1]}">${chip[0]}</span>${ed ? '<span class="meta" style="margin-left:8px">editar ›</span>' : ""}</summary>
       <div class="lote-ed" data-lazy="${esc(l.id)}"></div></details>`;
     leiCorpos.set(l.id, `
@@ -2609,19 +2683,24 @@ function renderLeilao() {
         <label>Descrição da obra<textarea data-f="descricao"${d}>${esc(l.descricao)}</textarea></label>
         <label>Sobre o artista (resumo mostrado no lote)<textarea data-f="artista_bio"${d}>${esc(l.artista_bio)}</textarea></label>
         <label>Currículo resumido (uma linha por item; em branco usa o texto padrão do artista, se houver)<textarea data-f="artista_curriculo"${d}>${esc(l.artista_curriculo)}</textarea></label>
-        <div class="grade2">${f("lance_inicial", "Lance inicial (R$)", l.lance_inicial, "number")}${f("reserva", "Reserva (R$, só equipe)", l.reserva, "number")}${f("estimativa_min", "Estimativa mínima", l.estimativa_min, "number")}${f("estimativa_max", "Estimativa máxima", l.estimativa_max, "number")}</div>
+        <div class="grade2">${f("lance_inicial", "Lance inicial (R$)", l.lance_inicial, "number", "", true)}${f("reserva", "Reserva (R$, só equipe)", l.reserva, "number", "", true)}${f("estimativa_min", "Estimativa mínima", l.estimativa_min, "number")}${f("estimativa_max", "Estimativa máxima", l.estimativa_max, "number")}</div>
         <div class="meta">Ficha da obra: quanto mais completa, mais confiança no catálogo. Preencha só o que for verdade e puder ser comprovado; campo em branco não aparece para o público.</div>
         <div class="grade2">${Object.keys(ROTULOS_FICHA).map(k => f("ficha_" + k, ROTULOS_FICHA[k], fi[k], "text", DICAS_FICHA[k] || "")).join("")}</div>
         <div class="meta">Exceções só para esta obra (em branco = usa o padrão do leilão):</div>
-        <div class="grade2">${f("comissao_pct", "Comissão %", l.comissao_pct, "number", "padrão " + L.comissao_pct)}${f("multa_pct", "Multa %", l.multa_pct, "number", "padrão " + L.multa_pct)}${f("prazo_pagamento_dias", "Pagamento (dias)", l.prazo_pagamento_dias, "number", "padrão " + L.prazo_pagamento_dias)}${f("prazo_aceite_horas", "Aceite da reserva (h)", l.prazo_aceite_horas, "number", "padrão " + L.prazo_aceite_horas)}</div>
+        <div class="grade2">${f("comissao_pct", "Comissão %", l.comissao_pct, "number", "padrão " + L.comissao_pct, true)}${f("multa_pct", "Multa %", l.multa_pct, "number", "padrão " + L.multa_pct, true)}${f("prazo_pagamento_dias", "Pagamento (dias)", l.prazo_pagamento_dias, "number", "padrão " + L.prazo_pagamento_dias, true)}${f("prazo_aceite_horas", "Aceite da reserva (h)", l.prazo_aceite_horas, "number", "padrão " + L.prazo_aceite_horas, true)}</div>
         <div class="acoes">${bt.join("")}</div>`);
     return html;
   }).join("") || "<p class='meta'>Nenhuma obra ainda. Escolha da loja ou cadastre uma nova.</p>";
   const rodape = [];
   if (rasc) rodape.push(`<button type="button" data-lrod="previa">Pré-visualizar como público</button><button type="button" class="principal" data-lrod="lancar">POSTAR leilão</button><button type="button" data-lrod="cancelar_leilao">Cancelar leilão</button>`);
-  else if (L.situacao === "agendado" || L.situacao === "aberto") rodape.push(`<button type="button" data-lrod="desfazer">Desfazer lançamento (só sem lances)</button>`);
+  else if (L.situacao === "agendado" || L.situacao === "aberto") {
+    if (L.suspenso) rodape.push(`<button type="button" class="principal" data-lrod="retomar">Retomar leilão…</button>`);
+    else rodape.push(`<label class="susp-motivo">Motivo da suspensão (os participantes leem)<input id="lei-susp-motivo" type="text" maxlength="200" placeholder="ex.: correção de uma informação no lote 7" autocomplete="off"></label><button type="button" class="perigo" data-lrod="suspender">Suspender leilão</button>`);
+    rodape.push(`<button type="button" data-lrod="desfazer">Desfazer lançamento (só sem lances)</button>`);
+  }
   $("lei-edit").innerHTML = `<div class="lei-topo"><button type="button" id="lei-voltar">← Todos os leilões</button><span class="chip-st ${cls}">${rs}</span></div>
-    <h4 style="font:italic 400 1.6rem/1.1 var(--serif); margin:10px 0 0">${esc(L.nome)}</h4><div class="sub meta">${esc(L.id)}${rasc ? "" : " · lançado: para editar, desfaça o lançamento (só sem lances)"}</div>
+    <h4 style="font:italic 400 1.6rem/1.1 var(--serif); margin:10px 0 0">${esc(L.nome)}</h4><div class="sub meta">${esc(L.id)}${rasc ? "" : L.suspenso ? " · suspenso: dá para corrigir textos e imagens das obras; preço, reserva e condições ficam travados" : " · lançado: para editar, desfaça o lançamento (só sem lances)"}</div>
+    ${L.suspenso ? `<div class="susp-painel" role="status"><h5>Leilão SUSPENSO desde ${esc(dataHora(L.suspenso_em))}</h5><p>Motivo mostrado aos participantes: <b>${esc(L.suspenso_motivo)}</b></p><p class="meta">Nenhum lance entra e o cronômetro dos lotes está parado. Corrija o que precisar nas obras abaixo e depois retome: os lotes ganham o tempo que ficaram parados.</p><div class="acoes"><button type="button" class="principal" data-lrod="retomar">Retomar leilão…</button></div><div id="lei-retomar-box" class="susp-painel oculto"></div></div>` : ""}
     <div class="lei-form">
       ${campo("lf-nome", "Nome do leilão", L.nome, "text")}
       ${campo("lf-abre", "Abre em", paraLocal(L.abre_em), "datetime-local")}
@@ -2723,12 +2802,43 @@ async function acaoLote(id, ac, el) {
   }
   leiConfirma = null; leiMsg("Executando…");
   try {
-    if (ac === "salvar") { await salvarFormLeilao(); await api("admin_lote_editar", { id, campos: lerCamposLote(id) }); leiMsg("Obra salva.", "ok"); }
+    if (ac === "salvar") { if (leiAtual.situacao === "rascunho") await salvarFormLeilao(); await api("admin_lote_editar", { id, campos: lerCamposLote(id) }); leiMsg(leiAtual.suspenso ? "Obra corrigida. Quando terminar, retome o leilão." : "Obra salva.", "ok"); }
     else { const r = await api("admin_lote_status", { id, acao: ac }); leiMsg(r.mensagem || "Feito.", "ok"); }
     await abrirLeilao(leiAtual.id, true);
   } catch (e) { leiMsg(e.message, "erro"); }
 }
+// Retomar o leilão suspenso: 1) mostra a prévia (tempo parado e novos horários) sem gravar nada; 2) só grava ao confirmar.
+async function retomarLeilao(extraTexto) {
+  const box = $("lei-retomar-box"); if (!box) return;
+  const extra = Math.max(0, Math.min(1440, Number(extraTexto) || 0));
+  leiMsg("Calculando os novos horários…");
+  try {
+    const r = await api("admin_leilao_retomar", { id: leiAtual.id, extra_min: extra }, 60000);
+    leiMsg("");
+    box.classList.remove("oculto");
+    box.innerHTML = `<h5>Retomar o leilão</h5>
+      <p>Parado há <b>${r.pausa_min} min</b> (desde ${esc(dataHora(r.suspenso_em))}). O tempo parado é contado até o clique em <b>Confirmar retomada</b>.</p>
+      <p><b>${r.n_lotes}</b> lote(s) que estavam abertos ganham esse tempo${r.extra_min ? " + " + r.extra_min + " min extras" : ""} no encerramento. Os lotes que já tinham encerrado não mudam.</p>
+      <label class="susp-motivo">Minutos extras (opcional)<input id="lei-retomar-extra" type="number" min="0" max="1440" value="${r.extra_min}"></label>
+      <div class="acoes"><button type="button" id="lei-retomar-calc">Recalcular</button><button type="button" class="principal" id="lei-retomar-ok">Confirmar retomada</button><button type="button" id="lei-retomar-x">Voltar</button></div>
+      <details><summary>Novos horários de encerramento (${r.lotes.length})</summary>${r.lotes.map(x => `<div class="meta">Lote ${esc(numeroLote(x.id))}: ${esc(dataHora(x.de))} → <b>${esc(dataHora(x.para))}</b></div>`).join("")}</details>`;
+    $("lei-retomar-calc").onclick = () => retomarLeilao($("lei-retomar-extra").value);
+    $("lei-retomar-x").onclick = () => { box.classList.add("oculto"); box.innerHTML = ""; };
+    $("lei-retomar-ok").onclick = async () => {
+      $("lei-retomar-ok").disabled = true; leiMsg("Retomando…");
+      try {
+        const ok = await api("admin_leilao_retomar", { id: leiAtual.id, extra_min: Number($("lei-retomar-extra").value) || 0, confirmar: true }, 60000);
+        leiMsg(ok.mensagem || "Leilão retomado.", "ok"); await abrirLeilao(leiAtual.id, true); carregarArremates();
+      } catch (e) { leiMsg(e.message, "erro"); const b = $("lei-retomar-ok"); if (b) b.disabled = false; }
+    };
+  } catch (e) { leiMsg(e.message, "erro"); }
+}
 async function acaoLeilao(ac, el) {
+  if (ac === "retomar") return retomarLeilao(0);
+  if (ac === "suspender") {
+    const campoMotivo = $("lei-susp-motivo");
+    if (!campoMotivo || campoMotivo.value.trim().length < 5) { leiMsg("Escreva o motivo da suspensão (pelo menos 5 letras): os participantes leem.", "erro"); if (campoMotivo) campoMotivo.focus(); return; }
+  }
   const chave = "lei:" + ac;
   if (leiConfirma !== chave) {
     leiConfirma = chave; clearTimeout(leiTimer); const antes = el.textContent;
@@ -2738,9 +2848,11 @@ async function acaoLeilao(ac, el) {
   }
   leiConfirma = null; $("lei-problemas").textContent = ""; leiMsg("Executando…");
   try {
-    const rota = { lancar: "admin_leilao_lancar", desfazer: "admin_leilao_desfazer", cancelar_leilao: "admin_leilao_cancelar" }[ac];
+    const rota = { lancar: "admin_leilao_lancar", desfazer: "admin_leilao_desfazer", cancelar_leilao: "admin_leilao_cancelar", suspender: "admin_leilao_suspender" }[ac];
     if (ac === "lancar") await salvarFormLeilao();
-    const r = await api(rota, { id: leiAtual.id }, 60000);
+    const corpo = { id: leiAtual.id };
+    if (ac === "suspender") corpo.motivo = $("lei-susp-motivo").value.trim();
+    const r = await api(rota, corpo, 60000);
     leiMsg(r.mensagem || "Feito.", "ok"); await abrirLeilao(leiAtual.id, true); carregarArremates();
   } catch (e) { $("lei-problemas").textContent = e.message; leiMsg("Não foi possível concluir.", "erro"); }
 }
