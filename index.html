@@ -308,6 +308,9 @@
   .lote-ed textarea { min-height: 70px; resize: vertical; }
   .lote-cart { border: 1px solid var(--line); border-radius: 14px; margin: 10px 0; background: var(--bg2); }
   .lote-cart > summary { cursor: pointer; list-style: none; display: flex; gap: 12px; align-items: center; padding: 10px 12px; }
+  .lote-cart .bt-linha { flex: none; font-size: .78rem; padding: 6px 12px; }
+  .lote-cart .bt-linha.perigo { color: #ff6a4d; border-color: #ff6a4d; }
+  .lote-cart .bt-linha.confirma { background: #ff6a4d; color: #fff; border-color: #ff6a4d; }
   .lote-cart img.mini { width: 54px; height: 54px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); flex: none; background: var(--bg); }
   .lote-cart .tt { flex: 1; min-width: 0; }
   .lote-cart .tt b { display: block; font: italic 400 1.1rem/1.1 var(--serif); }
@@ -2676,7 +2679,15 @@ function renderLeilao() {
     if (rasc && !ret && !can) b("remover", "Retirar do leilão");
     if (rasc && ret) b("recolocar", "Recolocar no leilão");
     if (!can && l.n_lances === 0 && !L.suspenso) b("cancelar", "Cancelar lote", true);
-    const html = `<details class="lote-cart" data-lote="${esc(l.id)}"><summary><img class="mini" ${atribImg(l.imagem, 160, 160)} alt="" loading="lazy" decoding="async"><div class="tt"><b>${esc(l.artista || l.titulo || "Sem título")}</b><span class="meta">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)} · inicial ${l.lance_inicial ? brl(l.lance_inicial) : "—"}${l.reserva ? " · reserva " + brl(l.reserva) : ""}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</span></div><span class="chip-st ${chip[1]}">${chip[0]}</span>${ed ? '<span class="meta" style="margin-left:8px">editar ›</span>' : ""}</summary>
+    // Botão sempre visível na linha da obra (sem abrir o editor): retirar/recolocar antes de postar; depois de postar, só sem lances.
+    let rb = "";
+    const rbt = (ac, t, perigo) => `<button type="button" class="bt-linha${perigo ? " perigo" : ""}" data-lrow="${ac}" data-lid="${esc(l.id)}" data-rot="${t}">${t}</button>`;
+    if (!can) {
+      if (rasc && !ret) rb = rbt("remover", "Retirar do leilão");
+      else if (rasc && ret) rb = rbt("recolocar", "Recolocar");
+      else if (!rasc && !ret && !L.suspenso && l.n_lances === 0) rb = rbt("cancelar", "Retirar do leilão", true);
+    }
+    const html = `<details class="lote-cart" data-lote="${esc(l.id)}"><summary><img class="mini" ${atribImg(l.imagem, 160, 160)} alt="" loading="lazy" decoding="async"><div class="tt"><b>${esc(l.artista || l.titulo || "Sem título")}</b><span class="meta">Lote ${esc(numeroLote(l.id))} · ${esc(l.titulo)} · inicial ${l.lance_inicial ? brl(l.lance_inicial) : "—"}${l.reserva ? " · reserva " + brl(l.reserva) : ""}${l.n_lances ? " · " + l.n_lances + " lance(s)" : ""}</span></div>${rb}<span class="chip-st ${chip[1]}">${chip[0]}</span>${ed ? '<span class="meta" style="margin-left:8px">editar ›</span>' : ""}</summary>
       <div class="lote-ed" data-lazy="${esc(l.id)}"></div></details>`;
     leiCorpos.set(l.id, `
         <div class="grade2">${f("titulo", "Título", l.titulo)}${f("artista", "Artista", l.artista)}${f("imagem", "Imagem (endereço https)", l.imagem)}</div>
@@ -2781,6 +2792,7 @@ function ligarLeilao() {
     box.innerHTML = leiCorpos.get(det.dataset.lote) || ""; box.dataset.pronto = "1";
     box.querySelectorAll("[data-lac]").forEach(bt => bt.onclick = () => acaoLote(bt.dataset.lid, bt.dataset.lac, bt));
   }));
+  document.querySelectorAll("#lei-lotes [data-lrow]").forEach(bt => bt.onclick = e => { e.preventDefault(); e.stopPropagation(); acaoLote(bt.dataset.lid, bt.dataset.lrow, bt); });
   document.querySelectorAll("#lei-edit [data-lrod]").forEach(bt => bt.onclick = () => bt.dataset.lrod === "previa" ? entrarNaPrevia(leiAtual) : acaoLeilao(bt.dataset.lrod, bt));
   if ($("lei-loja")) $("lei-loja").onclick = abrirCatalogo;
   if ($("lei-nova-btn")) $("lei-nova-btn").onclick = abrirObraNova;
@@ -2797,8 +2809,8 @@ function lerCamposLote(id) {
 async function acaoLote(id, ac, el) {
   const chave = id + ":" + ac;
   if (ac === "cancelar" && leiConfirma !== chave) {
-    leiConfirma = chave; clearTimeout(leiTimer); leiTimer = setTimeout(() => { leiConfirma = null; if (el.isConnected) { el.textContent = "Cancelar lote"; el.classList.remove("confirma"); } }, 6000);
-    el.textContent = "Confirmar: cancelar lote"; el.classList.add("confirma"); return;
+    leiConfirma = chave; clearTimeout(leiTimer); leiTimer = setTimeout(() => { leiConfirma = null; if (el.isConnected) { el.textContent = el.dataset.rot || "Cancelar lote"; el.classList.remove("confirma"); } }, 6000);
+    el.textContent = el.dataset.rot ? "Confirmar: retirar do leilão" : "Confirmar: cancelar lote"; el.classList.add("confirma"); return;
   }
   leiConfirma = null; leiMsg("Executando…");
   try {
