@@ -160,6 +160,11 @@
   .card:hover .foto img, .card:focus-visible .foto img { transform: scale(1.07); }
   .card .foto::after { content: "Ver lote →"; position: absolute; inset: auto 14px 14px auto; background: var(--acid); color: #0a0a0a; font: 700 .78rem var(--sans); padding: 9px 14px; border-radius: 999px; transform: translateY(14px); opacity: 0; transition: all .4s var(--ease); }
   .card:hover .foto::after, .card:focus-visible .foto::after { transform: none; opacity: 1; }
+  .card .sit { position: absolute; left: 12px; bottom: 12px; z-index: 2; font: 700 .68rem var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; }
+  .card .sit.ok { background: #12b76a; color: #04210f; }
+  .card .sit.mau { background: #ff6a4d; color: #fff; }
+  .card.ganhando { box-shadow: 0 0 0 2px #12b76a; }
+  .card.coberto { box-shadow: 0 0 0 2px #ff6a4d; }
   .card .n { position: absolute; top: 12px; left: 12px; z-index: 2; font: 700 .72rem var(--mono); letter-spacing: .1em; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 999px; }
   .card .tempo { position: absolute; top: 12px; right: 12px; z-index: 2; font: 700 .72rem var(--mono); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
   .card .tempo.urgente { background: var(--hot); color: #fff; animation: piscar 1.2s steps(2) infinite; }
@@ -1289,8 +1294,11 @@ function revelar() {
 /* ===== LISTA ===== */
 function cardHtml(l, i) {
     const enc = l.encerrado;
-    return `<article class="card ${enc ? "encerrado" : ""}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
-      <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span><button type="button" class="fav" data-fav="${esc(l.id)}" aria-pressed="${FAV.has(l.id)}" aria-label="Favoritar este lote">♥</button>
+    // Quem participa vê a própria situação direto no cartão (a Lupa e "Meus lances" mostram o mesmo).
+    const sit = !l.participo ? "" : enc ? (l.voce_arrematou ? `<span class="sit ok">Você arrematou</span>` : "") : l.lider ? `<span class="sit ok">Você está ganhando</span>` : `<span class="sit mau">Coberto</span>`;
+    const classeSit = !l.participo || enc ? "" : l.lider ? " ganhando" : " coberto";
+    return `<article class="card ${enc ? "encerrado" : ""}${classeSit}" data-id="${esc(l.id)}" style="--i:${Math.min(i, 8)}" tabindex="0" role="button" aria-label="${esc((l.artista || "") + ", " + l.titulo + ". " + (enc ? "Encerrado." : "Lance atual " + brl(l.valor_atual)))}">
+      <div class="foto"><span class="n">LOTE ${numeroLote(l.id)}</span>${sit}<button type="button" class="fav" data-fav="${esc(l.id)}" aria-pressed="${FAV.has(l.id)}" aria-label="Favoritar este lote">♥</button>
         ${l.suspenso ? `<span class="tempo susp">Suspenso</span>` : l.em_breve ? `<span class="tempo">Abre ${esc(dataHora(l.abre_em))}</span>` : `<span class="tempo" data-fim="${enc ? "" : esc(l.encerra_em)}">${enc ? "Encerrado" : tempoRestante(l.encerra_em)}</span>`}
         ${l.imagem ? `<img ${atribImg(l.imagem, 640, 800)} alt="" loading="lazy" decoding="async">` : ""}</div>
       <h3>${esc(l.artista || l.titulo)}</h3>
@@ -1892,8 +1900,9 @@ function renderLupa() {
       geral = "ok";
       faixa.className = "lupa-faixa ok";
       faixa.innerHTML = `<div class="txt"><span>Você está ganhando ${ganhando.length} ${ganhando.length === 1 ? "lote" : "lotes"}.</span><small>Próximo encerramento: ${esc(l.artista || l.titulo)} em <span class="tempo-f" data-fim="${esc(l.encerra_em)}">${tempoRestante(l.encerra_em)}</span></small></div>
-        <div class="acoes"><button type="button" class="mudo" data-abrir="${esc(l.id)}">Ver lote</button>${mudoBtn}</div>`;
+        <div class="acoes">${ganhando.slice(0, 4).map(g => `<button type="button" class="mudo" data-abrir="${esc(g.id)}">${esc(String(g.titulo || g.artista).replace(/^.*| /, ""))} · ${brl(g.valor_atual)}</button>`).join("")}${ganhando.length > 4 ? `<button type="button" class="mudo" id="lupa-todos">+${ganhando.length - 4}</button>` : ""}${mudoBtn}</div>`;
     }
+    const lt = $("lupa-todos"); if (lt) lt.onclick = () => mostrar("lances");
     faixa.querySelectorAll("[data-cobrir]").forEach(b => b.onclick = () => cobrir(b.dataset.cobrir, b));
     faixa.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => { mostrar("lotes"); abrir(b.dataset.abrir); });
     const mb = $("lupa-mudo"); if (mb) mb.onclick = () => { lupaMudo = !lupaMudo; try { localStorage.setItem("l33-lupa-mudo", lupaMudo ? "1" : "0"); } catch (e) {} if (!lupaMudo) tom("ok"); renderLupa(); };
