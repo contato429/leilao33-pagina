@@ -645,7 +645,6 @@ Cadastre-se, habilite-se e dispute.</span></div>
         <p class="sub">Arte Contemporânea Brasileira · SANTA CATARINA. Lances abertos até o encerramento de cada lote. Cadastre-se, habilite-se e dispute.</p>
         <div class="numeros" aria-live="polite">
           <div><b id="h-abertos">–</b><span>lotes abertos</span></div>
-          <div><b id="h-total">–</b><span>em lances</span></div>
           <div><b id="h-prox" data-fim="">–</b><span id="h-prox-rot">próximo encerramento</span></div>
         </div>
       </div>
@@ -1181,7 +1180,6 @@ function renderHeroi() {
   const abertos = lotes.filter(l => estadoDoLote(l) === "aberto");
   const breves = lotes.filter(l => estadoDoLote(l) === "breve");
   $("h-abertos").textContent = abertos.length;
-  $("h-total").textContent = brl(lotes.reduce((s, l) => s + (l.n_lances ? l.valor_atual : 0), 0));
   const prox = abertos.slice().sort((a, b) => new Date(a.encerra_em) - new Date(b.encerra_em))[0];
   const proxAbre = !prox && breves.length ? breves.slice().sort((a, b) => new Date(a.abre_em) - new Date(b.abre_em))[0] : null;
   $("h-prox-rot").textContent = proxAbre ? "próxima abertura" : "próximo encerramento";
