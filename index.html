@@ -1157,7 +1157,7 @@ async function carregarConfig() {
     `Comissão do leiloeiro: ${CONFIG.leiloeiro.comissao_percentual}% sobre o valor arrematado. ` +
     `Incremento mínimo: ${CONFIG.regras.incremento_texto || brl(CONFIG.regras.incremento_minimo_reais)}. ` +
     `Lances nos últimos ${CONFIG.regras.janela_prorrogacao_minutos} minutos prorrogam o encerramento em ${CONFIG.regras.prorrogacao_minutos} minutos. ` +
-    `Quando o leilão permitir, o lance automático dá os lances por você, no incremento mínimo, até o limite que você definir; o limite não aparece para ninguém e, em empate de limites, vale o registrado primeiro. A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o último licitante recebe, ao fim do lote, a oferta de levar a obra pelo valor da reserva e tem 24 horas para aceitar ou recusar. Se recusar ou não responder, o lote encerra sem venda e a obra volta ao acervo. Quem arremata tem 7 dias para pagar; sem pagamento, paga multa de 20% e a obra volta ao acervo.`;
+    `Quando o leilão permitir, o lance automático dá os lances por você, no incremento mínimo, até o limite que você definir; o limite não aparece para ninguém e, em empate de limites, vale o registrado primeiro. A reserva (valor mínimo de venda) não é divulgada. Se o maior lance não a atingir, o lote encerra sem venda e a obra volta ao acervo. Quem arremata tem 72 horas para pagar; sem pagamento, paga multa de 20% e a obra volta ao acervo.`;
 }
 function renderEsqueleto() {
   $("lista").innerHTML = Array.from({ length: 6 }, () =>
@@ -1510,7 +1510,7 @@ function renderOferta(l) {
     <p class="meta">Responda até ${dataHora(o.prazo)}. Sem resposta ou com recusa, o lote é encerrado sem venda e a obra volta ao acervo.</p>
     ${ofertaConfirma ? `<p><b>Confirma que recusa? O lote será encerrado sem venda e a obra voltará ao acervo.</b></p>
       <div class="bts"><button type="button" class="recusar" id="of-sim-recusa">Sim, recuso</button><button type="button" class="recusar" id="of-nao">Voltar</button></div>`
-    : `<label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);"><input type="checkbox" id="of-aceite"${marcado ? " checked" : ""}> Li e aceito as condições do novo preço: levarei esta obra por ${brl(o.valor)}${pc ? `, mais ${pc}% de comissão do leiloeiro (total ${brl(total)})` : ""}, com pagamento em até 7 dias pelo link enviado por e-mail, conforme o edital do leilão.</label>
+    : `<label class="check" style="text-transform:none; letter-spacing:0; font-family:var(--sans);"><input type="checkbox" id="of-aceite"${marcado ? " checked" : ""}> Li e aceito as condições do novo preço: levarei esta obra por ${brl(o.valor)}${pc ? `, mais ${pc}% de comissão do leiloeiro (total ${brl(total)})` : ""}, com pagamento em até 72 horas pelo link enviado por e-mail, conforme o edital do leilão.</label>
       <div class="bts"><button type="button" class="aceitar" id="of-aceitar"${marcado ? "" : " disabled"}>Confirmar e arrematar por ${brl(o.valor)}</button><button type="button" class="recusar" id="of-recusar">Recusar</button></div>`}`;
   const q = id => box.querySelector("#" + id);
   const enviar = async (aceitar, botao) => {
